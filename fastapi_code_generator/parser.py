@@ -242,7 +242,7 @@ class Operations(BaseModel):
 
 
 class Path(BaseModel):
-    path: str
+    path: Optional[str]
     operations: Optional[Operations] = None
     children: List[Path] = []
     parent: Optional[Path] = None
@@ -257,7 +257,7 @@ class Path(BaseModel):
 
     @property
     def root_path(self) -> str:
-        paths = self.path.split("/")
+        paths = self.path.split("/")  # type: ignore
         if len(paths) > 1:
             return paths[1]
         else:
