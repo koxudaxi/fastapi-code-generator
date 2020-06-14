@@ -274,6 +274,33 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#custom-template" class="md-nav__link">
+    Custom Template
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom Template">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    Variables
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-template" class="md-nav__link">
+    default template
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pypi" class="md-nav__link">
     PyPi
   </a>
@@ -370,6 +397,33 @@
           <li class="md-nav__item">
   <a href="#openapi" class="md-nav__link">
     OpenAPI
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#custom-template" class="md-nav__link">
+    Custom Template
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom Template">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#variables" class="md-nav__link">
+    Variables
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#default-template" class="md-nav__link">
+    default template
   </a>
   
 </li>
@@ -647,6 +701,41 @@
 <span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
     <span class="n">code</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+</code></pre></div>
+
+
+<h2 id="custom-template">Custom Template<a class="headerlink" href="#custom-template" title="Permanent link">🔗</a></h2>
+<p>If you want to generate custom <code>*.py</code> files then you can give custom template directory fastapi-code-generator as <code>-t</code> or <code>--template-dir</code> options of the command.</p>
+<p>fastapi-code-generator search <a href="https://jinja.palletsprojects.com/">jinja2</a> template files in given template directory.</p>
+<p>These files will be rendered and write to the output directory. Also, the generated file name will be created template file name which extension is replace to <code>*.py</code>.</p>
+<h3 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">🔗</a></h3>
+<p>You can use below variables in jinja2 template</p>
+<ul>
+<li><code>imports</code>  all imports statements</li>
+<li><code>operations</code> <code>operations</code> is list of <code>operation</code></li>
+<li><code>operation.type</code> HTTP METHOD</li>
+<li><code>operation.path</code> Path</li>
+<li><code>operation.snake_case_path</code> Snake-cased Path</li>
+<li><code>operation.response</code> response object</li>
+<li><code>operation.function_name</code> function name is created <code>operationId</code> or <code>METHOD</code> + <code>Path</code> </li>
+<li><code>operation.snake_case_arguments</code> Snake-cased function arguments</li>
+</ul>
+<h3 id="default-template">default template<a class="headerlink" href="#default-template" title="Permanent link">🔗</a></h3>
+<p><code>main.jinja2</code></p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
+
+<span class="p">{{</span><span class="n">imports</span><span class="p">}}</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+
+<span class="p">{</span><span class="o">%</span> <span class="k">for</span> <span class="n">operation</span> <span class="ow">in</span> <span class="n">operations</span> <span class="o">%</span><span class="p">}</span>
+<span class="nd">@app.</span><span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">type</span><span class="p">}}(</span><span class="s1">&#39;{{operation.snake_case_path}}&#39;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">response</span><span class="p">}})</span>
+<span class="k">def</span> <span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">function_name</span><span class="p">}}({{</span><span class="n">operation</span><span class="o">.</span><span class="n">snake_case_arguments</span><span class="p">}})</span> <span class="o">-&gt;</span> <span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">response</span><span class="p">}}:</span>
+    <span class="k">pass</span>
+<span class="p">{</span><span class="o">%</span> <span class="n">endfor</span> <span class="o">%</span><span class="p">}</span>
 </code></pre></div>
 
 
