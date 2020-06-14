@@ -19,7 +19,8 @@ classifiers = [
 
 [tool.poetry-dynamic-versioning]
 enable = true
-style = "pep440"
+vcs = "git"
+pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)(-?((?P<stage>[a-zA-Z]+)\\.?(?P<revision>\\d+)?))?$"
 
 [tool.poetry.scripts]
 fastapi-codegen = "fastapi_code_generator.__main__:app"
