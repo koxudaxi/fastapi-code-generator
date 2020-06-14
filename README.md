@@ -244,6 +244,43 @@ class Error(BaseModel):
     message: str
 ```
 
+## Custom Template
+If you want to generate custom `*.py` files then you can give custom template directory fastapi-code-generator as `-t` or `--template-dir` options of the command.
+
+fastapi-code-generator search [jinja2](https://jinja.palletsprojects.com/) template files in given template directory.
+
+These files will be rendered and write to the output directory. Also, the generated file name will be created template file name which extension is replace to `*.py`.
+
+### Variables
+You can use below variables in jinja2 template
+
+- `imports`  all imports statements
+- `operations` `operations` is list of `operation`
+  - `operation.type` HTTP METHOD
+  - `operation.path` Path
+  - `operation.snake_case_path` Snake-cased Path
+  - `operation.response` response object
+  - `operation.function_name` function name is created `operationId` or `METHOD` + `Path` 
+  - `operation.snake_case_arguments` Snake-cased function arguments
+
+### default template 
+`main.jinja2`
+```jinja2
+from __future__ import annotations
+
+from fastapi import FastAPI
+
+{{imports}}
+
+app = FastAPI()
+
+
+{% for operation in operations %}
+@app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}})
+def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operation.response}}:
+    pass
+{% endfor %}
+```
 
 ## PyPi 
 
