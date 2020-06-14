@@ -36,15 +36,11 @@ jobs:
     - name: Unit Test
       if: matrix.os != 'windows-latest'
       run: |
-        poetry run ./scripts/unittest.sh
+        poetry run ./scripts/test.sh
     - name: Unit Test windows
       if: matrix.os == 'windows-latest'
       run: |
-        poetry run ./scripts/unittest.bat
-    - name: Integration Test
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        poetry run ./scripts/integration_test.sh
+        poetry run ./scripts/test.bat
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v1
