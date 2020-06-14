@@ -53,11 +53,11 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def snake_case_path(self) -> str:
-        return re.sub(
+        return re.sub(  # type: ignore
             r"{([^\}]+)}", lambda m: stringcase.snakecase(m.group()), self.path
         )
 
-    def set_path(self, path: Path):
+    def set_path(self, path: Path) -> None:
         self.path = path.path
         self.rootPath = path.root_path
 
@@ -120,7 +120,7 @@ class Operation(CachedPropertyModel):
         if self.operationId:
             name: str = self.operationId
         else:
-            name = f"{self.type}{self.path.replace('/', '_')}"
+            name = f"{self.type}{self.path.replace('/', '_')}"  # type: ignore
         return stringcase.snakecase(name)
 
     @property
@@ -158,8 +158,8 @@ class Operation(CachedPropertyModel):
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> str:
-        format_ = parameter["schema"].get("format", "default")
-        type_ = json_schema_data_formats[parameter["schema"]["type"]][format_]
+        format_ = parameter["schema"].get("format", "default")  # type: ignore
+        type_ = json_schema_data_formats[parameter["schema"]["type"]][format_]  # type: ignore
         return self.get_data_type_hint(
             name=stringcase.snakecase(parameter["name"])
             if snake_case
@@ -242,7 +242,7 @@ class Operations(BaseModel):
 
 
 class Path(BaseModel):
-    path: Optional[str] = None
+    path: str
     operations: Optional[Operations] = None
     children: List[Path] = []
     parent: Optional[Path] = None
@@ -263,7 +263,7 @@ class Path(BaseModel):
         else:
             return ""
 
-    def init(self):
+    def init(self) -> None:
         if self.parent:
             self.parent.children.append(self)
 
@@ -295,11 +295,11 @@ class OpenAPIParser:
 
     def parse_paths(self, path_tree: Dict[str, Any]) -> ParsedObject:
         paths: List[Path] = []
-        for path, operations in path_tree.items():
+        for path_name, operations in path_tree.items():
             tree: List[str] = []
             last: Optional[Path] = None
 
-            for key in path.split("/"):
+            for key in path_name.split("/"):
                 parent: Optional[Path] = None
                 parents = [p for p in paths if p.path == "/".join(tree)]
                 if parents:
