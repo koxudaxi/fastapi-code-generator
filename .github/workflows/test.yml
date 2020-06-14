@@ -33,23 +33,19 @@ jobs:
       if: matrix.os != 'windows-latest'
       run: |
         ./scripts/lint.sh
-    - name: Unit Test
-      if: matrix.os != 'windows-latest'
-      run: |
-        poetry run ./scripts/unittest.sh
-    - name: Unit Test windows
-      if: matrix.os == 'windows-latest'
-      run: |
-        poetry run ./scripts/unittest.bat
-    - name: Integration Test
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        poetry run ./scripts/integration_test.sh
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-        flags: unittests
-        fail_ci_if_error: true
+#    - name: Unit Test
+#      if: matrix.os != 'windows-latest'
+#      run: |
+#        poetry run ./scripts/test.sh
+#    - name: Unit Test windows
+#      if: matrix.os == 'windows-latest'
+#      run: |
+#        poetry run ./scripts/test.bat
+#    - name: Upload coverage to Codecov
+#      if: matrix.os == 'ubuntu-latest'
+#      uses: codecov/codecov-action@v1
+#      with:
+#        token: ${{ secrets.CODECOV_TOKEN }}
+#        file: ./coverage.xml
+#        flags: unittests
+#        fail_ci_if_error: true

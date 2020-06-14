@@ -10,17 +10,17 @@ from jinja2 import Environment, FileSystemLoader
 
 from fastapi_code_generator.parser import OpenAPIParser, ParsedObject
 
-app = typer.Typer()
+app = typer.Typer()  # type: ignore
 
 BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 
 
 @app.command()
 def main(
-    input_file: typer.FileText = typer.Option(..., "--input", "-i"),
-    output_dir: Path = typer.Option(..., "--output", "-o"),
-    template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),
-):
+    input_file: typer.FileText = typer.Option(..., "--input", "-i"),  # type: ignore
+    output_dir: Path = typer.Option(..., "--output", "-o"),  # type: ignore
+    template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),  # type: ignore
+) -> None:
     input_name: str = input_file.name
     input_text: str = input_file.read()
     if not output_dir.exists():
@@ -67,4 +67,4 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    typer.run(main)  # type: ignore
