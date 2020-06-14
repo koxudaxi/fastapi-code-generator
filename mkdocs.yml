@@ -1,0 +1,28 @@
+site_name: fastapi-code-generator
+site_description: This code generator creates FastAPI app from an openapi file.
+
+theme:
+    name: 'material'
+    palette:
+      primary: 'light blue'
+      accent: 'light blue'
+
+markdown_extensions:
+  - codehilite
+  - admonition
+  - toc:
+      permalink: 🔗
+
+repo_name: koxudaxi/fastapi-code-generator
+repo_url: https://github.com/koxudaxi/fastapi-code-generator
+
+google_analytics:
+    - 'UA-142130505-1'
+    - 'auto'
+
+nav:
+    - Overview: index.md
+    - Development-Contributing: development-contributing.md
+
+plugins:
+  - search

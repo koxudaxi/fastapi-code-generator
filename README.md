@@ -1,0 +1,255 @@
+# fastapi-code-generator
+
+This code generator creates FastAPI app from an openapi file.
+
+[![PyPI version](https://badge.fury.io/py/fastapi-code-generator.svg)](https://pypi.python.org/pypi/fastapi-code-generator)
+[![Downloads](https://pepy.tech/badge/fastapi-code-generator/month)](https://pepy.tech/project/fastapi-code-generator/month)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fastapi-code-generator)](https://pypi.python.org/pypi/fastapi-code-generator)
+[![codecov](https://codecov.io/gh/koxudaxi/fastapi-code-generator/branch/master/graph/badge.svg)](https://codecov.io/gh/koxudaxi/fastapi-code-generator)
+![license](https://img.shields.io/github/license/koxudaxi/fastapi-code-generator.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
+## This project is an experimental phase.
+
+fastapi-code-generator uses [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator) to generate pydantic models
+
+## Help
+See [documentation](https://koxudaxi.github.io/fastapi-code-generator) for more details.
+
+
+## Installation
+
+To install `fastapi-code-generator`:
+```sh
+$ pip install fastapi-code-generator
+```
+
+## Usage
+
+The `fastapi-code-generator` command:
+```
+Usage: fastapi-codegen [OPTIONS]
+
+Options:
+  -i, --input FILENAME     [required]
+  -o, --output PATH        [required]
+  -t, --template-dir PATH
+  --install-completion     Install completion for the current shell.
+  --show-completion        Show completion for the current shell, to copy it
+                           or customize the installation.
+
+  --help                   Show this message and exit.
+```
+
+## Example
+### OpenAPI
+```sh
+$ fastapi-codegen --input api.yaml --output app
+```
+
+<details>
+<summary>api.yaml</summary>
+<pre>
+<code>
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+servers:
+  - url: http://petstore.swagger.io/v1
+paths:
+  /pets:
+    get:
+      summary: List all pets
+      operationId: listPets
+      tags:
+        - pets
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: A paged array of pets
+          headers:
+            x-next:
+              description: A link to the next page of responses
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pets"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                x-amazon-apigateway-integration:
+                  uri:
+                    Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
+                  passthroughBehavior: when_no_templates
+                  httpMethod: POST
+                  type: aws_proxy
+    post:
+      summary: Create a pet
+      operationId: createPets
+      tags:
+        - pets
+      responses:
+        '201':
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+                x-amazon-apigateway-integration:
+                  uri:
+                    Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
+                  passthroughBehavior: when_no_templates
+                  httpMethod: POST
+                  type: aws_proxy
+  /pets/{petId}:
+    get:
+      summary: Info for a specific pet
+      operationId: showPetById
+      tags:
+        - pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The id of the pet to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pets"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    x-amazon-apigateway-integration:
+      uri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
+      passthroughBehavior: when_no_templates
+      httpMethod: POST
+      type: aws_proxy
+components:
+  schemas:
+    Pet:
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        tag:
+          type: string
+    Pets:
+      type: array
+      items:
+        $ref: "#/components/schemas/Pet"
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+```
+</code>
+</pre>
+</details>
+
+
+`app/main.py`:
+```python
+# generated by fastapi-codegen:
+#   filename:  api.yaml
+#   timestamp: 2020-06-14T10:45:22+00:00
+
+from __future__ import annotations
+
+from typing import Optional
+
+from fastapi import FastAPI
+
+from .models import Pet, Pets
+
+app = FastAPI()
+
+
+@app.get('/pets', response_model=Pets)
+def list_pets(limit: Optional[int] = None) -> Pets:
+    pass
+
+
+@app.post('/pets', response_model=None)
+def create_pets() -> None:
+    pass
+
+
+@app.get('/pets/{pet_id}', response_model=Pet)
+def show_pet_by_id(pet_id: str) -> Pet:
+    pass
+```
+
+`app/models.py`:
+```python
+# generated by datamodel-codegen:
+#   filename:  api.yaml
+#   timestamp: 2020-06-14T10:45:22+00:00
+
+from typing import List, Optional
+
+from pydantic import BaseModel
+
+
+class Pet(BaseModel):
+    id: int
+    name: str
+    tag: Optional[str] = None
+
+
+class Pets(BaseModel):
+    __root__: List[Pet]
+
+
+class Error(BaseModel):
+    code: int
+    message: str
+```
+
+
+## PyPi 
+
+[https://pypi.org/project/fastapi-code-generator](https://pypi.org/project/fastapi-code-generator)
+
+## License
+
+fastapi-code-generator is released under the MIT License. http://www.opensource.org/licenses/mit-license
+
