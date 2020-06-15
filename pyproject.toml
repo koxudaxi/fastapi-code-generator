@@ -30,7 +30,7 @@ python = "^3.8.0"
 typer = {extras = ["all"], version =  "^0.2.1"}
 datamodel-code-generator = "^0.5.5"
 stringcase = "^1.2.0"
-black = "^19.10b0"
+black = "19.10b0"
 isort = "^4.3.21"
 PySnooper = "^0.4.1"
 jinja2 = "^2.11.2"
