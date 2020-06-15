@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from contextvars import ContextVar
 from functools import cached_property
 from typing import Any, Dict, List, Optional, Union
 
@@ -10,7 +11,7 @@ from datamodel_code_generator import (
     load_json_or_yaml,
     snooper_to_methods,
 )
-from datamodel_code_generator.imports import Import, Imports
+from datamodel_code_generator.imports import IMPORT_LIST, Import, Imports
 from datamodel_code_generator.model.pydantic.types import type_map
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
@@ -21,6 +22,8 @@ from pydantic import BaseModel, validator
 from pydantic.fields import ModelField
 
 MODEL_PATH = ".models"
+
+model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
 
 
 class CachedPropertyModel(BaseModel):
@@ -41,13 +44,40 @@ class Request(BaseModel):
     required: bool
 
 
+class UsefulStr(str):
+    @property
+    def snakecase(self) -> str:
+        return stringcase.snakecase(self)
+
+    @property
+    def pascalcase(self) -> str:
+        return stringcase.pascalcase(self)
+
+    @property
+    def camelcase(self) -> str:
+        return stringcase.camelcase(self)
+
+
+class Argument(BaseModel):
+    name: UsefulStr
+
+    @validator('name')
+    def validate_name(cls, value: Any) -> Any:
+        if type(value) == str:
+            return UsefulStr(value)
+        return value
+
+    # def __str__(self) -> UsefulStr:
+    #     return self.name
+
+
 class Operation(CachedPropertyModel):
-    type: Optional[str]
-    path: Optional[str]
-    operationId: Optional[str]
-    rootPath: Optional[str]
+    type: Optional[UsefulStr]
+    path: Optional[UsefulStr]
+    operationId: Optional[UsefulStr]
+    root_path: Optional[UsefulStr]
     parameters: Optional[Any]
-    responses: Dict[str, Any] = {}
+    responses: Dict[UsefulStr, Any] = {}
     requestBody: Dict[str, Any] = {}
     imports: List[Import] = []
 
@@ -59,7 +89,7 @@ class Operation(CachedPropertyModel):
 
     def set_path(self, path: Path) -> None:
         self.path = path.path
-        self.rootPath = path.root_path
+        self.root_path = UsefulStr(path.root_path)
 
     @cached_property
     def request(self) -> Optional[str]:
@@ -69,7 +99,9 @@ class Operation(CachedPropertyModel):
                 if content_type == "application/json":
                     models.append(schema.ref_object_name)
                     self.imports.append(
-                        Import(from_=MODEL_PATH, import_=schema.ref_object_name)
+                        Import(
+                            from_=model_path_var.get(), import_=schema.ref_object_name
+                        )
                     )
         if not models:
             return None
@@ -81,9 +113,9 @@ class Operation(CachedPropertyModel):
     def request_objects(self) -> List[Request]:
         requests: List[Request] = []
         contents: Dict[str, JsonSchemaObject] = {}
-        for content_type, obj in self.requestBody.get("content", {}).items():
+        for content_type, obj in self.requestBody.get('content', {}).items():
             contents[content_type] = (
-                JsonSchemaObject.parse_obj(obj["schema"]) if "schema" in obj else None
+                JsonSchemaObject.parse_obj(obj['schema']) if 'schema' in obj else None
             )
             requests.append(
                 Request(
@@ -131,29 +163,36 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def arguments(self) -> str:
-        parameters: List[str] = []
-
-        if self.parameters:
-            for parameter in self.parameters:
-                parameters.append(self.get_parameter_type(parameter, False))
-
-        if self.request:
-            parameters.append(f"body: {self.request}")
-
-        return ", ".join(parameters)
+        return self.get_arguments(snake_case=False)
 
     @cached_property
     def snake_case_arguments(self) -> str:
-        parameters: List[str] = []
+        return self.get_arguments(snake_case=True)
+
+    def get_arguments(self, snake_case: bool) -> str:
+        arguments: List[str] = []
 
         if self.parameters:
             for parameter in self.parameters:
-                parameters.append(self.get_parameter_type(parameter, True))
+                arguments.append(self.get_parameter_type(parameter, snake_case))
 
         if self.request:
-            parameters.append(f"body: {self.request}")
+            arguments.append(f"body: {self.request}")
 
-        return ", ".join(parameters)
+        return ", ".join(arguments)
+
+    @cached_property
+    def argument_list(self) -> List[Argument]:
+        arguments: List[Argument] = []
+
+        if self.parameters:
+            for parameter in self.parameters:
+                arguments.append(Argument.parse_obj(parameter))
+
+        if self.request:
+            arguments.append(Argument(name=UsefulStr('body')))
+
+        return arguments
 
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
@@ -200,10 +239,35 @@ class Operation(CachedPropertyModel):
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
                     if content_type == "application/json":
-                        models.append(schema.ref_object_name)
-                        self.imports.append(
-                            Import(from_=MODEL_PATH, import_=schema.ref_object_name)
-                        )
+                        if schema.is_array:
+                            if isinstance(schema.items, list):
+                                type_ = f'List[{",".join(i.ref_object_name for i in schema.items)}]'
+                                self.imports.extend(
+                                    Import(
+                                        from_=model_path_var.get(),
+                                        import_=i.ref_object_name,
+                                    )
+                                    for i in schema.items
+                                )
+                            else:
+                                type_ = f'List[{schema.items.ref_object_name}]'
+                                self.imports.append(
+                                    Import(
+                                        from_=model_path_var.get(),
+                                        import_=schema.items.ref_object_name,
+                                    )
+                                )
+                            self.imports.append(IMPORT_LIST)
+                        else:
+                            type_ = schema.ref_object_name
+                            self.imports.append(
+                                Import(
+                                    from_=model_path_var.get(),
+                                    import_=schema.ref_object_name,
+                                )
+                            )
+                        models.append(type_)
+
         if not models:
             return "None"
         if len(models) > 1:
@@ -237,12 +301,12 @@ class Operations(BaseModel):
     @validator(*OPERATION_NAMES)
     def validate_operations(cls, value: Any, field: ModelField) -> Any:
         if isinstance(value, Operation):
-            value.type = field.name
+            value.type = UsefulStr(field.name)
         return value
 
 
 class Path(BaseModel):
-    path: Optional[str]
+    path: Optional[UsefulStr]
     operations: Optional[Operations] = None
     children: List[Path] = []
     parent: Optional[Path] = None
@@ -273,7 +337,9 @@ Path.update_forward_refs()
 
 class ParsedObject:
     def __init__(self, parsed_operations: List[Operation]):
-        self.operations = sorted(parsed_operations, key=lambda m: m.path)
+        self.operations: List[Operation] = sorted(
+            parsed_operations, key=lambda m: m.path
+        )
         self.imports: Imports = Imports()
         for operation in self.operations:
             # create imports
@@ -285,9 +351,13 @@ class ParsedObject:
 
 @snooper_to_methods(max_variable_length=None)
 class OpenAPIParser:
-    def __init__(self, input_name: str, input_text: str,) -> None:
+    def __init__(
+        self, input_name: str, input_text: str, model_path: Optional[str] = None
+    ) -> None:
         self.input_name: str = input_name
         self.input_text: str = input_text
+        if model_path:
+            model_path_var.set(model_path)
 
     def parse(self) -> ParsedObject:
         openapi = load_json_or_yaml(self.input_text)
@@ -312,7 +382,7 @@ class OpenAPIParser:
                 if me:
                     continue
 
-                last = Path(path="/".join(tree), parent=parent)
+                last = Path(path=UsefulStr("/".join(tree)), parent=parent)
 
                 paths.append(last)
 
