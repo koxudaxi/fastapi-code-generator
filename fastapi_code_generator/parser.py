@@ -58,6 +58,18 @@ class UsefulStr(str):
         return stringcase.camelcase(self)
 
 
+class Argument(BaseModel):
+    name: UsefulStr
+
+    @validator('name')
+    def validate_name(cls, value: Any) -> Any:
+        if type(value) == str:
+            return UsefulStr(value)
+        return value
+    # def __str__(self) -> UsefulStr:
+    #     return self.name
+
+
 class Operation(CachedPropertyModel):
     type: Optional[UsefulStr]
     path: Optional[UsefulStr]
@@ -150,29 +162,36 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def arguments(self) -> str:
-        parameters: List[str] = []
-
-        if self.parameters:
-            for parameter in self.parameters:
-                parameters.append(self.get_parameter_type(parameter, False))
-
-        if self.request:
-            parameters.append(f"body: {self.request}")
-
-        return ", ".join(parameters)
+        return self.get_arguments(snake_case=False)
 
     @cached_property
     def snake_case_arguments(self) -> str:
-        parameters: List[str] = []
+        return self.get_arguments(snake_case=True)
+
+    def get_arguments(self, snake_case: bool) -> str:
+        arguments: List[str] = []
 
         if self.parameters:
             for parameter in self.parameters:
-                parameters.append(self.get_parameter_type(parameter, True))
+                arguments.append(self.get_parameter_type(parameter, snake_case))
 
         if self.request:
-            parameters.append(f"body: {self.request}")
+            arguments.append(f"body: {self.request}")
 
-        return ", ".join(parameters)
+        return ", ".join(arguments)
+
+    @cached_property
+    def argument_list(self) -> List[Argument]:
+        arguments: List[Argument] = []
+
+        if self.parameters:
+            for parameter in self.parameters:
+                arguments.append(Argument.parse_obj(parameter))
+
+        if self.request:
+            arguments.append(Argument(name='body'))
+
+        return arguments
 
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
