@@ -66,6 +66,7 @@ class Argument(BaseModel):
         if type(value) == str:
             return UsefulStr(value)
         return value
+
     # def __str__(self) -> UsefulStr:
     #     return self.name
 
