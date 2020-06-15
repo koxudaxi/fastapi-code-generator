@@ -78,7 +78,7 @@ class Operation(CachedPropertyModel):
     root_path: Optional[UsefulStr]
     parameters: Optional[Any]
     responses: Dict[UsefulStr, Any] = {}
-    requestBody: Dict[UsefulStr, Any] = {}
+    requestBody: Dict[str, Any] = {}
     imports: List[Import] = []
 
     @cached_property
@@ -113,9 +113,9 @@ class Operation(CachedPropertyModel):
     def request_objects(self) -> List[Request]:
         requests: List[Request] = []
         contents: Dict[str, JsonSchemaObject] = {}
-        for content_type, obj in self.requestBody.get("content", {}).items():
+        for content_type, obj in self.requestBody.get('content', {}).items():
             contents[content_type] = (
-                JsonSchemaObject.parse_obj(obj["schema"]) if "schema" in obj else None
+                JsonSchemaObject.parse_obj(obj['schema']) if 'schema' in obj else None
             )
             requests.append(
                 Request(
@@ -190,7 +190,7 @@ class Operation(CachedPropertyModel):
                 arguments.append(Argument.parse_obj(parameter))
 
         if self.request:
-            arguments.append(Argument(name='body'))
+            arguments.append(Argument(name=UsefulStr('body')))
 
         return arguments
 
@@ -240,15 +240,7 @@ class Operation(CachedPropertyModel):
                 for content_type, schema in response.contents.items():
                     if content_type == "application/json":
                         if schema.is_array:
-                            if isinstance(schema.items, JsonSchemaObject):
-                                type_ = f'List[{schema.items.ref_object_name}]'
-                                self.imports.append(
-                                    Import(
-                                        from_=model_path_var.get(),
-                                        import_=schema.items.ref_object_name,
-                                    )
-                                )
-                            else:
+                            if isinstance(schema.items, list):
                                 type_ = f'List[{",".join(i.ref_object_name for i in schema.items)}]'
                                 self.imports.extend(
                                     Import(
@@ -256,6 +248,14 @@ class Operation(CachedPropertyModel):
                                         import_=i.ref_object_name,
                                     )
                                     for i in schema.items
+                                )
+                            else:
+                                type_ = f'List[{schema.items.ref_object_name}]'
+                                self.imports.append(
+                                    Import(
+                                        from_=model_path_var.get(),
+                                        import_=schema.items.ref_object_name,
+                                    )
                                 )
                             self.imports.append(IMPORT_LIST)
                         else:
@@ -301,12 +301,12 @@ class Operations(BaseModel):
     @validator(*OPERATION_NAMES)
     def validate_operations(cls, value: Any, field: ModelField) -> Any:
         if isinstance(value, Operation):
-            value.type = field.name
+            value.type = UsefulStr(field.name)
         return value
 
 
 class Path(BaseModel):
-    path: Optional[str]
+    path: Optional[UsefulStr]
     operations: Optional[Operations] = None
     children: List[Path] = []
     parent: Optional[Path] = None
@@ -382,7 +382,7 @@ class OpenAPIParser:
                 if me:
                     continue
 
-                last = Path(path="/".join(tree), parent=parent)
+                last = Path(path=UsefulStr("/".join(tree)), parent=parent)
 
                 paths.append(last)
 
