@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
+from contextvars import ContextVar
 from functools import cached_property
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Union
 
 import stringcase
 from datamodel_code_generator import (
@@ -10,7 +11,7 @@ from datamodel_code_generator import (
     load_json_or_yaml,
     snooper_to_methods,
 )
-from datamodel_code_generator.imports import Import, Imports
+from datamodel_code_generator.imports import IMPORT_LIST, Import, Imports
 from datamodel_code_generator.model.pydantic.types import type_map
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
@@ -21,6 +22,8 @@ from pydantic import BaseModel, validator
 from pydantic.fields import ModelField
 
 MODEL_PATH = ".models"
+
+model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
 
 
 class CachedPropertyModel(BaseModel):
@@ -41,14 +44,28 @@ class Request(BaseModel):
     required: bool
 
 
+class UsefulStr(str):
+    @property
+    def snakecase(self) -> str:
+        return stringcase.snakecase(self)
+
+    @property
+    def pascalcase(self) -> str:
+        return stringcase.pascalcase(self)
+
+    @property
+    def camelcase(self) -> str:
+        return stringcase.camelcase(self)
+
+
 class Operation(CachedPropertyModel):
-    type: Optional[str]
-    path: Optional[str]
-    operationId: Optional[str]
-    rootPath: Optional[str]
+    type: Optional[UsefulStr]
+    path: Optional[UsefulStr]
+    operationId: Optional[UsefulStr]
+    root_path: Optional[UsefulStr]
     parameters: Optional[Any]
-    responses: Dict[str, Any] = {}
-    requestBody: Dict[str, Any] = {}
+    responses: Dict[UsefulStr, Any] = {}
+    requestBody: Dict[UsefulStr, Any] = {}
     imports: List[Import] = []
 
     @cached_property
@@ -59,7 +76,7 @@ class Operation(CachedPropertyModel):
 
     def set_path(self, path: Path) -> None:
         self.path = path.path
-        self.rootPath = path.root_path
+        self.root_path = UsefulStr(path.root_path)
 
     @cached_property
     def request(self) -> Optional[str]:
@@ -69,7 +86,9 @@ class Operation(CachedPropertyModel):
                 if content_type == "application/json":
                     models.append(schema.ref_object_name)
                     self.imports.append(
-                        Import(from_=MODEL_PATH, import_=schema.ref_object_name)
+                        Import(
+                            from_=model_path_var.get(), import_=schema.ref_object_name
+                        )
                     )
         if not models:
             return None
@@ -200,10 +219,35 @@ class Operation(CachedPropertyModel):
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
                     if content_type == "application/json":
-                        models.append(schema.ref_object_name)
-                        self.imports.append(
-                            Import(from_=MODEL_PATH, import_=schema.ref_object_name)
-                        )
+                        if schema.is_array:
+                            if isinstance(schema.items, JsonSchemaObject):
+                                type_ = f'List[{schema.items.ref_object_name}]'
+                                self.imports.append(
+                                    Import(
+                                        from_=model_path_var.get(),
+                                        import_=schema.items.ref_object_name,
+                                    )
+                                )
+                            else:
+                                type_ = f'List[{",".join(i.ref_object_name for i in schema.items)}]'
+                                self.imports.extend(
+                                    Import(
+                                        from_=model_path_var.get(),
+                                        import_=i.ref_object_name,
+                                    )
+                                    for i in schema.items
+                                )
+                            self.imports.append(IMPORT_LIST)
+                        else:
+                            type_ = schema.ref_object_name
+                            self.imports.append(
+                                Import(
+                                    from_=model_path_var.get(),
+                                    import_=schema.ref_object_name,
+                                )
+                            )
+                        models.append(type_)
+
         if not models:
             return "None"
         if len(models) > 1:
@@ -271,12 +315,11 @@ class Path(BaseModel):
 Path.update_forward_refs()
 
 
-T = TypeVar('T', bound=Operations)
-
-
 class ParsedObject:
     def __init__(self, parsed_operations: List[Operation]):
-        self.operations = sorted(parsed_operations, key=lambda m: m.path)
+        self.operations: List[Operation] = sorted(
+            parsed_operations, key=lambda m: m.path
+        )
         self.imports: Imports = Imports()
         for operation in self.operations:
             # create imports
@@ -288,17 +331,17 @@ class ParsedObject:
 
 @snooper_to_methods(max_variable_length=None)
 class OpenAPIParser:
-    def __init__(self, input_name: str, input_text: str) -> None:
+    def __init__(
+        self, input_name: str, input_text: str, model_path: Optional[str] = None
+    ) -> None:
         self.input_name: str = input_name
         self.input_text: str = input_text
+        if model_path:
+            model_path_var.set(model_path)
 
     def parse(self) -> ParsedObject:
         openapi = load_json_or_yaml(self.input_text)
         return self.parse_paths(openapi["paths"])
-
-    @staticmethod
-    def parse_operations(obj: Any) -> Operations:
-        return Operations.parse_obj(obj)
 
     def parse_paths(self, path_tree: Dict[str, Any]) -> ParsedObject:
         paths: List[Path] = []
@@ -324,7 +367,7 @@ class OpenAPIParser:
                 paths.append(last)
 
             if last:
-                last.operations = self.parse_operations(operations)
+                last.operations = Operations.parse_obj(operations)
 
         for path in paths:
             path.init()
