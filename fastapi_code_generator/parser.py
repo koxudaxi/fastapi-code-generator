@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from functools import cached_property
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 import stringcase
 from datamodel_code_generator import (
@@ -274,8 +274,8 @@ Path.update_forward_refs()
 T = TypeVar('T', bound=Operations)
 
 
-class ParsedObject(Generic[T]):
-    def __init__(self, parsed_operations: List[T]):
+class ParsedObject:
+    def __init__(self, parsed_operations: List[Operation]):
         self.operations = sorted(parsed_operations, key=lambda m: m.path)
         self.imports: Imports = Imports()
         for operation in self.operations:
@@ -287,19 +287,20 @@ class ParsedObject(Generic[T]):
 
 
 @snooper_to_methods(max_variable_length=None)
-class OpenAPIBaseParser(Generic[T]):
+class OpenAPIParser:
     def __init__(self, input_name: str, input_text: str) -> None:
         self.input_name: str = input_name
         self.input_text: str = input_text
-
-    def __init_subclass__(cls, **kwargs: Any) -> None:
-        cls.operation_class = cls.__orig_bases__[0].__args__[0]  # type: ignore
 
     def parse(self) -> ParsedObject:
         openapi = load_json_or_yaml(self.input_text)
         return self.parse_paths(openapi["paths"])
 
-    def parse_paths(self, path_tree: Dict[str, Any]) -> ParsedObject[T]:
+    @staticmethod
+    def parse_operations(obj: Any) -> Operations:
+        return Operations.parse_obj(obj)
+
+    def parse_paths(self, path_tree: Dict[str, Any]) -> ParsedObject:
         paths: List[Path] = []
         for path_name, operations in path_tree.items():
             tree: List[str] = []
@@ -323,7 +324,7 @@ class OpenAPIBaseParser(Generic[T]):
                 paths.append(last)
 
             if last:
-                last.operations = self.operation_class.parse_obj(operations)
+                last.operations = self.parse_operations(operations)
 
         for path in paths:
             path.init()
@@ -335,7 +336,7 @@ class OpenAPIBaseParser(Generic[T]):
         return ParsedObject(parsed_operations)
 
     @classmethod
-    def parse_operation(cls, path: Path) -> List[T]:
+    def parse_operation(cls, path: Path) -> List[Operation]:
         operations: List[Operation] = []
         if path.operations:
             for operation in path.exists_operations:
@@ -348,7 +349,3 @@ class OpenAPIBaseParser(Generic[T]):
 
                 operations.append(operation)
         return operations
-
-
-class OpenAPIParser(OpenAPIBaseParser[Operations]):
-    pass

@@ -27,7 +27,7 @@ def main(
         output_dir.mkdir(parents=True)
     if not template_dir:
         template_dir = BUILTIN_TEMPLATE_DIR
-    parser = OpenAPIParser[Operation](input_name, input_text)
+    parser = OpenAPIParser(input_name, input_text)
     parsed_object: ParsedObject = parser.parse()
 
     environment: Environment = Environment(
