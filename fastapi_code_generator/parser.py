@@ -18,8 +18,7 @@ from datamodel_code_generator.parser.jsonschema import (
     json_schema_data_formats,
 )
 from datamodel_code_generator.types import DataType
-from pydantic import BaseModel, validator
-from pydantic.fields import ModelField
+from pydantic import BaseModel, root_validator
 
 MODEL_PATH = ".models"
 
@@ -45,6 +44,14 @@ class Request(BaseModel):
 
 
 class UsefulStr(str):
+    @classmethod
+    def __get_validators__(cls) -> Any:
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v: Any) -> Any:
+        return cls(v)
+
     @property
     def snakecase(self) -> str:
         return stringcase.snakecase(self)
@@ -61,35 +68,28 @@ class UsefulStr(str):
 class Argument(BaseModel):
     name: UsefulStr
 
-    @validator('name')
-    def validate_name(cls, value: Any) -> Any:
-        if type(value) == str:
-            return UsefulStr(value)
-        return value
-
     # def __str__(self) -> UsefulStr:
     #     return self.name
 
 
 class Operation(CachedPropertyModel):
-    type: Optional[UsefulStr]
-    path: Optional[UsefulStr]
+    type: UsefulStr
+    path: UsefulStr
     operationId: Optional[UsefulStr]
-    root_path: Optional[UsefulStr]
-    parameters: Optional[Any]
+    parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     requestBody: Dict[str, Any] = {}
     imports: List[Import] = []
 
     @cached_property
+    def root_path(self) -> UsefulStr:
+        return UsefulStr(self.path.split("/")[1:])
+
+    @cached_property
     def snake_case_path(self) -> str:
-        return re.sub(  # type: ignore
+        return re.sub(
             r"{([^\}]+)}", lambda m: stringcase.snakecase(m.group()), self.path
         )
-
-    def set_path(self, path: Path) -> None:
-        self.path = path.path
-        self.root_path = UsefulStr(path.root_path)
 
     @cached_property
     def request(self) -> Optional[str]:
@@ -152,7 +152,7 @@ class Operation(CachedPropertyModel):
         if self.operationId:
             name: str = self.operationId
         else:
-            name = f"{self.type}{self.path.replace('/', '_')}"  # type: ignore
+            name = f"{self.type}{self.path.replace('/', '_')}"
         return stringcase.snakecase(name)
 
     @property
@@ -288,7 +288,7 @@ OPERATION_NAMES: List[str] = [
 
 
 class Operations(BaseModel):
-    parameters: Optional[Any] = None
+    parameters: List[Dict[str, Any]] = []
     get: Optional[Operation] = None
     put: Optional[Operation] = None
     post: Optional[Operation] = None
@@ -297,39 +297,54 @@ class Operations(BaseModel):
     head: Optional[Operation] = None
     options: Optional[Operation] = None
     trace: Optional[Operation] = None
+    path: UsefulStr
 
-    @validator(*OPERATION_NAMES)
-    def validate_operations(cls, value: Any, field: ModelField) -> Any:
-        if isinstance(value, Operation):
-            value.type = UsefulStr(field.name)
-        return value
+    @root_validator(pre=True)
+    def inject_path_and_type_to_operation(cls, values: Dict[str, Any]) -> Any:
+        path: Any = values.get('path')
+        return dict(
+            **{
+                o: dict(**v, path=path, type=o)
+                for o in OPERATION_NAMES
+                if (v := values.get(o))
+            },
+            path=path,
+        )
+
+    @root_validator
+    def inject_parameters_to_operation(cls, values: Dict[str, Any]) -> Any:
+        if parameters := values.get('parameters'):
+            for operation_name in OPERATION_NAMES:
+                if operation := values.get(operation_name):
+                    operation.parameters.extend(parameters)
+        return values
 
 
-class Path(BaseModel):
-    path: Optional[UsefulStr]
+class Path(CachedPropertyModel):
+    path: UsefulStr
     operations: Optional[Operations] = None
-    children: List[Path] = []
-    parent: Optional[Path] = None
 
-    @property
+    @root_validator(pre=True)
+    def validate_root(cls, values: Dict[str, Any]) -> Any:
+        if path := values.get('path'):
+            if isinstance(path, str):
+                if operations := values.get('operations'):
+                    if isinstance(operations, dict):
+                        return {
+                            'path': path,
+                            'operations': dict(**operations, path=path),
+                        }
+        return values
+
+    @cached_property
     def exists_operations(self) -> List[Operation]:
-        return [
-            operation
-            for operation_name in OPERATION_NAMES
-            if (operation := getattr(self.operations, operation_name))
-        ]
-
-    @property
-    def root_path(self) -> str:
-        paths = self.path.split("/")  # type: ignore
-        if len(paths) > 1:
-            return paths[1]
-        else:
-            return ""
-
-    def init(self) -> None:
-        if self.parent:
-            self.parent.children.append(self)
+        if self.operations:
+            return [
+                operation
+                for operation_name in OPERATION_NAMES
+                if (operation := getattr(self.operations, operation_name))
+            ]
+        return []
 
 
 Path.update_forward_refs()
@@ -363,52 +378,13 @@ class OpenAPIParser:
         openapi = load_json_or_yaml(self.input_text)
         return self.parse_paths(openapi["paths"])
 
-    def parse_paths(self, path_tree: Dict[str, Any]) -> ParsedObject:
-        paths: List[Path] = []
-        for path_name, operations in path_tree.items():
-            tree: List[str] = []
-            last: Optional[Path] = None
-
-            for key in path_name.split("/"):
-                parent: Optional[Path] = None
-                parents = [p for p in paths if p.path == "/".join(tree)]
-                if parents:
-                    parent = parents[0]
-
-                tree.append(key)
-
-                me = [p for p in paths if p.path == "/".join(tree)]
-
-                if me:
-                    continue
-
-                last = Path(path=UsefulStr("/".join(tree)), parent=parent)
-
-                paths.append(last)
-
-            if last:
-                last.operations = Operations.parse_obj(operations)
-
-        for path in paths:
-            path.init()
-
-        parsed_operations: List[Operation] = []
-        for path in paths:
-            for child in path.children:
-                parsed_operations.extend(self.parse_operation(child))
-        return ParsedObject(parsed_operations)
-
-    @classmethod
-    def parse_operation(cls, path: Path) -> List[Operation]:
-        operations: List[Operation] = []
-        if path.operations:
-            for operation in path.exists_operations:
-                operation.set_path(path)
-                if path.operations.parameters:
-                    if operation.parameters:
-                        operation.parameters.extend(path.operations.parameters)
-                    else:
-                        operation.parameters = path.operations.parameters
-
-                operations.append(operation)
-        return operations
+    def parse_paths(self, paths: Dict[str, Any]) -> ParsedObject:
+        return ParsedObject(
+            [
+                operation
+                for path_name, operations in paths.items()
+                for operation in Path(
+                    path=UsefulStr(path_name), operations=operations
+                ).exists_operations
+            ]
+        )
