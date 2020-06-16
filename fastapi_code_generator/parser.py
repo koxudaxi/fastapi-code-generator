@@ -83,7 +83,8 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def root_path(self) -> UsefulStr:
-        return UsefulStr(self.path.split("/")[1:])
+        paths = self.path.split("/")
+        return UsefulStr(paths[1] if len(paths) > 1 else '')
 
     @cached_property
     def snake_case_path(self) -> str:
@@ -309,6 +310,7 @@ class Operations(BaseModel):
                 if (v := values.get(o))
             },
             path=path,
+            parameters=values.get('parameters', []),
         )
 
     @root_validator
