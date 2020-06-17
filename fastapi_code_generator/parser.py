@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from contextvars import ContextVar
-from functools import cached_property, lru_cache
+from functools import cached_property
 from typing import Any, Dict, List, Optional, Union
 
 import stringcase
