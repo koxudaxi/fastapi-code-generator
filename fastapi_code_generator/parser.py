@@ -112,7 +112,7 @@ class Operation(CachedPropertyModel):
                         # TODO: support multiple body
                         Argument(
                             name='body',  # type: ignore
-                            type_hint=schema.ref_object_name,  # type: ignore
+                            type_hint=schema.ref_object_name,
                             required=requests.required,
                         )
                     )
@@ -211,7 +211,7 @@ class Operation(CachedPropertyModel):
         schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
         format_ = schema.format or "default"
         type_ = json_schema_data_formats[schema.type][format_]
-        name: str = parameter["name"]
+        name: str = parameter["name"]  # type: ignore
 
         field = DataModelField(
             name=stringcase.snakecase(name) if snake_case else name,
@@ -222,10 +222,10 @@ class Operation(CachedPropertyModel):
         )
         self.imports.extend(field.imports)
         return Argument(
-            name=field.name,  # type: ignore
-            type_hint=field.type_hint,  # type: ignore
-            default=field.default,  # type: ignore
-            required=field.required,  # type: ignore
+            name=field.name,
+            type_hint=field.type_hint,
+            default=field.default,
+            required=field.required,
         )
 
     @cached_property
