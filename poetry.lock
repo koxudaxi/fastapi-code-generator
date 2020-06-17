@@ -108,7 +108,7 @@ description = "Datamodel Code Generator"
 name = "datamodel-code-generator"
 optional = false
 python-versions = ">=3.6.1"
-version = "0.5.7"
+version = "0.5.8"
 
 [package.dependencies]
 PySnooper = "0.4.1"
@@ -322,7 +322,7 @@ description = "library with cross-python path, ini-parsing, io, code, log facili
 name = "py"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "1.8.1"
+version = "1.8.2"
 
 [[package]]
 category = "main"
@@ -464,7 +464,7 @@ description = "Python helper for Semantic Versioning (http://semver.org/)"
 name = "semver"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
-version = "2.10.1"
+version = "2.10.2"
 
 [[package]]
 category = "main"
@@ -561,7 +561,7 @@ python-versions = "*"
 version = "0.2.4"
 
 [metadata]
-content-hash = "f33d494aa9fe724bd2c6420330f1cc0e99bbf7961393bbee04e2e6e36065f2bc"
+content-hash = "6beabb064c3489fbf41102bea56beaee2d360c0e1b856a65d590243eebee6a3c"
 python-versions = "^3.8.0"
 
 [metadata.files]
@@ -635,8 +635,8 @@ coverage = [
     {file = "coverage-5.1.tar.gz", hash = "sha256:f90bfc4ad18450c80b024036eaf91e4a246ae287701aaa88eaebebf150868052"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.5.7.tar.gz", hash = "sha256:08ac7d743afbe9dfe6a919c6e3f8461d8ee65399bb7e31679fa642d14f9674d7"},
-    {file = "datamodel_code_generator-0.5.7-py3-none-any.whl", hash = "sha256:710ec1b908f6604fe12cbd0c7f25cb55d037f4010a832dfdd50178a6d9698dee"},
+    {file = "datamodel-code-generator-0.5.8.tar.gz", hash = "sha256:8db0db0dc1bef9e21d37383ccae7221231f1c3769c15e4eaf3225e71148a93a3"},
+    {file = "datamodel_code_generator-0.5.8-py3-none-any.whl", hash = "sha256:fbc6444b2e2982c924af069177a389458c849abdcb0596552cffa57f156b9759"},
 ]
 genson = [
     {file = "genson-1.2.1.tar.gz", hash = "sha256:40b8faa17f53240f224d683d7a302b5f7b35eb7ab2aba1c223a58a38b8d09c42"},
@@ -742,8 +742,8 @@ prance = [
     {file = "prance-0.18.2.tar.gz", hash = "sha256:e1ab67ec984c94b94e32bf17a2d6f35960db8b1ee248efea9f00ebaa1fcea1af"},
 ]
 py = [
-    {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},
-    {file = "py-1.8.1.tar.gz", hash = "sha256:5e27081401262157467ad6e7f851b7aa402c5852dbcb3dae06768434de5752aa"},
+    {file = "py-1.8.2-py2.py3-none-any.whl", hash = "sha256:a673fa23d7000440cc885c17dbd34fafcb7d7a6e230b29f6766400de36a33c44"},
+    {file = "py-1.8.2.tar.gz", hash = "sha256:f3b3a4c36512a4c4f024041ab51866f11761cc169670204b235f6b20523d4e6b"},
 ]
 pydantic = [
     {file = "pydantic-1.5.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:2a6904e9f18dea58f76f16b95cba6a2f20b72d787abd84ecd67ebc526e61dce6"},
@@ -828,8 +828,8 @@ requests = [
     {file = "requests-2.23.0.tar.gz", hash = "sha256:b3f43d496c6daba4493e7c431722aeb7dbc6288f52a6e04e7b6023b0247817e6"},
 ]
 semver = [
-    {file = "semver-2.10.1-py2.py3-none-any.whl", hash = "sha256:21eb9deafc627dfd122e294f96acd0deadf1b5b7758ab3bbdf3698155dca4705"},
-    {file = "semver-2.10.1.tar.gz", hash = "sha256:b08a84f604ef579e474ce448672a05c8d50d1ee0b24cee9fb58a12b260e4d0dc"},
+    {file = "semver-2.10.2-py2.py3-none-any.whl", hash = "sha256:21e80ca738975ed513cba859db0a0d2faca2380aef1962f48272ebf9a8a44bd4"},
+    {file = "semver-2.10.2.tar.gz", hash = "sha256:c0a4a9d1e45557297a722ee9bac3de2ec2ea79016b6ffcaca609b0bc62cf4276"},
 ]
 shellingham = [
     {file = "shellingham-1.3.2-py2.py3-none-any.whl", hash = "sha256:7f6206ae169dc1a03af8a138681b3f962ae61cc93ade84d0585cca3aaf770044"},

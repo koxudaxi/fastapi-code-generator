@@ -198,8 +198,9 @@ class Operation(CachedPropertyModel):
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> str:
-        format_ = parameter["schema"].get("format", "default")  # type: ignore
-        type_ = json_schema_data_formats[parameter["schema"]["type"]][format_]  # type: ignore
+        schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
+        format_ = schema.format or "default"
+        type_ = json_schema_data_formats[schema.type][format_]
         return self.get_data_type_hint(
             name=stringcase.snakecase(parameter["name"])
             if snake_case
@@ -208,6 +209,7 @@ class Operation(CachedPropertyModel):
             required=parameter.get("required") == "true"
             or parameter.get("in") == "path",
             snake_case=snake_case,
+            default=schema.typed_default,
         )
 
     def get_data_type_hint(
@@ -230,7 +232,8 @@ class Operation(CachedPropertyModel):
 
         if not default and field.required:
             return f"{field.name}: {field.type_hint}"
-        return f'{field.name}: {field.type_hint} = {default or "None"}'
+
+        return f'{field.name}: {field.type_hint} = {default}'
 
     @cached_property
     def response(self) -> str:

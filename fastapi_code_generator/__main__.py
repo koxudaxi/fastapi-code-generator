@@ -35,7 +35,6 @@ def main(
             template_dir if template_dir else f"{Path(__file__).parent}/template",
             encoding="utf8",
         ),
-        autoescape=True,
     )
     results: Dict[Path, str] = {}
     for target in template_dir.rglob("*"):
