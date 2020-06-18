@@ -23,10 +23,12 @@ def main(
 ) -> None:
     input_name: str = input_file.name
     input_text: str = input_file.read()
-    return generate_code(input_name, input_text,  output_dir, template_dir)
+    return generate_code(input_name, input_text, output_dir, template_dir)
 
 
-def generate_code(input_name: str, input_text: str, output_dir: Path, template_dir: Optional[Path]):
+def generate_code(
+    input_name: str, input_text: str, output_dir: Path, template_dir: Optional[Path]
+) -> None:
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     if not template_dir:
