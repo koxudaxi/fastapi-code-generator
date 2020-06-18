@@ -17,7 +17,7 @@ from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
     json_schema_data_formats,
 )
-from datamodel_code_generator.types import DataType
+
 from pydantic import BaseModel, root_validator
 
 MODEL_PATH = ".models"
@@ -69,6 +69,7 @@ class Argument(CachedPropertyModel):
     name: UsefulStr
     type_hint: UsefulStr
     default: Optional[UsefulStr]
+    default_value: Optional[UsefulStr]
     required: bool
 
     def __str__(self) -> str:
@@ -212,19 +213,28 @@ class Operation(CachedPropertyModel):
         format_ = schema.format or "default"
         type_ = json_schema_data_formats[schema.type][format_]
         name: str = parameter["name"]  # type: ignore
+        orig_name = name
+        if snake_case:
+            name = stringcase.snakecase(name)
 
         field = DataModelField(
-            name=stringcase.snakecase(name) if snake_case else name,
+            name=name,
             data_types=[type_map[type_]],
             required=parameter.get("required") == "true"
             or parameter.get("in") == "path",
             default=schema.typed_default,
         )
         self.imports.extend(field.imports)
+        if orig_name != name:
+            default = f"Query({'...' if field.required else field.default}, alias='{orig_name}')"
+            self.imports.append(Import(from_='fastapi', import_='Query'))
+        else:
+            default = field.default
         return Argument(
             name=field.name,
             type_hint=field.type_hint,
-            default=field.default,
+            default=default,
+            default_value=field.default,
             required=field.required,
         )
 
@@ -357,6 +367,7 @@ class ParsedObject:
         for operation in self.operations:
             # create imports
             operation.arguments
+            operation.snake_case_arguments
             operation.request
             operation.response
             self.imports.append(operation.imports)
