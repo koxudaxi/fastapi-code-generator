@@ -137,7 +137,7 @@ class Operation(CachedPropertyModel):
                 Request(
                     description=self.requestBody.get("description"),
                     contents=contents,
-                    required=self.requestBody.get("required") == "true",
+                    required=self.requestBody.get("required") is True,
                 )
             )
         return requests
@@ -219,8 +219,7 @@ class Operation(CachedPropertyModel):
         field = DataModelField(
             name=name,
             data_types=[type_map[type_]],
-            required=parameter.get("required") == "true"
-            or parameter.get("in") == "path",
+            required=parameter.get("required") or parameter.get("in") == "path",
             default=schema.typed_default,
         )
         self.imports.extend(field.imports)
