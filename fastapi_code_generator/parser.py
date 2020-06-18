@@ -17,7 +17,6 @@ from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
     json_schema_data_formats,
 )
-
 from pydantic import BaseModel, root_validator
 
 MODEL_PATH = ".models"
@@ -233,7 +232,7 @@ class Operation(CachedPropertyModel):
         return Argument(
             name=field.name,
             type_hint=field.type_hint,
-            default=default,
+            default=default,  # type: ignore
             default_value=field.default,
             required=field.required,
         )
