@@ -137,7 +137,7 @@ class Operation(CachedPropertyModel):
                 Request(
                     description=self.requestBody.get("description"),
                     contents=contents,
-                    required=self.requestBody.get("required"),
+                    required=self.requestBody.get("required") is True,
                 )
             )
         return requests
