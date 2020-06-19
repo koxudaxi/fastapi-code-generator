@@ -168,14 +168,8 @@ class Operation(CachedPropertyModel):
         if self.operationId:
             name: str = self.operationId
         else:
-            name = f"{self.type}{self.path.replace('/', '_')}"
+            name = f"{self.type}{re.sub(r'[/{}]', '_', self.path)}"
         return stringcase.snakecase(name)
-
-    @property
-    def dump_imports(self) -> str:
-        imports = Imports()
-        imports.append(self.imports)
-        return imports.dump()
 
     @cached_property
     def arguments(self) -> str:

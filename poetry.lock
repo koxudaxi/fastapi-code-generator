@@ -135,6 +135,18 @@ test = ["pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy
 wheel = ["wheel", "twine"]
 
 [[package]]
+category = "dev"
+description = "Let your Python tests travel through time"
+name = "freezegun"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+version = "0.3.15"
+
+[package.dependencies]
+python-dateutil = ">=1.0,<2.0 || >2.0"
+six = "*"
+
+[[package]]
 category = "main"
 description = "GenSON is a powerful, user-friendly JSON Schema generator."
 name = "genson"
@@ -425,6 +437,17 @@ pytest = ">=2.7"
 dev = ["pre-commit", "tox", "pytest-asyncio"]
 
 [[package]]
+category = "dev"
+description = "Extensions to the standard Python datetime module"
+name = "python-dateutil"
+optional = false
+python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+version = "2.8.1"
+
+[package.dependencies]
+six = ">=1.5"
+
+[[package]]
 category = "main"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
@@ -561,7 +584,7 @@ python-versions = "*"
 version = "0.2.4"
 
 [metadata]
-content-hash = "6beabb064c3489fbf41102bea56beaee2d360c0e1b856a65d590243eebee6a3c"
+content-hash = "3e65ccd6d972c0bf74ad374685364a1bf967cc4f2886ede43a30c0642e2be192"
 python-versions = "^3.8.0"
 
 [metadata.files]
@@ -637,6 +660,10 @@ coverage = [
 datamodel-code-generator = [
     {file = "datamodel-code-generator-0.5.8.tar.gz", hash = "sha256:8db0db0dc1bef9e21d37383ccae7221231f1c3769c15e4eaf3225e71148a93a3"},
     {file = "datamodel_code_generator-0.5.8-py3-none-any.whl", hash = "sha256:fbc6444b2e2982c924af069177a389458c849abdcb0596552cffa57f156b9759"},
+]
+freezegun = [
+    {file = "freezegun-0.3.15-py2.py3-none-any.whl", hash = "sha256:82c757a05b7c7ca3e176bfebd7d6779fd9139c7cb4ef969c38a28d74deef89b2"},
+    {file = "freezegun-0.3.15.tar.gz", hash = "sha256:e2062f2c7f95cc276a834c22f1a17179467176b624cc6f936e8bc3be5535ad1b"},
 ]
 genson = [
     {file = "genson-1.2.1.tar.gz", hash = "sha256:40b8faa17f53240f224d683d7a302b5f7b35eb7ab2aba1c223a58a38b8d09c42"},
@@ -786,6 +813,10 @@ pytest-cov = [
 pytest-mock = [
     {file = "pytest-mock-3.1.1.tar.gz", hash = "sha256:636e792f7dd9e2c80657e174c04bf7aa92672350090736d82e97e92ce8f68737"},
     {file = "pytest_mock-3.1.1-py3-none-any.whl", hash = "sha256:a9fedba70e37acf016238bb2293f2652ce19985ceb245bbd3d7f3e4032667402"},
+]
+python-dateutil = [
+    {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
+    {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
 ]
 pyyaml = [
     {file = "PyYAML-5.3.1-cp27-cp27m-win32.whl", hash = "sha256:74809a57b329d6cc0fdccee6318f44b9b8649961fa73144a98735b0aaf029f1f"},
