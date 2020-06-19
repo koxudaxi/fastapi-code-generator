@@ -2,7 +2,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest
-
 from freezegun import freeze_time
 
 from fastapi_code_generator.__main__ import generate_code
