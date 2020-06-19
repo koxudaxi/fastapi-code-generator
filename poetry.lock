@@ -108,7 +108,7 @@ description = "Datamodel Code Generator"
 name = "datamodel-code-generator"
 optional = false
 python-versions = ">=3.6.1"
-version = "0.5.8"
+version = "0.5.9"
 
 [package.dependencies]
 PySnooper = "0.4.1"
@@ -469,7 +469,7 @@ description = "Python HTTP for Humans."
 name = "requests"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-version = "2.23.0"
+version = "2.24.0"
 
 [package.dependencies]
 certifi = ">=2017.4.17"
@@ -584,7 +584,7 @@ python-versions = "*"
 version = "0.2.4"
 
 [metadata]
-content-hash = "3e65ccd6d972c0bf74ad374685364a1bf967cc4f2886ede43a30c0642e2be192"
+content-hash = "d9cf741befa08aa46ee0ea5ee17150ac99e06b700fb308c573e143faa292bd18"
 python-versions = "^3.8.0"
 
 [metadata.files]
@@ -658,8 +658,8 @@ coverage = [
     {file = "coverage-5.1.tar.gz", hash = "sha256:f90bfc4ad18450c80b024036eaf91e4a246ae287701aaa88eaebebf150868052"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.5.8.tar.gz", hash = "sha256:8db0db0dc1bef9e21d37383ccae7221231f1c3769c15e4eaf3225e71148a93a3"},
-    {file = "datamodel_code_generator-0.5.8-py3-none-any.whl", hash = "sha256:fbc6444b2e2982c924af069177a389458c849abdcb0596552cffa57f156b9759"},
+    {file = "datamodel-code-generator-0.5.9.tar.gz", hash = "sha256:3fea751f197ac589444988234c251f54ede2e32116893625af8615f6f0eb18de"},
+    {file = "datamodel_code_generator-0.5.9-py3-none-any.whl", hash = "sha256:e6b4fa5fab976fe75470efb61e4f9733af91ce15d37bb0cf5118eaa220950d55"},
 ]
 freezegun = [
     {file = "freezegun-0.3.15-py2.py3-none-any.whl", hash = "sha256:82c757a05b7c7ca3e176bfebd7d6779fd9139c7cb4ef969c38a28d74deef89b2"},
@@ -855,8 +855,8 @@ regex = [
     {file = "regex-2020.6.8.tar.gz", hash = "sha256:e9b64e609d37438f7d6e68c2546d2cb8062f3adb27e6336bc129b51be20773ac"},
 ]
 requests = [
-    {file = "requests-2.23.0-py2.py3-none-any.whl", hash = "sha256:43999036bfa82904b6af1d99e4882b560e5e2c68e5c4b0aa03b655f3d7d73fee"},
-    {file = "requests-2.23.0.tar.gz", hash = "sha256:b3f43d496c6daba4493e7c431722aeb7dbc6288f52a6e04e7b6023b0247817e6"},
+    {file = "requests-2.24.0-py2.py3-none-any.whl", hash = "sha256:fe75cc94a9443b9246fc7049224f75604b113c36acb93f87b80ed42c44cbb898"},
+    {file = "requests-2.24.0.tar.gz", hash = "sha256:b3559a131db72c33ee969480840fff4bb6dd111de7dd27c8ee1f820f4f00231b"},
 ]
 semver = [
     {file = "semver-2.10.2-py2.py3-none-any.whl", hash = "sha256:21e80ca738975ed513cba859db0a0d2faca2380aef1962f48272ebf9a8a44bd4"},
