@@ -43,8 +43,10 @@ pytest = "^4.6"
 pytest-cov = "*"
 pytest-mock = "*"
 mypy = "*"
+freezegun = "^0.3.15"
 
 #[tool.poetry.extras]
+
 #docs = ["mkdocs", "mkdocs-material"]
 
 [tool.black]

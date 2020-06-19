@@ -32,24 +32,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pets"
+                items:
+                        $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                x-amazon-apigateway-integration:
-                  uri:
-                    Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
-                  passthroughBehavior: when_no_templates
-                  httpMethod: POST
-                  type: aws_proxy
     post:
       summary: Create a pet
-      operationId: createPets
       tags:
         - pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetForm'
       responses:
         '201':
           description: Null response
@@ -59,12 +59,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-                x-amazon-apigateway-integration:
-                  uri:
-                    Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
-                  passthroughBehavior: when_no_templates
-                  httpMethod: POST
-                  type: aws_proxy
   /pets/{petId}:
     get:
       summary: Info for a specific pet
@@ -91,6 +85,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    put:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The id of the pet to retrieve
+          schema:
+            type: string
+      summary: update a pet
+      tags:
+        - pets
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetForm'
+      responses:
+        '201':
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     x-amazon-apigateway-integration:
       uri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
@@ -111,10 +131,6 @@ components:
           type: string
         tag:
           type: string
-    Pets:
-      type: array
-      items:
-        $ref: "#/components/schemas/Pet"
     Error:
       required:
         - code
@@ -125,3 +141,11 @@ components:
           format: int32
         message:
           type: string
+    PetForm:
+      title: PetForm
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
