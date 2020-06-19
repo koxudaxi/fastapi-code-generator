@@ -40,7 +40,7 @@ jobs:
     - name: Unit Test windows
       if: matrix.os == 'windows-latest'
       run: |
-        ./scripts/test.bat
+        ./scripts/poetry_test.bat
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v1
