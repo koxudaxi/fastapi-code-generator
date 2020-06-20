@@ -14,7 +14,11 @@ app = FastAPI()
 
 
 @app.get('/pets', response_model=List[Pet])
-def list_pets(limit: Optional[int] = 0) -> List[Pet]:
+def list_pets(
+    limit: Optional[int] = 0,
+    home_address: Optional[str] = Query('Unknown', alias='HomeAddress'),
+    kind: Optional[str] = 'dog',
+) -> List[Pet]:
     pass
 
 
