@@ -214,7 +214,7 @@ class Operation(CachedPropertyModel):
             name=name,
             data_types=[type_map[type_]],
             required=parameter.get("required") or parameter.get("in") == "path",
-            default=schema.typed_default,
+            default=DataModelField(default=schema.default).represented_default
         )
         self.imports.extend(field.imports)
         if orig_name != name:

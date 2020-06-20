@@ -22,6 +22,12 @@ paths:
             default: 0
             type: integer
             format: int32
+        - name: kind
+          in: query
+          required: false
+          schema:
+            default: dog
+            type: string
       responses:
         '200':
           description: A paged array of pets
