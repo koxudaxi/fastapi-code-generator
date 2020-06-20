@@ -45,8 +45,9 @@ paths:
           content:
             application/json:
               schema:
+                type: array
                 items:
-                        $ref: "#/components/schemas/Pet"
+                 - $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
@@ -91,7 +92,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pets"
+                $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
@@ -124,6 +125,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    x-amazon-apigateway-integration:
+      uri:
+        Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
+      passthroughBehavior: when_no_templates
+      httpMethod: POST
+      type: aws_proxy
+  /food/{food_id}:
+    get:
+      summary: Info for a specific pet
+      operationId: showFoodById
+      tags:
+        - foods
+      parameters:
+        - name: food_id
+          in: path
+          description: The id of the food to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
     x-amazon-apigateway-integration:
       uri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations

@@ -8,9 +8,14 @@ from typing import List, Optional
 
 from fastapi import FastAPI, Query
 
-from .models import Pet, PetForm, Pets
+from .models import Pet, PetForm
 
 app = FastAPI()
+
+
+@app.get('/food/{food_id}', response_model=None)
+def show_food_by_id(food_id: str) -> None:
+    pass
 
 
 @app.get('/pets', response_model=List[Pet])
@@ -27,8 +32,8 @@ def post_pets(body: PetForm) -> None:
     pass
 
 
-@app.get('/pets/{pet_id}', response_model=Pets)
-def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pets:
+@app.get('/pets/{pet_id}', response_model=Pet)
+def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pet:
     pass
 
 

@@ -216,17 +216,16 @@ class Operation(CachedPropertyModel):
             required=parameter.get("required") or parameter.get("in") == "path",
         )
         self.imports.extend(field.imports)
-        represented_default = repr(schema.default)
         if orig_name != name:
-            default = f"Query({'...' if field.required else represented_default}, alias='{orig_name}')"
+            default = f"Query({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
             self.imports.append(Import(from_='fastapi', import_='Query'))
         else:
-            default = represented_default
+            default = repr(schema.default) if 'default' in parameter["schema"] else None
         return Argument(
             name=field.name,
             type_hint=field.type_hint,
             default=default,  # type: ignore
-            default_value=represented_default,  # type: ignore
+            default_value=schema.default,  # type: ignore
             required=field.required,
         )
 
