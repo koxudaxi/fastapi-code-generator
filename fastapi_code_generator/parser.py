@@ -76,7 +76,7 @@ class Argument(CachedPropertyModel):
 
     @cached_property
     def argument(self) -> str:
-        if not self.default and self.required:
+        if self.default is None and self.required:
             return f'{self.name}: {self.type_hint}'
         return f'{self.name}: {self.type_hint} = {self.default}'
 
