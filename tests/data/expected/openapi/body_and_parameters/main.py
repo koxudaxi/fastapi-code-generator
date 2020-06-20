@@ -38,7 +38,7 @@ def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pet:
 
 
 @app.put('/pets/{pet_id}', response_model=None)
-def put_pets__pet_id_(
+def put_pets_pet_id(
     pet_id: str = Query(..., alias='petId'), body: PetForm = None
 ) -> None:
     pass
