@@ -226,7 +226,7 @@ class Operation(CachedPropertyModel):
             name=field.name,
             type_hint=field.type_hint,
             default=default,  # type: ignore
-            default_value=represented_default,
+            default_value=represented_default,  # type: ignore
             required=field.required,
         )
 
