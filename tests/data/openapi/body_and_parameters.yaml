@@ -22,6 +22,12 @@ paths:
             default: 0
             type: integer
             format: int32
+        - name: HomeAddress
+          in: query
+          required: false
+          schema:
+            default: 'Unknown'
+            type: string
         - name: kind
           in: query
           required: false
