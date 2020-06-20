@@ -168,7 +168,7 @@ class Operation(CachedPropertyModel):
         if self.operationId:
             name: str = self.operationId
         else:
-            path = re.sub(r'/{|/','_', self.snake_case_path).replace('}', '')
+            path = re.sub(r'/{|/', '_', self.snake_case_path).replace('}', '')
             name = f"{self.type}{path}"
         return stringcase.snakecase(name)
 
