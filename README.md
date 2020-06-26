@@ -262,6 +262,7 @@ You can use below variables in jinja2 template
   - `operation.response` response object
   - `operation.function_name` function name is created `operationId` or `METHOD` + `Path` 
   - `operation.snake_case_arguments` Snake-cased function arguments
+  - `operation.security` [Security](https://swagger.io/docs/specification/authentication/)
 
 ### default template 
 `main.jinja2`
