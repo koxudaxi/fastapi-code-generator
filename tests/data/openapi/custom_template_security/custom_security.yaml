@@ -6,6 +6,8 @@ info:
     name: MIT
 servers:
   - url: http://petstore.swagger.io/v1
+security:
+  - BearerAuth: []
 paths:
   /pets:
     get:
@@ -13,6 +15,7 @@ paths:
       operationId: listPets
       tags:
         - pets
+      security: []
       parameters:
         - name: limit
           in: query
@@ -153,6 +156,10 @@ paths:
       httpMethod: POST
       type: aws_proxy
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     Pet:
       required:

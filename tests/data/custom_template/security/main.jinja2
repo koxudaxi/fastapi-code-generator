@@ -1,0 +1,47 @@
+
+from __future__ import annotations
+
+from typing import List, Optional
+
+from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from pydantic import BaseModel
+from starlette import status
+
+{{ imports }}
+
+app = FastAPI()
+
+
+DUMMY_CREDENTIALS = 'abcdefg'
+
+
+class User(BaseModel):
+    username: str
+    email: str
+
+
+def get_dummy_user(token: str) -> User:
+    return User(username=token, email='abc@example.com')
+
+
+async def valid_token(auth: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> str:
+    if auth.credentials == DUMMY_CREDENTIALS:
+        return 'dummy'
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+async def valid_current_user(token: str = Depends(valid_token)) -> User:
+    return get_dummy_user(token)
+
+
+
+{% for operation in operations %}
+@app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}})
+def {{operation.function_name}}({{operation.snake_case_arguments}}{%- if operation.security -%}{%- if operation.snake_case_arguments -%}, {%- endif -%}user: User = Depends(valid_current_user){%- endif -%}) -> {{operation.response}}:
+    pass
+{% endfor %}
