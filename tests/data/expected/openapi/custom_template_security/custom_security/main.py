@@ -46,9 +46,7 @@ async def valid_current_user(token: str = Depends(valid_token)) -> User:
 
 
 @app.get('/food/{food_id}', response_model=None)
-def show_food_by_id(
-    food_id: str = None, user: User = Depends(valid_current_user)
-) -> None:
+def show_food_by_id(food_id: str, user: User = Depends(valid_current_user)) -> None:
     pass
 
 
@@ -74,7 +72,7 @@ def show_pet_by_id(
 
 
 @app.put('/pets/{pet_id}', response_model=None)
-def put_pets__pet_id_(
+def put_pets_pet_id(
     pet_id: str = Query(..., alias='petId'),
     body: PetForm = None,
     user: User = Depends(valid_current_user),

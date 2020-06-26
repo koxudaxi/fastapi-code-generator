@@ -14,7 +14,9 @@ DATA_DIR = Path(__file__).parent / 'data'
 EXPECTED_DIR = DATA_DIR / 'expected'
 
 
-@pytest.mark.parametrize("oas_file", (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml"))
+@pytest.mark.parametrize(
+    "oas_file", (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml")
+)
 @freeze_time("2020-06-19")
 def test_generate_default_template(oas_file):
     with TemporaryDirectory() as tmp_dir:
@@ -33,7 +35,9 @@ def test_generate_default_template(oas_file):
             assert output_file.read_text() == expected_file.read_text()
 
 
-@pytest.mark.parametrize("oas_file", (DATA_DIR / OPEN_API_SECURITY_TEMPLATE_DIR_NAME).glob("*.yaml"))
+@pytest.mark.parametrize(
+    "oas_file", (DATA_DIR / OPEN_API_SECURITY_TEMPLATE_DIR_NAME).glob("*.yaml")
+)
 @freeze_time("2020-06-19")
 def test_generate_custom_security_template(oas_file):
     with TemporaryDirectory() as tmp_dir:
@@ -44,7 +48,9 @@ def test_generate_custom_security_template(oas_file):
             output_dir=output_dir,
             template_dir=DATA_DIR / 'custom_template' / 'security',
         )
-        expected_dir = EXPECTED_DIR / OPEN_API_SECURITY_TEMPLATE_DIR_NAME / oas_file.stem
+        expected_dir = (
+            EXPECTED_DIR / OPEN_API_SECURITY_TEMPLATE_DIR_NAME / oas_file.stem
+        )
         output_files = sorted(list(output_dir.glob('*')))
         expected_files = sorted(list(expected_dir.glob('*')))
         assert [f.name for f in output_files] == [f.name for f in expected_files]

@@ -300,7 +300,7 @@ class Operations(BaseModel):
     options: Optional[Operation] = None
     trace: Optional[Operation] = None
     path: UsefulStr
-    security: List[Dict[str, List[str]]] = []
+    security: Optional[List[Dict[str, List[str]]]] = []
 
     @root_validator(pre=True)
     def inject_path_and_type_to_operation(cls, values: Dict[str, Any]) -> Any:
@@ -313,7 +313,7 @@ class Operations(BaseModel):
             },
             path=path,
             parameters=values.get('parameters', []),
-            security=values.get('security')
+            security=values.get('security'),
         )
 
     @root_validator
@@ -332,7 +332,7 @@ class Operations(BaseModel):
 class Path(CachedPropertyModel):
     path: UsefulStr
     operations: Optional[Operations] = None
-    security: List[Dict[str, List[str]]] = []
+    security: Optional[List[Dict[str, List[str]]]] = []
 
     @root_validator(pre=True)
     def validate_root(cls, values: Dict[str, Any]) -> Any:
@@ -343,8 +343,10 @@ class Path(CachedPropertyModel):
                         security = values.get('security', [])
                         return {
                             'path': path,
-                            'operations': dict(**operations, path=path, security=security),
-                            'security': security
+                            'operations': dict(
+                                **operations, path=path, security=security
+                            ),
+                            'security': security,
                         }
         return values
 
@@ -391,7 +393,9 @@ class OpenAPIParser:
         openapi = load_json_or_yaml(self.input_text)
         return self.parse_paths(openapi)
 
-    def parse_security(self, openapi: Dict[str, Any]) -> Optional[List[Dict[str, List[str]]]]:
+    def parse_security(
+        self, openapi: Dict[str, Any]
+    ) -> Optional[List[Dict[str, List[str]]]]:
         return openapi.get('security')
 
     def parse_paths(self, openapi: Dict[str, Any]) -> ParsedObject:
