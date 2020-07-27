@@ -6,11 +6,8 @@ from functools import cached_property
 from typing import Any, Dict, List, Optional, Union
 
 import stringcase
-from datamodel_code_generator import (
-    DataModelField,
-    load_json_or_yaml,
-    snooper_to_methods,
-)
+import yaml
+from datamodel_code_generator import DataModelField, snooper_to_methods
 from datamodel_code_generator.imports import IMPORT_LIST, Import, Imports
 from datamodel_code_generator.model.pydantic.types import type_map
 from datamodel_code_generator.parser.jsonschema import (
@@ -390,7 +387,7 @@ class OpenAPIParser:
             model_path_var.set(model_path)
 
     def parse(self) -> ParsedObject:
-        openapi = load_json_or_yaml(self.input_text)
+        openapi = yaml.safe_load(self.input_text)
         return self.parse_paths(openapi)
 
     def parse_security(
