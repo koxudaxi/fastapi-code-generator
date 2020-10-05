@@ -1,6 +1,4 @@
 
-
-
 <!doctype html>
 <html lang="en" class="no-js">
   <head>
@@ -13,7 +11,7 @@
       
       
       <link rel="shortcut icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.0.2">
     
     
       
@@ -21,19 +19,21 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.b5d04df8.min.css">
-      
-        <link rel="stylesheet" href="assets/stylesheets/palette.9ab2c1f8.min.css">
-      
+      <link rel="stylesheet" href="assets/stylesheets/main.38780c08.min.css">
       
         
+        <link rel="stylesheet" href="assets/stylesheets/palette.3f72e892.min.css">
         
-        <meta name="theme-color" content="#03a9f4">
+          
+          
+          <meta name="theme-color" content="#02a6f2">
+        
       
     
     
     
       
+        
         <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
         <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
@@ -55,9 +55,11 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="light-blue" data-md-color-accent="light-blue">
-  
     
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="light-blue" data-md-color-accent="light-blue">
+      
+  
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
@@ -148,8 +150,6 @@
     
     <div class="md-container" data-md-component="container">
       
-        
-      
       
         
       
@@ -202,12 +202,10 @@
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
         Overview
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
-        </span>
+        <span class="md-nav__icon md-icon"></span>
       </label>
     
-    <a href="." title="Overview" class="md-nav__link md-nav__link--active">
+    <a href="." class="md-nav__link md-nav__link--active">
       Overview
     </a>
     
@@ -219,9 +217,7 @@
   
   
     <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-scrollfix>
@@ -328,7 +324,7 @@
 
 
   <li class="md-nav__item">
-    <a href="development-contributing/" title="Development-Contributing" class="md-nav__link">
+    <a href="development-contributing/" class="md-nav__link">
       Development-Contributing
     </a>
   </li>
@@ -352,9 +348,7 @@
   
   
     <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-scrollfix>
@@ -465,9 +459,6 @@
                   </a>
                 
                 
-                  
-                
-                
                 <h1 id="fastapi-code-generator">fastapi-code-generator<a class="headerlink" href="#fastapi-code-generator" title="Permanent link">🔗</a></h1>
 <p>This code generator creates FastAPI app from an openapi file.</p>
 <p><a href="https://pypi.python.org/pypi/fastapi-code-generator"><img alt="PyPI version" src="https://badge.fury.io/py/fastapi-code-generator.svg" /></a>
@@ -491,11 +482,11 @@
 <div class="codehilite"><pre><span></span><code><span class="k">Usage</span><span class="err">:</span><span class="w"> </span><span class="n">fastapi</span><span class="o">-</span><span class="n">codegen</span><span class="w"> </span><span class="o">[</span><span class="n">OPTIONS</span><span class="o">]</span><span class="w"></span>
 
 <span class="nl">Options</span><span class="p">:</span><span class="w"></span>
-<span class="w">  </span><span class="o">-</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="c1">--input FILENAME     [required]</span>
-<span class="w">  </span><span class="o">-</span><span class="n">o</span><span class="p">,</span><span class="w"> </span><span class="c1">--output PATH        [required]</span>
-<span class="w">  </span><span class="o">-</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="c1">--template-dir PATH</span>
-<span class="w">  </span><span class="c1">--install-completion     Install completion for the current shell.</span>
-<span class="w">  </span><span class="c1">--show-completion        Show completion for the current shell, to copy it</span>
+<span class="w">  </span><span class="o">-</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="k">input</span><span class="w"> </span><span class="n">FILENAME</span><span class="w">     </span><span class="o">[</span><span class="n">required</span><span class="o">]</span><span class="w"></span>
+<span class="w">  </span><span class="o">-</span><span class="n">o</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="w"> </span><span class="k">PATH</span><span class="w">        </span><span class="o">[</span><span class="n">required</span><span class="o">]</span><span class="w"></span>
+<span class="w">  </span><span class="o">-</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="n">template</span><span class="o">-</span><span class="n">dir</span><span class="w"> </span><span class="k">PATH</span><span class="w"></span>
+<span class="w">  </span><span class="o">--</span><span class="n">install</span><span class="o">-</span><span class="k">completion</span><span class="w">     </span><span class="n">Install</span><span class="w"> </span><span class="k">completion</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">current</span><span class="w"> </span><span class="n">shell</span><span class="p">.</span><span class="w"></span>
+<span class="w">  </span><span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="k">completion</span><span class="w">        </span><span class="n">Show</span><span class="w"> </span><span class="k">completion</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">current</span><span class="w"> </span><span class="n">shell</span><span class="p">,</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="n">it</span><span class="w"></span>
 <span class="w">                           </span><span class="ow">or</span><span class="w"> </span><span class="n">customize</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">installation</span><span class="p">.</span><span class="w"></span>
 
 <span class="w">  </span><span class="c1">--help                   Show this message and exit.</span>
@@ -764,7 +755,7 @@
       <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
         
         
-          <a href="development-contributing/" title="Development-Contributing" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="development-contributing/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
@@ -797,15 +788,15 @@
       
     </div>
     
-      <script src="assets/javascripts/vendor.92ffa368.min.js"></script>
-      <script src="assets/javascripts/bundle.5123e3d4.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="assets/javascripts/vendor.77e55a48.min.js"></script>
+      <script src="assets/javascripts/bundle.9554a270.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
       
       <script>
         app = initialize({
           base: ".",
           features: [],
           search: Object.assign({
-            worker: "assets/javascripts/worker/search.a68abb33.min.js"
+            worker: "assets/javascripts/worker/search.4ac00218.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
