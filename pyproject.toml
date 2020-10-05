@@ -4,7 +4,7 @@ version = "0.0.1"
 description = ""
 authors = ["Koudai Aono <koxudaxi@gmail.com>"]
 readme = "README.md"
-License = "MIT"
+license = "MIT"
 homepage = "https://github.com/koxudaxi/fastapi-code-generator"
 repository = "https://github.com/koxudaxi/fastapi-code-generator"
 
@@ -28,7 +28,7 @@ fastapi-codegen = "fastapi_code_generator.__main__:app"
 [tool.poetry.dependencies]
 python = "^3.8.0"
 typer = {extras = ["all"], version =  "^0.2.1"}
-datamodel-code-generator = "==0.5.10"
+datamodel-code-generator = "==0.5.38"
 stringcase = "^1.2.0"
 black = "19.10b0"
 isort = "^4.3.21"
