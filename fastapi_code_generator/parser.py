@@ -12,9 +12,10 @@ from datamodel_code_generator.imports import IMPORT_LIST, Import, Imports
 from datamodel_code_generator.model.pydantic.types import type_map
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
+    get_model_by_path,
     json_schema_data_formats,
 )
-from pydantic import BaseModel, root_validator
+from pydantic import BaseModel, Field, root_validator
 
 MODEL_PATH = ".models"
 
@@ -87,6 +88,7 @@ class Operation(CachedPropertyModel):
     requestBody: Dict[str, Any] = {}
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
+    components: Dict[str, Any] = {}
 
     @cached_property
     def root_path(self) -> UsefulStr:
@@ -144,8 +146,15 @@ class Operation(CachedPropertyModel):
     def response_objects(self) -> List[Response]:
         responses: List[Response] = []
         for status_code, detail in self.responses.items():
+            ref: Optional[str] = detail.get('$ref')
+            if ref and ref.startswith('#/components/'):
+                content: Dict[str, Any] = get_model_by_path(
+                    self.components, ref[13:].split('/')
+                ).get("content", {})
+            else:
+                content = detail.get("content", {})
             contents = {}
-            for content_type, obj in detail.get("content", {}).items():
+            for content_type, obj in content.items():
                 contents[content_type] = (
                     JsonSchemaObject.parse_obj(obj["schema"])
                     if "schema" in obj
@@ -298,19 +307,21 @@ class Operations(BaseModel):
     trace: Optional[Operation] = None
     path: UsefulStr
     security: Optional[List[Dict[str, List[str]]]] = []
+    components: Dict[str, Any] = {}
 
     @root_validator(pre=True)
     def inject_path_and_type_to_operation(cls, values: Dict[str, Any]) -> Any:
         path: Any = values.get('path')
         return dict(
             **{
-                o: dict(**v, path=path, type=o)
+                o: dict(**v, path=path, type=o, components=values.get('components', {}))
                 for o in OPERATION_NAMES
                 if (v := values.get(o))
             },
             path=path,
             parameters=values.get('parameters', []),
             security=values.get('security'),
+            components=values.get('components', {}),
         )
 
     @root_validator
@@ -330,6 +341,7 @@ class Path(CachedPropertyModel):
     path: UsefulStr
     operations: Optional[Operations] = None
     security: Optional[List[Dict[str, List[str]]]] = []
+    components: Dict[str, Any] = {}
 
     @root_validator(pre=True)
     def validate_root(cls, values: Dict[str, Any]) -> Any:
@@ -338,12 +350,17 @@ class Path(CachedPropertyModel):
                 if operations := values.get('operations'):
                     if isinstance(operations, dict):
                         security = values.get('security', [])
+                        components = values.get('components', {})
                         return {
                             'path': path,
                             'operations': dict(
-                                **operations, path=path, security=security
+                                **operations,
+                                path=path,
+                                security=security,
+                                components=components,
                             ),
                             'security': security,
+                            'components': components,
                         }
         return values
 
@@ -402,7 +419,10 @@ class OpenAPIParser:
                 operation
                 for path_name, operations in openapi['paths'].items()
                 for operation in Path(
-                    path=UsefulStr(path_name), operations=operations, security=security
+                    path=UsefulStr(path_name),
+                    operations=operations,
+                    security=security,
+                    components=openapi.get('components', {}),
                 ).exists_operations
             ]
         )
