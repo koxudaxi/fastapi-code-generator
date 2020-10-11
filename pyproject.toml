@@ -43,7 +43,7 @@ pytest = "^6.1"
 pytest-cov = "*"
 pytest-mock = "*"
 mypy = "*"
-freezegun = "^0.3.15"
+freezegun = "^1.0.0"
 
 #[tool.poetry.extras]
 
