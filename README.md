@@ -255,6 +255,7 @@ These files will be rendered and write to the output directory. Also, the genera
 You can use below variables in jinja2 template
 
 - `imports`  all imports statements
+- `info`  all info statements
 - `operations` `operations` is list of `operation`
   - `operation.type` HTTP METHOD
   - `operation.path` Path
