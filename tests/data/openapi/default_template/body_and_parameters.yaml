@@ -134,6 +134,26 @@ paths:
       passthroughBehavior: when_no_templates
       httpMethod: POST
       type: aws_proxy
+  /food:
+    post:
+      summary: Create a pet
+      tags:
+        - pets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '201':
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                type: string
   /food/{food_id}:
     get:
       summary: Info for a specific pet
