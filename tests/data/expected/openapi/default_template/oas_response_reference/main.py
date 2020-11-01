@@ -10,7 +10,7 @@ from fastapi import FastAPI
 
 from .models import Pet
 
-app = FastAPI()
+app = FastAPI(version="1.0.0", title="Swagger Petstore", license="{'name': 'MIT'}",)
 
 
 @app.get('/pets', response_model=List[Pet])

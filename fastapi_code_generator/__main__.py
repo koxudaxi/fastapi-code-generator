@@ -46,7 +46,9 @@ def generate_code(
     for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir.absolute())
         result = environment.get_template(str(relative_path)).render(
-            operations=parsed_object.operations, imports=parsed_object.imports, info=parsed_object.info
+            operations=parsed_object.operations,
+            imports=parsed_object.imports,
+            info=parsed_object.info,
         )
         results[relative_path] = format_code(result, PythonVersion.PY_38)
 
@@ -63,8 +65,8 @@ def generate_code(
             print(code.rstrip(), file=file)
 
     generate_models(
-        input_name=input_name,
-        input_text=input_text,
+        input_=input_text,
+        input_filename=input_name,
         input_file_type=InputFileType.OpenAPI,
         output=output_dir.joinpath("models.py"),
         target_python_version=PythonVersion.PY_38,

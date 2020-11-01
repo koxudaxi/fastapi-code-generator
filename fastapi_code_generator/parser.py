@@ -220,7 +220,7 @@ class Operation(CachedPropertyModel):
 
         field = DataModelField(
             name=name,
-            data_types=[type_map[type_]],
+            data_type=type_map[type_],
             required=parameter.get("required") or parameter.get("in") == "path",
         )
         self.imports.extend(field.imports)
@@ -379,7 +379,11 @@ Path.update_forward_refs()
 
 
 class ParsedObject:
-    def __init__(self, parsed_operations: List[Operation], info=None):
+    def __init__(
+        self,
+        parsed_operations: List[Operation],
+        info: Optional[List[Dict[str, Any]]] = None,
+    ):
         self.operations: List[Operation] = sorted(
             parsed_operations, key=lambda m: m.path
         )
@@ -432,5 +436,5 @@ class OpenAPIParser:
                     components=openapi.get('components', {}),
                 ).exists_operations
             ],
-            info
+            info,
         )
