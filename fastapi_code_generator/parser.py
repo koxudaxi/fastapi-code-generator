@@ -379,11 +379,12 @@ Path.update_forward_refs()
 
 
 class ParsedObject:
-    def __init__(self, parsed_operations: List[Operation]):
+    def __init__(self, parsed_operations: List[Operation], info=None):
         self.operations: List[Operation] = sorted(
             parsed_operations, key=lambda m: m.path
         )
         self.imports: Imports = Imports()
+        self.info = info
         for operation in self.operations:
             # create imports
             operation.arguments
@@ -412,8 +413,14 @@ class OpenAPIParser:
     ) -> Optional[List[Dict[str, List[str]]]]:
         return openapi.get('security')
 
+    def parse_info(
+        self, openapi: Dict[str, Any]
+    ) -> Optional[List[Dict[str, List[str]]]]:
+        return openapi.get('info')
+
     def parse_paths(self, openapi: Dict[str, Any]) -> ParsedObject:
         security = self.parse_security(openapi)
+        info = self.parse_info(openapi)
         return ParsedObject(
             [
                 operation
@@ -424,5 +431,6 @@ class OpenAPIParser:
                     security=security,
                     components=openapi.get('components', {}),
                 ).exists_operations
-            ]
+            ],
+            info
         )

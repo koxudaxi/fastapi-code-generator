@@ -46,7 +46,7 @@ def generate_code(
     for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir.absolute())
         result = environment.get_template(str(relative_path)).render(
-            operations=parsed_object.operations, imports=parsed_object.imports
+            operations=parsed_object.operations, imports=parsed_object.imports, info=parsed_object.info
         )
         results[relative_path] = format_code(result, PythonVersion.PY_38)
 

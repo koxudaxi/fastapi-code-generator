@@ -4,7 +4,13 @@ from fastapi import FastAPI
 
 {{imports}}
 
-app = FastAPI()
+app = FastAPI(
+    {% if info %}
+    {% for key,value in info.items() %}
+    {{ key }} = "{{ value }}",
+    {% endfor %}
+    {% endif %}
+    )
 
 
 {% for operation in operations %}
