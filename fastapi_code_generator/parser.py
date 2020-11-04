@@ -8,14 +8,14 @@ from typing import Any, Dict, List, Optional, Union
 import stringcase
 import yaml
 from datamodel_code_generator import DataModelField, snooper_to_methods
-from datamodel_code_generator.imports import IMPORT_LIST, Import, Imports
-from datamodel_code_generator.model.pydantic.types import type_map
+from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
     get_model_by_path,
-    json_schema_data_formats,
 )
-from pydantic import BaseModel, Field, root_validator
+from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
+from datamodel_code_generator.types import DataType
+from pydantic import BaseModel, root_validator
 
 MODEL_PATH = ".models"
 
@@ -89,6 +89,7 @@ class Operation(CachedPropertyModel):
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
     components: Dict[str, Any] = {}
+    open_api_model_parser: OpenAPIModelParser
 
     @cached_property
     def root_path(self) -> UsefulStr:
@@ -108,19 +109,17 @@ class Operation(CachedPropertyModel):
             for content_type, schema in requests.contents.items():
                 # TODO: support other content-types
                 if content_type == "application/json":
+                    data_type = self.get_data_type(schema)
                     arguments.append(
                         # TODO: support multiple body
                         Argument(
                             name='body',  # type: ignore
-                            type_hint=schema.ref_object_name,
+                            type_hint=data_type.type_hint,
                             required=requests.required,
                         )
                     )
-                    self.imports.append(
-                        Import(
-                            from_=model_path_var.get(), import_=schema.ref_object_name
-                        )
-                    )
+                    self.imports.extend(data_type.imports_)
+
         if not arguments:
             return None
         return arguments[0]
@@ -207,20 +206,37 @@ class Operation(CachedPropertyModel):
             arguments.append(self.request)
         return arguments
 
+    def get_data_type(self, schema: JsonSchemaObject) -> DataType:
+        if schema.ref:
+            data_type = self.open_api_model_parser.get_ref_data_type(schema.ref)
+            data_type.imports_.append(
+                Import(
+                    # TODO: Improve import statements
+                    from_=model_path_var.get(),
+                    import_=data_type.type,
+                )
+            )
+            return data_type
+        elif schema.is_array:
+            # TODO: Improve handling array
+            items = schema.items if isinstance(schema.items, list) else [schema.items]
+            return self.open_api_model_parser.data_type(
+                data_types=[self.get_data_type(i) for i in items], is_list=True
+            )
+        return self.open_api_model_parser.get_data_type(schema)
+
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> Argument:
-        schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
-        format_ = schema.format or "default"
-        type_ = json_schema_data_formats[schema.type][format_]
         name: str = parameter["name"]  # type: ignore
         orig_name = name
         if snake_case:
             name = stringcase.snakecase(name)
+        schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
 
         field = DataModelField(
             name=name,
-            data_type=type_map[type_],
+            data_type=self.get_data_type(schema),
             required=parameter.get("required") or parameter.get("in") == "path",
         )
         self.imports.extend(field.imports)
@@ -241,46 +257,21 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def response(self) -> str:
-        models: List[str] = []
+        data_types: List[DataType] = []
         for response in self.response_objects:
             # expect 2xx
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
                     if content_type == "application/json":
-                        if schema.is_array:
-                            if isinstance(schema.items, list):
-                                type_ = f'List[{",".join(i.ref_object_name for i in schema.items)}]'
-                                self.imports.extend(
-                                    Import(
-                                        from_=model_path_var.get(),
-                                        import_=i.ref_object_name,
-                                    )
-                                    for i in schema.items
-                                )
-                            else:
-                                type_ = f'List[{schema.items.ref_object_name}]'
-                                self.imports.append(
-                                    Import(
-                                        from_=model_path_var.get(),
-                                        import_=schema.items.ref_object_name,
-                                    )
-                                )
-                            self.imports.append(IMPORT_LIST)
-                        else:
-                            type_ = schema.ref_object_name
-                            self.imports.append(
-                                Import(
-                                    from_=model_path_var.get(),
-                                    import_=schema.ref_object_name,
-                                )
-                            )
-                        models.append(type_)
+                        data_type = self.get_data_type(schema)
+                        data_types.append(data_type)
+                        self.imports.extend(data_type.imports_)
 
-        if not models:
+        if not data_types:
             return "None"
-        if len(models) > 1:
-            return f'Union[{",".join(models)}]'
-        return models[0]
+        if len(data_types) > 1:
+            return self.open_api_model_parser.data_type(data_types=data_types).type_hint
+        return data_types[0].type_hint
 
 
 OPERATION_NAMES: List[str] = [
@@ -296,6 +287,9 @@ OPERATION_NAMES: List[str] = [
 
 
 class Operations(BaseModel):
+    class Config:
+        arbitrary_types_allowed = (OpenAPIModelParser,)
+
     parameters: List[Dict[str, Any]] = []
     get: Optional[Operation] = None
     put: Optional[Operation] = None
@@ -308,13 +302,21 @@ class Operations(BaseModel):
     path: UsefulStr
     security: Optional[List[Dict[str, List[str]]]] = []
     components: Dict[str, Any] = {}
+    open_api_model_parser: OpenAPIModelParser
 
     @root_validator(pre=True)
     def inject_path_and_type_to_operation(cls, values: Dict[str, Any]) -> Any:
         path: Any = values.get('path')
+        open_api_model_parser: OpenAPIModelParser = values.get('open_api_model_parser')
         return dict(
             **{
-                o: dict(**v, path=path, type=o, components=values.get('components', {}))
+                o: dict(
+                    **v,
+                    path=path,
+                    type=o,
+                    components=values.get('components', {}),
+                    open_api_model_parser=open_api_model_parser,
+                )
                 for o in OPERATION_NAMES
                 if (v := values.get(o))
             },
@@ -322,6 +324,7 @@ class Operations(BaseModel):
             parameters=values.get('parameters', []),
             security=values.get('security'),
             components=values.get('components', {}),
+            open_api_model_parser=open_api_model_parser,
         )
 
     @root_validator
@@ -342,6 +345,7 @@ class Path(CachedPropertyModel):
     operations: Optional[Operations] = None
     security: Optional[List[Dict[str, List[str]]]] = []
     components: Dict[str, Any] = {}
+    open_api_model_parser: OpenAPIModelParser
 
     @root_validator(pre=True)
     def validate_root(cls, values: Dict[str, Any]) -> Any:
@@ -351,6 +355,7 @@ class Path(CachedPropertyModel):
                     if isinstance(operations, dict):
                         security = values.get('security', [])
                         components = values.get('components', {})
+                        open_api_model_parser = values.get('open_api_model_parser')
                         return {
                             'path': path,
                             'operations': dict(
@@ -358,9 +363,11 @@ class Path(CachedPropertyModel):
                                 path=path,
                                 security=security,
                                 components=components,
+                                open_api_model_parser=open_api_model_parser,
                             ),
                             'security': security,
                             'components': components,
+                            'open_api_model_parser': open_api_model_parser,
                         }
         return values
 
@@ -407,6 +414,7 @@ class OpenAPIParser:
         self.input_text: str = input_text
         if model_path:
             model_path_var.set(model_path)
+        self.open_api_model_parser: OpenAPIModelParser = OpenAPIModelParser(source='')
 
     def parse(self) -> ParsedObject:
         openapi = yaml.safe_load(self.input_text)
@@ -434,6 +442,7 @@ class OpenAPIParser:
                     operations=operations,
                     security=security,
                     components=openapi.get('components', {}),
+                    open_api_model_parser=self.open_api_model_parser,
                 ).exists_operations
             ],
             info,

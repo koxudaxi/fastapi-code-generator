@@ -13,8 +13,15 @@ from .models import Pet, PetForm
 app = FastAPI(version="1.0.0", title="Swagger Petstore", license="{'name': 'MIT'}",)
 
 
-@app.get('/food/{food_id}', response_model=None)
-def show_food_by_id(food_id: str) -> None:
+@app.post('/food', response_model=None)
+def post_food(body: str) -> None:
+    pass
+
+
+@app.get('/food/{food_id}', response_model=List[int])
+def show_food_by_id(
+    food_id: str, message_texts: Optional[List[str]] = None
+) -> List[int]:
     pass
 
 
