@@ -222,17 +222,29 @@ class Operation(CachedPropertyModel):
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> Argument:
-        schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
-        format_ = schema.format or "default"
-        type_ = json_schema_data_formats[schema.type][format_]
         name: str = parameter["name"]  # type: ignore
         orig_name = name
         if snake_case:
             name = stringcase.snakecase(name)
+        schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
+        # TODO: Improve handling array
+        if schema.is_array:
+            if schema.items:
+                items = (
+                    schema.items if isinstance(schema.items, list) else [schema.items]
+                )
+            else:
+                items = [schema]
+            data_types = [self.open_api_model_parser.get_data_type(i) for i in items]
+            data_type = self.open_api_model_parser.data_type(
+                data_types=data_types, is_list=True
+            )
+        else:
+            data_type = self.open_api_model_parser.get_data_type(schema)
 
         field = DataModelField(
             name=name,
-            data_type=type_map[type_],
+            data_type=data_type,
             required=parameter.get("required") or parameter.get("in") == "path",
         )
         self.imports.extend(field.imports)

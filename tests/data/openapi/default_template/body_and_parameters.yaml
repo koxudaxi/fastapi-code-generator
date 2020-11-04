@@ -166,6 +166,14 @@ paths:
           description: The id of the food to retrieve
           schema:
             type: string
+        - name: message_texts
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: Expected response to a valid request
