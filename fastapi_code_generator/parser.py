@@ -8,16 +8,14 @@ from typing import Any, Dict, List, Optional, Union
 import stringcase
 import yaml
 from datamodel_code_generator import DataModelField, snooper_to_methods
-from datamodel_code_generator.imports import IMPORT_LIST, Import, Imports
-from datamodel_code_generator.model.pydantic.types import type_map
+from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
     get_model_by_path,
-    json_schema_data_formats,
 )
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.types import DataType
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, root_validator
 
 MODEL_PATH = ".models"
 
