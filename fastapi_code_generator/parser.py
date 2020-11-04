@@ -222,9 +222,8 @@ class Operation(CachedPropertyModel):
         elif schema.is_array:
             # TODO: Improve handling array
             items = schema.items if isinstance(schema.items, list) else [schema.items]
-            data_types = [self.get_data_type(i) for i in items]
             return self.open_api_model_parser.data_type(
-                data_types=data_types, is_list=True
+                data_types=[self.get_data_type(i) for i in items], is_list=True
             )
         return self.open_api_model_parser.get_data_type(schema)
 
