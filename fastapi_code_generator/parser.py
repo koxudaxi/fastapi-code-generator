@@ -16,6 +16,7 @@ from datamodel_code_generator.parser.jsonschema import (
     json_schema_data_formats,
 )
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
+from datamodel_code_generator.types import DataType
 from pydantic import BaseModel, Field, root_validator
 
 MODEL_PATH = ".models"
@@ -110,19 +111,7 @@ class Operation(CachedPropertyModel):
             for content_type, schema in requests.contents.items():
                 # TODO: support other content-types
                 if content_type == "application/json":
-                    if schema.ref:
-                        data_type = self.open_api_model_parser.get_ref_data_type(
-                            schema.ref
-                        )
-                        self.imports.append(
-                            Import(
-                                # TODO: Improve import statements
-                                from_=model_path_var.get(),
-                                import_=data_type.type,
-                            )
-                        )
-                    else:
-                        data_type = self.open_api_model_parser.get_data_type(schema)
+                    data_type = self.get_data_type(schema)
                     arguments.append(
                         # TODO: support multiple body
                         Argument(
@@ -219,6 +208,31 @@ class Operation(CachedPropertyModel):
             arguments.append(self.request)
         return arguments
 
+    def get_data_type(self, schema: JsonSchemaObject) -> DataType:
+        if schema.ref:
+            data_type = self.open_api_model_parser.get_ref_data_type(schema.ref)
+            data_type.imports_.append(
+                Import(
+                    # TODO: Improve import statements
+                    from_=model_path_var.get(),
+                    import_=data_type.type,
+                )
+            )
+            return data_type
+        elif schema.is_array:
+            # TODO: Improve handling array
+            if schema.items:
+                items = (
+                    schema.items if isinstance(schema.items, list) else [schema.items]
+                )
+            else:
+                items = [schema]
+            data_types = [self.get_data_type(i) for i in items]
+            return self.open_api_model_parser.data_type(
+                data_types=data_types, is_list=True
+            )
+        return self.open_api_model_parser.get_data_type(schema)
+
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> Argument:
@@ -227,24 +241,10 @@ class Operation(CachedPropertyModel):
         if snake_case:
             name = stringcase.snakecase(name)
         schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
-        # TODO: Improve handling array
-        if schema.is_array:
-            if schema.items:
-                items = (
-                    schema.items if isinstance(schema.items, list) else [schema.items]
-                )
-            else:
-                items = [schema]
-            data_types = [self.open_api_model_parser.get_data_type(i) for i in items]
-            data_type = self.open_api_model_parser.data_type(
-                data_types=data_types, is_list=True
-            )
-        else:
-            data_type = self.open_api_model_parser.get_data_type(schema)
 
         field = DataModelField(
             name=name,
-            data_type=data_type,
+            data_type=self.get_data_type(schema),
             required=parameter.get("required") or parameter.get("in") == "path",
         )
         self.imports.extend(field.imports)
@@ -265,46 +265,21 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def response(self) -> str:
-        models: List[str] = []
+        data_types: List[DataType] = []
         for response in self.response_objects:
             # expect 2xx
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
                     if content_type == "application/json":
-                        if schema.is_array:
-                            if isinstance(schema.items, list):
-                                type_ = f'List[{",".join(i.ref_object_name for i in schema.items)}]'
-                                self.imports.extend(
-                                    Import(
-                                        from_=model_path_var.get(),
-                                        import_=i.ref_object_name,
-                                    )
-                                    for i in schema.items
-                                )
-                            else:
-                                type_ = f'List[{schema.items.ref_object_name}]'
-                                self.imports.append(
-                                    Import(
-                                        from_=model_path_var.get(),
-                                        import_=schema.items.ref_object_name,
-                                    )
-                                )
-                            self.imports.append(IMPORT_LIST)
-                        else:
-                            type_ = schema.ref_object_name
-                            self.imports.append(
-                                Import(
-                                    from_=model_path_var.get(),
-                                    import_=schema.ref_object_name,
-                                )
-                            )
-                        models.append(type_)
+                        data_type = self.get_data_type(schema)
+                        data_types.append(data_type)
+                        self.imports.extend(data_type.imports_)
 
-        if not models:
+        if not data_types:
             return "None"
-        if len(models) > 1:
-            return f'Union[{",".join(models)}]'
-        return models[0]
+        if len(data_types) > 1:
+            return self.open_api_model_parser.data_type(data_types=data_types).type_hint
+        return data_types[0].type_hint
 
 
 OPERATION_NAMES: List[str] = [

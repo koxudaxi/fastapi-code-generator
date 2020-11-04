@@ -176,7 +176,19 @@ paths:
               type: string
       responses:
         '200':
-          description: Expected response to a valid request
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+              examples:
+                example-1:
+                  value:
+                    - 0
+                    - 1
+                    - 3
     x-amazon-apigateway-integration:
       uri:
         Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PythonVersionFunction.Arn}/invocations
