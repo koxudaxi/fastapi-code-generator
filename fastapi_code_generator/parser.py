@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from contextvars import ContextVar
 from functools import cached_property
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Pattern, Union
 
 import stringcase
 import yaml
@@ -21,6 +21,7 @@ MODEL_PATH = ".models"
 
 model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
 
+APPLICATION_JSON_PATTERN: Pattern = re.compile(r'^application/.*json$')
 
 class CachedPropertyModel(BaseModel):
     class Config:
@@ -108,7 +109,7 @@ class Operation(CachedPropertyModel):
         for requests in self.request_objects:
             for content_type, schema in requests.contents.items():
                 # TODO: support other content-types
-                if content_type == "application/json":
+                if re.match(APPLICATION_JSON_PATTERN, content_type):
                     data_type = self.get_data_type(schema)
                     arguments.append(
                         # TODO: support multiple body
@@ -262,7 +263,7 @@ class Operation(CachedPropertyModel):
             # expect 2xx
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
-                    if content_type == "application/json":
+                    if re.match(APPLICATION_JSON_PATTERN, content_type):
                         data_type = self.get_data_type(schema)
                         data_types.append(data_type)
                         self.imports.extend(data_type.imports_)

@@ -142,7 +142,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          application/problem+json:
             schema:
               type: string
       responses:
@@ -151,7 +151,7 @@ paths:
         default:
           description: unexpected error
           content:
-            application/json:
+            application/problem+json:
               schema:
                 type: string
   /food/{food_id}:
