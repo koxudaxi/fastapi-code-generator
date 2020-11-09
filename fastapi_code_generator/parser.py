@@ -23,6 +23,7 @@ model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
 
 APPLICATION_JSON_PATTERN: Pattern = re.compile(r'^application/.*json$')
 
+
 class CachedPropertyModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
