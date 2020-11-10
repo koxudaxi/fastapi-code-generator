@@ -195,7 +195,26 @@ paths:
       passthroughBehavior: when_no_templates
       httpMethod: POST
       type: aws_proxy
+  /foo:
+    get:
+      tags:
+        - foo
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+    parameters:
+    - $ref: '#/components/parameters/MyParam'
 components:
+  parameters:
+    MyParam:
+      name: foo
+      in: query
+      schema:
+        type: string
   securitySchemes:
     BearerAuth:
       type: http
