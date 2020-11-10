@@ -230,6 +230,11 @@ class Operation(CachedPropertyModel):
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> Argument:
+        ref: Optional[str] = parameter.get('$ref')  # type: ignore
+        if ref:
+            if not ref.startswith('#/components'):
+                raise NotImplementedError(f'{ref=} is not supported for parameters')
+            parameter = get_model_by_path(self.components, ref[13:].split('/'))
         name: str = parameter["name"]  # type: ignore
         orig_name = name
         if snake_case:

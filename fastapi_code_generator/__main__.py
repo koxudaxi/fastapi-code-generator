@@ -50,7 +50,9 @@ def generate_code(
             imports=parsed_object.imports,
             info=parsed_object.info,
         )
-        results[relative_path] = format_code(result, PythonVersion.PY_38)
+        results[relative_path] = format_code(
+            result, PythonVersion.PY_38, Path().resolve()
+        )
 
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     header = f"""\
