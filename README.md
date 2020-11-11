@@ -3,7 +3,7 @@
 This code generator creates FastAPI app from an openapi file.
 
 [![PyPI version](https://badge.fury.io/py/fastapi-code-generator.svg)](https://pypi.python.org/pypi/fastapi-code-generator)
-[![Downloads](https://pepy.tech/badge/fastapi-code-generator/month)](https://pepy.tech/project/fastapi-code-generator/month)
+[![Downloads](https://pepy.tech/badge/fastapi-code-generator)](https://pepy.tech/project/fastapi-code-generator/month)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fastapi-code-generator)](https://pypi.python.org/pypi/fastapi-code-generator)
 [![codecov](https://codecov.io/gh/koxudaxi/fastapi-code-generator/branch/master/graph/badge.svg)](https://codecov.io/gh/koxudaxi/fastapi-code-generator)
 ![license](https://img.shields.io/github/license/koxudaxi/fastapi-code-generator.svg)
