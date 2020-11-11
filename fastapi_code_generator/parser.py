@@ -21,7 +21,7 @@ MODEL_PATH = ".models"
 
 model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
 
-APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
+RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
 
 class CachedPropertyModel(BaseModel):
@@ -110,7 +110,7 @@ class Operation(CachedPropertyModel):
         for requests in self.request_objects:
             for content_type, schema in requests.contents.items():
                 # TODO: support other content-types
-                if re.match(APPLICATION_JSON_PATTERN, content_type):
+                if RE_APPLICATION_JSON_PATTERN.match(content_type):
                     data_type = self.get_data_type(schema)
                     arguments.append(
                         # TODO: support multiple body
@@ -269,7 +269,7 @@ class Operation(CachedPropertyModel):
             # expect 2xx
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
-                    if re.match(APPLICATION_JSON_PATTERN, content_type):
+                    if RE_APPLICATION_JSON_PATTERN.match(content_type):
                         data_type = self.get_data_type(schema)
                         data_types.append(data_type)
                         self.imports.extend(data_type.imports_)
