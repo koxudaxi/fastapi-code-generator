@@ -62,12 +62,12 @@ def test_generate_custom_security_template(oas_file):
 
 @freeze_time("2020-06-19")
 def test_generate_remote_ref(mocker):
-    oas_file = (DATA_DIR / OPEN_API_REMOTE_REF_DIR_NAME / 'body_and_parameters.yaml')
+    oas_file = DATA_DIR / OPEN_API_REMOTE_REF_DIR_NAME / 'body_and_parameters.yaml'
     person_response = mocker.Mock()
-    person_response.text = (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / 'body_and_parameters.yaml').read_text()
-    httpx_get_mock = mocker.patch(
-        'httpx.get', side_effect=[person_response]
-    )
+    person_response.text = (
+        DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / 'body_and_parameters.yaml'
+    ).read_text()
+    httpx_get_mock = mocker.patch('httpx.get', side_effect=[person_response])
 
     with TemporaryDirectory() as tmp_dir:
         output_dir = Path(tmp_dir) / oas_file.stem
@@ -78,9 +78,7 @@ def test_generate_remote_ref(mocker):
             template_dir=None,
         )
         httpx_get_mock.assert_has_calls(
-            [
-                call('https://schema.example'),
-            ]
+            [call('https://schema.example'),]
         )
         expected_dir = EXPECTED_DIR / OPEN_API_REMOTE_REF_DIR_NAME / oas_file.stem
         output_files = sorted(list(output_dir.glob('*')))
