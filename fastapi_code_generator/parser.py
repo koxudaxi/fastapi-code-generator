@@ -232,9 +232,17 @@ class Operation(CachedPropertyModel):
     ) -> Argument:
         ref: Optional[str] = parameter.get('$ref')  # type: ignore
         if ref:
-            if not ref.startswith('#/components'):
-                raise NotImplementedError(f'{ref=} is not supported for parameters')
-            parameter = get_model_by_path(self.components, ref[13:].split('/'))
+            if ref.startswith('http://') or ref.startswith('https://'):
+                if '#/' in ref:
+                    url, path = ref.rsplit('#/', 1)
+                    ref_body = self.open_api_model_parser._get_ref_body(url)
+                    parameter = get_model_by_path(ref_body, path.split('/'))
+                else:
+                    parameter = self.open_api_model_parser._get_ref_body(ref)
+            else:
+                if not ref.startswith('#/components'):
+                    raise NotImplementedError(f'{ref=} is not supported for parameters')
+                parameter = get_model_by_path(self.components, ref[13:].split('/'))
         name: str = parameter["name"]  # type: ignore
         orig_name = name
         if snake_case:
