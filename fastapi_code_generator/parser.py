@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Pattern, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Pattern, Union
 
 import stringcase
 import yaml
@@ -15,11 +15,16 @@ from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIMode
 from datamodel_code_generator.types import DataType
 from pydantic import BaseModel, root_validator
 
-try:
-    from functools import cached_property
-except ImportError:
-    # For Python3.7
-    from cached_property import cached_property  # type: ignore
+if TYPE_CHECKING:
+    from typing import Any, Callable
+
+    cached_property: Callable[..., Any]
+else:
+    try:
+        from functools import cached_property
+    except ImportError:
+        # For Python3.7
+        from cached_property import cached_property
 
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
