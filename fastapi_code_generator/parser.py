@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import re
-from contextvars import ContextVar
-from functools import cached_property
-from typing import Any, Dict, List, Optional, Pattern, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Pattern, Union
 
 import stringcase
 import yaml
@@ -17,9 +15,17 @@ from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIMode
 from datamodel_code_generator.types import DataType
 from pydantic import BaseModel, root_validator
 
-MODEL_PATH = ".models"
+if TYPE_CHECKING:
+    from typing import Any, Callable
 
-model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
+    cached_property: Callable[..., Any]
+else:
+    try:
+        from functools import cached_property
+    except ImportError:
+        # For Python3.7
+        from cached_property import cached_property
+
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
@@ -36,7 +42,7 @@ def get_ref_body(
             return get_model_by_path(ref_body, path.split('/'))
         else:
             return openapi_model_parser._get_ref_body(ref)
-    raise NotImplementedError(f'{ref=} is not supported')
+    raise NotImplementedError(f'ref={ref} is not supported')
 
 
 class CachedPropertyModel(BaseModel):
@@ -234,7 +240,7 @@ class Operation(CachedPropertyModel):
             data_type.imports_.append(
                 Import(
                     # TODO: Improve import statements
-                    from_=model_path_var.get(),
+                    from_=self.openapi_model_parser.current_source_path,  # model_path_var.get(),
                     import_=data_type.type,
                 )
             )
@@ -336,14 +342,14 @@ class Operations(BaseModel):
         return dict(
             **{
                 o: dict(
-                    **v,
+                    **values[o],
                     path=path,
                     type=o,
                     components=values.get('components', {}),
                     openapi_model_parser=openapi_model_parser,
                 )
                 for o in OPERATION_NAMES
-                if (v := values.get(o))
+                if o in values
             },
             path=path,
             parameters=values.get('parameters', []),
@@ -356,8 +362,10 @@ class Operations(BaseModel):
     def inject_parameters_and_security_to_operation(cls, values: Dict[str, Any]) -> Any:
         security = values.get('security')
         for operation_name in OPERATION_NAMES:
-            if operation := values.get(operation_name):
-                if parameters := values.get('parameters'):
+            operation = values.get(operation_name)
+            if operation:
+                parameters = values.get('parameters')
+                if parameters:
                     operation.parameters.extend(parameters)
                 if security is not None and operation.security is None:
                     operation.security = security
@@ -374,9 +382,11 @@ class Path(CachedPropertyModel):
 
     @root_validator(pre=True)
     def validate_root(cls, values: Dict[str, Any]) -> Any:
-        if path := values.get('path'):
+        path = values.get('path')
+        if path:
             if isinstance(path, str):
-                if operations := values.get('operations'):
+                operations = values.get('operations')
+                if operations:
                     if isinstance(operations, dict):
                         security = values.get('security', [])
                         components = values.get('components', {})
@@ -400,9 +410,9 @@ class Path(CachedPropertyModel):
     def exists_operations(self) -> List[Operation]:
         if self.operations:
             return [
-                operation
+                getattr(self.operations, operation_name)
                 for operation_name in OPERATION_NAMES
-                if (operation := getattr(self.operations, operation_name))
+                if getattr(self.operations, operation_name)
             ]
         return []
 
@@ -437,9 +447,9 @@ class OpenAPIParser:
     ) -> None:
         self.input_name: str = input_name
         self.input_text: str = input_text
-        if model_path:
-            model_path_var.set(model_path)
         self.openapi_model_parser: OpenAPIModelParser = OpenAPIModelParser(source='')
+        if model_path:
+            self.openapi_model_parser.current_source_path = '.models'
 
     def parse(self) -> ParsedObject:
         openapi = yaml.safe_load(self.input_text)

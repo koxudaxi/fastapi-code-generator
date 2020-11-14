@@ -8,11 +8,13 @@ from datamodel_code_generator import generate as generate_models
 from datamodel_code_generator.format import format_code
 from jinja2 import Environment, FileSystemLoader
 
-from fastapi_code_generator.parser import OpenAPIParser, Operation, ParsedObject
+from fastapi_code_generator.parser import OpenAPIParser, ParsedObject
 
 app = typer.Typer()
 
 BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
+
+MODEL_PATH: Path = Path("models.py")
 
 
 @app.command()
@@ -33,7 +35,7 @@ def generate_code(
         output_dir.mkdir(parents=True)
     if not template_dir:
         template_dir = BUILTIN_TEMPLATE_DIR
-    parser = OpenAPIParser(input_name, input_text)
+    parser = OpenAPIParser(input_name, input_text, model_path=MODEL_PATH.stem)
     parsed_object: ParsedObject = parser.parse()
 
     environment: Environment = Environment(
@@ -70,7 +72,7 @@ def generate_code(
         input_=input_text,
         input_filename=input_name,
         input_file_type=InputFileType.OpenAPI,
-        output=output_dir.joinpath("models.py"),
+        output=output_dir / MODEL_PATH,
         target_python_version=PythonVersion.PY_38,
     )
 
