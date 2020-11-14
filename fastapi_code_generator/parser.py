@@ -19,7 +19,7 @@ try:
     from functools import cached_property
 except ImportError:
     # For Python3.7
-    from cached_property import cached_property
+    from cached_property import cached_property  # type: ignore
 
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
