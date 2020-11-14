@@ -15,6 +15,7 @@ classifiers = [
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: Implementation :: CPython"
 ]
 
@@ -29,7 +30,7 @@ fastapi-codegen = "fastapi_code_generator.__main__:app"
 [tool.poetry.dependencies]
 python = "^3.7.0"
 typer = {extras = ["all"], version = ">=0.2.1,<0.4.0"}
-datamodel-code-generator =  {extras = ["http"], version = "==0.6.5"}
+datamodel-code-generator =  {extras = ["http"], version = "==0.6.6"}
 stringcase = "^1.2.0"
 black = "19.10b0"
 isort = "^4.3.21"
