@@ -24,6 +24,21 @@ model_path_var: ContextVar[str] = ContextVar('model_path', default=MODEL_PATH)
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
 
+def get_ref_body(
+    ref: str, openapi_model_parser: OpenAPIModelParser, components: Dict[str, Any]
+) -> Dict[str, Any]:
+    if ref.startswith('#/components'):
+        return get_model_by_path(components, ref[13:].split('/'))
+    elif ref.startswith('http://') or ref.startswith('https://'):
+        if '#/' in ref:
+            url, path = ref.rsplit('#/', 1)
+            ref_body = openapi_model_parser._get_ref_body(url)
+            return get_model_by_path(ref_body, path.split('/'))
+        else:
+            return openapi_model_parser._get_ref_body(ref)
+    raise NotImplementedError(f'{ref=} is not supported')
+
+
 class CachedPropertyModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
@@ -91,7 +106,7 @@ class Operation(CachedPropertyModel):
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
     components: Dict[str, Any] = {}
-    open_api_model_parser: OpenAPIModelParser
+    openapi_model_parser: OpenAPIModelParser
 
     @cached_property
     def root_path(self) -> UsefulStr:
@@ -130,15 +145,20 @@ class Operation(CachedPropertyModel):
     def request_objects(self) -> List[Request]:
         requests: List[Request] = []
         contents: Dict[str, JsonSchemaObject] = {}
-        for content_type, obj in self.requestBody.get('content', {}).items():
+        ref: Optional[str] = self.requestBody.get('$ref')
+        if ref:
+            request_body = get_ref_body(ref, self.openapi_model_parser, self.components)
+        else:
+            request_body = self.requestBody
+        for content_type, obj in request_body.get('content', {}).items():
             contents[content_type] = (
                 JsonSchemaObject.parse_obj(obj['schema']) if 'schema' in obj else None
             )
             requests.append(
                 Request(
-                    description=self.requestBody.get("description"),
+                    description=request_body.get("description"),
                     contents=contents,
-                    required=self.requestBody.get("required") is True,
+                    required=request_body.get("required") is True,
                 )
             )
         return requests
@@ -148,9 +168,9 @@ class Operation(CachedPropertyModel):
         responses: List[Response] = []
         for status_code, detail in self.responses.items():
             ref: Optional[str] = detail.get('$ref')
-            if ref and ref.startswith('#/components/'):
-                content: Dict[str, Any] = get_model_by_path(
-                    self.components, ref[13:].split('/')
+            if ref:
+                content = get_ref_body(
+                    ref, self.openapi_model_parser, self.components
                 ).get("content", {})
             else:
                 content = detail.get("content", {})
@@ -210,7 +230,7 @@ class Operation(CachedPropertyModel):
 
     def get_data_type(self, schema: JsonSchemaObject) -> DataType:
         if schema.ref:
-            data_type = self.open_api_model_parser.get_ref_data_type(schema.ref)
+            data_type = self.openapi_model_parser.get_ref_data_type(schema.ref)
             data_type.imports_.append(
                 Import(
                     # TODO: Improve import statements
@@ -222,27 +242,17 @@ class Operation(CachedPropertyModel):
         elif schema.is_array:
             # TODO: Improve handling array
             items = schema.items if isinstance(schema.items, list) else [schema.items]
-            return self.open_api_model_parser.data_type(
+            return self.openapi_model_parser.data_type(
                 data_types=[self.get_data_type(i) for i in items], is_list=True
             )
-        return self.open_api_model_parser.get_data_type(schema)
+        return self.openapi_model_parser.get_data_type(schema)
 
     def get_parameter_type(
         self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
     ) -> Argument:
         ref: Optional[str] = parameter.get('$ref')  # type: ignore
         if ref:
-            if ref.startswith('http://') or ref.startswith('https://'):
-                if '#/' in ref:
-                    url, path = ref.rsplit('#/', 1)
-                    ref_body = self.open_api_model_parser._get_ref_body(url)
-                    parameter = get_model_by_path(ref_body, path.split('/'))
-                else:
-                    parameter = self.open_api_model_parser._get_ref_body(ref)
-            else:
-                if not ref.startswith('#/components'):
-                    raise NotImplementedError(f'{ref=} is not supported for parameters')
-                parameter = get_model_by_path(self.components, ref[13:].split('/'))
+            parameter = get_ref_body(ref, self.openapi_model_parser, self.components)
         name: str = parameter["name"]  # type: ignore
         orig_name = name
         if snake_case:
@@ -285,7 +295,7 @@ class Operation(CachedPropertyModel):
         if not data_types:
             return "None"
         if len(data_types) > 1:
-            return self.open_api_model_parser.data_type(data_types=data_types).type_hint
+            return self.openapi_model_parser.data_type(data_types=data_types).type_hint
         return data_types[0].type_hint
 
 
@@ -317,12 +327,12 @@ class Operations(BaseModel):
     path: UsefulStr
     security: Optional[List[Dict[str, List[str]]]] = []
     components: Dict[str, Any] = {}
-    open_api_model_parser: OpenAPIModelParser
+    openapi_model_parser: OpenAPIModelParser
 
     @root_validator(pre=True)
     def inject_path_and_type_to_operation(cls, values: Dict[str, Any]) -> Any:
         path: Any = values.get('path')
-        open_api_model_parser: OpenAPIModelParser = values.get('open_api_model_parser')
+        openapi_model_parser: OpenAPIModelParser = values.get('openapi_model_parser')
         return dict(
             **{
                 o: dict(
@@ -330,7 +340,7 @@ class Operations(BaseModel):
                     path=path,
                     type=o,
                     components=values.get('components', {}),
-                    open_api_model_parser=open_api_model_parser,
+                    openapi_model_parser=openapi_model_parser,
                 )
                 for o in OPERATION_NAMES
                 if (v := values.get(o))
@@ -339,7 +349,7 @@ class Operations(BaseModel):
             parameters=values.get('parameters', []),
             security=values.get('security'),
             components=values.get('components', {}),
-            open_api_model_parser=open_api_model_parser,
+            openapi_model_parser=openapi_model_parser,
         )
 
     @root_validator
@@ -360,7 +370,7 @@ class Path(CachedPropertyModel):
     operations: Optional[Operations] = None
     security: Optional[List[Dict[str, List[str]]]] = []
     components: Dict[str, Any] = {}
-    open_api_model_parser: OpenAPIModelParser
+    openapi_model_parser: OpenAPIModelParser
 
     @root_validator(pre=True)
     def validate_root(cls, values: Dict[str, Any]) -> Any:
@@ -370,7 +380,7 @@ class Path(CachedPropertyModel):
                     if isinstance(operations, dict):
                         security = values.get('security', [])
                         components = values.get('components', {})
-                        open_api_model_parser = values.get('open_api_model_parser')
+                        openapi_model_parser = values.get('openapi_model_parser')
                         return {
                             'path': path,
                             'operations': dict(
@@ -378,11 +388,11 @@ class Path(CachedPropertyModel):
                                 path=path,
                                 security=security,
                                 components=components,
-                                open_api_model_parser=open_api_model_parser,
+                                openapi_model_parser=openapi_model_parser,
                             ),
                             'security': security,
                             'components': components,
-                            'open_api_model_parser': open_api_model_parser,
+                            'openapi_model_parser': openapi_model_parser,
                         }
         return values
 
@@ -429,7 +439,7 @@ class OpenAPIParser:
         self.input_text: str = input_text
         if model_path:
             model_path_var.set(model_path)
-        self.open_api_model_parser: OpenAPIModelParser = OpenAPIModelParser(source='')
+        self.openapi_model_parser: OpenAPIModelParser = OpenAPIModelParser(source='')
 
     def parse(self) -> ParsedObject:
         openapi = yaml.safe_load(self.input_text)
@@ -457,7 +467,7 @@ class OpenAPIParser:
                     operations=operations,
                     security=security,
                     components=openapi.get('components', {}),
-                    open_api_model_parser=self.open_api_model_parser,
+                    openapi_model_parser=self.openapi_model_parser,
                 ).exists_operations
             ],
             info,

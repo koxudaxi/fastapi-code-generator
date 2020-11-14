@@ -64,9 +64,7 @@ def test_generate_custom_security_template(oas_file):
 def test_generate_remote_ref(mocker):
     oas_file = DATA_DIR / OPEN_API_REMOTE_REF_DIR_NAME / 'body_and_parameters.yaml'
     person_response = mocker.Mock()
-    person_response.text = (
-        DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / 'body_and_parameters.yaml'
-    ).read_text()
+    person_response.text = oas_file.read_text()
     httpx_get_mock = mocker.patch('httpx.get', side_effect=[person_response])
 
     with TemporaryDirectory() as tmp_dir:

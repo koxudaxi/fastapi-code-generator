@@ -62,11 +62,7 @@ paths:
       tags:
         - pets
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PetForm'
+        $ref: 'https://schema.example#/components/requestBodies/Pet'
       responses:
         '201':
           description: Null response
@@ -118,7 +114,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PetForm'
+              $ref: 'https://schema.example#/components/schemas/PetForm'
       responses:
         '201':
           description: Null response
@@ -200,12 +196,8 @@ paths:
       tags:
         - foo
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: string
+        200:
+          $ref: 'https://schema.example#/components/responses/OK'
     parameters:
       - $ref: 'https://schema.example#/components/parameters/MyParam'
 components:
@@ -215,6 +207,20 @@ components:
       in: query
       schema:
         type: string
+  responses:
+    OK:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: string
+  requestBodies:
+    Pet:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PetForm'
   securitySchemes:
     BearerAuth:
       type: http
