@@ -176,11 +176,14 @@ class Operation(CachedPropertyModel):
         for status_code, detail in self.responses.items():
             ref: Optional[str] = detail.get('$ref')
             if ref:
-                content = get_ref_body(
+                ref_body = get_ref_body(
                     ref, self.openapi_model_parser, self.components
-                ).get("content", {})
+                )
+                content = ref_body.get("content", {})
+                description = ref_body.get("description")
             else:
                 content = detail.get("content", {})
+                description = detail.get("description")
             contents = {}
             for content_type, obj in content.items():
                 contents[content_type] = (
@@ -192,7 +195,7 @@ class Operation(CachedPropertyModel):
             responses.append(
                 Response(
                     status_code=status_code,
-                    description=detail.get("description"),
+                    description=description,
                     contents=contents,
                 )
             )
