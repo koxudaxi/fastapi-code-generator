@@ -16,5 +16,10 @@ app = FastAPI(
 {% for operation in operations %}
 @app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}})
 def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operation.response}}:
+    {%- if operation.summary %}
+    """
+    {{ operation.summary }}
+    """
+    {%- endif %}
     pass
 {% endfor %}

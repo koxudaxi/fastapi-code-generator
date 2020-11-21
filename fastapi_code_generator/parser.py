@@ -106,6 +106,7 @@ class Operation(CachedPropertyModel):
     type: UsefulStr
     path: UsefulStr
     operationId: Optional[UsefulStr]
+    summary: Optional[str]
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     requestBody: Dict[str, Any] = {}
