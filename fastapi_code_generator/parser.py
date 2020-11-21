@@ -176,9 +176,7 @@ class Operation(CachedPropertyModel):
         for status_code, detail in self.responses.items():
             ref: Optional[str] = detail.get('$ref')
             if ref:
-                ref_body = get_ref_body(
-                    ref, self.openapi_model_parser, self.components
-                )
+                ref_body = get_ref_body(ref, self.openapi_model_parser, self.components)
                 content = ref_body.get("content", {})
                 description = ref_body.get("description")
             else:
@@ -194,9 +192,7 @@ class Operation(CachedPropertyModel):
 
             responses.append(
                 Response(
-                    status_code=status_code,
-                    description=description,
-                    contents=contents,
+                    status_code=status_code, description=description, contents=contents,
                 )
             )
         return responses
