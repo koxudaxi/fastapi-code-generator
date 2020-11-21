@@ -168,6 +168,7 @@ components:
           type: string
     Pets:
       type: array
+      description: list of pet
       items:
         $ref: "#/components/schemas/Pet"
     Error:
@@ -196,26 +197,36 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
-from .models import Pet, Pets
+from .models import Pets
 
-app = FastAPI()
+app = FastAPI(version="1.0.0", title="Swagger Petstore", license="{'name': 'MIT'}",)
 
 
 @app.get('/pets', response_model=Pets)
 def list_pets(limit: Optional[int] = None) -> Pets:
+    """
+    List all pets
+    """
     pass
 
 
 @app.post('/pets', response_model=None)
 def create_pets() -> None:
+    """
+    Create a pet
+    """
     pass
 
 
-@app.get('/pets/{pet_id}', response_model=Pet)
-def show_pet_by_id(pet_id: str) -> Pet:
+@app.get('/pets/{pet_id}', response_model=Pets)
+def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pets:
+    """
+    Info for a specific pet
+    """
     pass
+
 ```
 
 `app/models.py`:
@@ -226,7 +237,7 @@ def show_pet_by_id(pet_id: str) -> Pet:
 
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Pet(BaseModel):
@@ -236,7 +247,7 @@ class Pet(BaseModel):
 
 
 class Pets(BaseModel):
-    __root__: List[Pet]
+    __root__: List[Pet] = Field(..., description='list of pet')
 
 
 class Error(BaseModel):
@@ -264,6 +275,7 @@ You can use below variables in jinja2 template
   - `operation.function_name` function name is created `operationId` or `METHOD` + `Path` 
   - `operation.snake_case_arguments` Snake-cased function arguments
   - `operation.security` [Security](https://swagger.io/docs/specification/authentication/)
+  - `operation.summary` a summary
 
 ### default template 
 `main.jinja2`
@@ -274,14 +286,26 @@ from fastapi import FastAPI
 
 {{imports}}
 
-app = FastAPI()
+app = FastAPI(
+    {% if info %}
+    {% for key,value in info.items() %}
+    {{ key }} = "{{ value }}",
+    {% endfor %}
+    {% endif %}
+    )
 
 
 {% for operation in operations %}
 @app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}})
 def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operation.response}}:
+    {%- if operation.summary %}
+    """
+    {{ operation.summary }}
+    """
+    {%- endif %}
     pass
 {% endfor %}
+
 ```
 
 ## PyPi 

@@ -101,6 +101,7 @@ components:
           type: string
     Pets:
       type: array
+      description: list of pet
       items:
         $ref: "#/components/schemas/Pet"
     Error:

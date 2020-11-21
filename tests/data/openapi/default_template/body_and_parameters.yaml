@@ -136,7 +136,7 @@ paths:
       type: aws_proxy
   /food:
     post:
-      summary: Create a pet
+      summary: Create a food
       tags:
         - pets
       requestBody:

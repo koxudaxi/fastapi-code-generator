@@ -20,6 +20,9 @@ def get_foo(foo: Optional[str] = None) -> str:
 
 @app.post('/food', response_model=None)
 def post_food(body: str) -> None:
+    """
+    Create a food
+    """
     pass
 
 
@@ -27,6 +30,9 @@ def post_food(body: str) -> None:
 def show_food_by_id(
     food_id: str, message_texts: Optional[List[str]] = None
 ) -> List[int]:
+    """
+    Info for a specific pet
+    """
     pass
 
 
@@ -36,16 +42,25 @@ def list_pets(
     home_address: Optional[str] = Query('Unknown', alias='HomeAddress'),
     kind: Optional[str] = 'dog',
 ) -> List[Pet]:
+    """
+    List all pets
+    """
     pass
 
 
 @app.post('/pets', response_model=None)
 def post_pets(body: PetForm) -> None:
+    """
+    Create a pet
+    """
     pass
 
 
 @app.get('/pets/{pet_id}', response_model=Pet)
 def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pet:
+    """
+    Info for a specific pet
+    """
     pass
 
 
@@ -53,4 +68,7 @@ def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pet:
 def put_pets_pet_id(
     pet_id: str = Query(..., alias='petId'), body: PetForm = None
 ) -> None:
+    """
+    update a pet
+    """
     pass

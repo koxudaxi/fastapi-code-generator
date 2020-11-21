@@ -106,6 +106,7 @@ class Operation(CachedPropertyModel):
     type: UsefulStr
     path: UsefulStr
     operationId: Optional[UsefulStr]
+    summary: Optional[str]
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     requestBody: Dict[str, Any] = {}
@@ -175,11 +176,12 @@ class Operation(CachedPropertyModel):
         for status_code, detail in self.responses.items():
             ref: Optional[str] = detail.get('$ref')
             if ref:
-                content = get_ref_body(
-                    ref, self.openapi_model_parser, self.components
-                ).get("content", {})
+                ref_body = get_ref_body(ref, self.openapi_model_parser, self.components)
+                content = ref_body.get("content", {})
+                description = ref_body.get("description")
             else:
                 content = detail.get("content", {})
+                description = detail.get("description")
             contents = {}
             for content_type, obj in content.items():
                 contents[content_type] = (
@@ -190,9 +192,7 @@ class Operation(CachedPropertyModel):
 
             responses.append(
                 Response(
-                    status_code=status_code,
-                    description=detail.get("description"),
-                    contents=contents,
+                    status_code=status_code, description=description, contents=contents,
                 )
             )
         return responses

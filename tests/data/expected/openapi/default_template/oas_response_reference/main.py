@@ -15,4 +15,7 @@ app = FastAPI(version="1.0.0", title="Swagger Petstore", license="{'name': 'MIT'
 
 @app.get('/pets', response_model=List[Pet])
 def list_pets(limit: Optional[int] = 0) -> List[Pet]:
+    """
+    List all pets
+    """
     pass
