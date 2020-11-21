@@ -621,6 +621,7 @@
           <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
     <span class="nt">Pets</span><span class="p">:</span>
       <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">array</span>
+      <span class="nt">description</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list of pet</span>
       <span class="nt">items</span><span class="p">:</span>
         <span class="nt">$ref</span><span class="p">:</span> <span class="s">&quot;#/components/schemas/Pet&quot;</span>
     <span class="nt">Error</span><span class="p">:</span>
@@ -649,25 +650,34 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span>
+<span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Query</span>
 
-<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Pet</span><span class="p">,</span> <span class="n">Pets</span>
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Pets</span>
 
-<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span><span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Swagger Petstore&quot;</span><span class="p">,</span> <span class="n">license</span><span class="o">=</span><span class="s2">&quot;{&#39;name&#39;: &#39;MIT&#39;}&quot;</span><span class="p">,)</span>
 
 
 <span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/pets&#39;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">Pets</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">list_pets</span><span class="p">(</span><span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pets</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    List all pets</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
 
 <span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;/pets&#39;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">create_pets</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a pet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 
 
-<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/pets/</span><span class="si">{pet_id}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">Pet</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">show_pet_by_id</span><span class="p">(</span><span class="n">pet_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pet</span><span class="p">:</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;/pets/</span><span class="si">{pet_id}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">Pets</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">show_pet_by_id</span><span class="p">(</span><span class="n">pet_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Query</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s1">&#39;petId&#39;</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">Pets</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Info for a specific pet</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </code></pre></div>
 
@@ -678,7 +688,7 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
 
 <span class="k">class</span> <span class="nc">Pet</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -688,7 +698,7 @@
 
 
 <span class="k">class</span> <span class="nc">Pets</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-    <span class="n">__root__</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Pet</span><span class="p">]</span>
+    <span class="n">__root__</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Pet</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s1">&#39;list of pet&#39;</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -713,6 +723,7 @@
 <li><code>operation.function_name</code> function name is created <code>operationId</code> or <code>METHOD</code> + <code>Path</code> </li>
 <li><code>operation.snake_case_arguments</code> Snake-cased function arguments</li>
 <li><code>operation.security</code> <a href="https://swagger.io/docs/specification/authentication/">Security</a></li>
+<li><code>operation.summary</code> a summary</li>
 </ul>
 <h3 id="default-template">default template<a class="headerlink" href="#default-template" title="Permanent link">🔗</a></h3>
 <p><code>main.jinja2</code></p>
@@ -722,12 +733,23 @@
 
 <span class="p">{{</span><span class="n">imports</span><span class="p">}}</span>
 
-<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">(</span>
+    <span class="p">{</span><span class="o">%</span> <span class="k">if</span> <span class="n">info</span> <span class="o">%</span><span class="p">}</span>
+    <span class="p">{</span><span class="o">%</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">value</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="o">%</span><span class="p">}</span>
+    <span class="p">{{</span> <span class="n">key</span> <span class="p">}}</span> <span class="o">=</span> <span class="s2">&quot;{{ value }}&quot;</span><span class="p">,</span>
+    <span class="p">{</span><span class="o">%</span> <span class="n">endfor</span> <span class="o">%</span><span class="p">}</span>
+    <span class="p">{</span><span class="o">%</span> <span class="n">endif</span> <span class="o">%</span><span class="p">}</span>
+    <span class="p">)</span>
 
 
 <span class="p">{</span><span class="o">%</span> <span class="k">for</span> <span class="n">operation</span> <span class="ow">in</span> <span class="n">operations</span> <span class="o">%</span><span class="p">}</span>
 <span class="nd">@app.</span><span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">type</span><span class="p">}}(</span><span class="s1">&#39;{{operation.snake_case_path}}&#39;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">response</span><span class="p">}})</span>
 <span class="k">def</span> <span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">function_name</span><span class="p">}}({{</span><span class="n">operation</span><span class="o">.</span><span class="n">snake_case_arguments</span><span class="p">}})</span> <span class="o">-&gt;</span> <span class="p">{{</span><span class="n">operation</span><span class="o">.</span><span class="n">response</span><span class="p">}}:</span>
+    <span class="p">{</span><span class="o">%-</span> <span class="k">if</span> <span class="n">operation</span><span class="o">.</span><span class="n">summary</span> <span class="o">%</span><span class="p">}</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    {{ operation.summary }}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="p">{</span><span class="o">%-</span> <span class="n">endif</span> <span class="o">%</span><span class="p">}</span>
     <span class="k">pass</span>
 <span class="p">{</span><span class="o">%</span> <span class="n">endfor</span> <span class="o">%</span><span class="p">}</span>
 </code></pre></div>
