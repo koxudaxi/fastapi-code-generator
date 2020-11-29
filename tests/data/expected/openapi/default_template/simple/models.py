@@ -2,6 +2,8 @@
 #   filename:  simple.yaml
 #   timestamp: 2020-06-19T00:00:00+00:00
 
+from __future__ import annotations
+
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
