@@ -52,7 +52,6 @@ $ fastapi-codegen --input api.yaml --output app
 <summary>api.yaml</summary>
 <pre>
 <code>
-```yaml
 openapi: "3.0.0"
 info:
   version: 1.0.0
@@ -181,7 +180,6 @@ components:
           format: int32
         message:
           type: string
-```
 </code>
 </pre>
 </details>
