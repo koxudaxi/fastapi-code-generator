@@ -7,7 +7,8 @@ from fastapi import FastAPI
 app = FastAPI(
     {% if info %}
     {% for key,value in info.items() %}
-    {{ key }} = "{{ value }}",
+    {% set info_value= value.__repr__() %}
+    {{ key }} = {{info_value}},
     {% endfor %}
     {% endif %}
     )
