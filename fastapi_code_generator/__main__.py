@@ -5,7 +5,7 @@ from typing import Dict, Optional
 import typer
 from datamodel_code_generator import InputFileType, PythonVersion
 from datamodel_code_generator import generate as generate_models
-from datamodel_code_generator.format import format_code
+from datamodel_code_generator.format import CodeFormatter
 from jinja2 import Environment, FileSystemLoader
 
 from fastapi_code_generator.parser import OpenAPIParser, ParsedObject
@@ -45,6 +45,7 @@ def generate_code(
         ),
     )
     results: Dict[Path, str] = {}
+    code_formatter = CodeFormatter(PythonVersion.PY_38, Path().resolve())
     for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir.absolute())
         result = environment.get_template(str(relative_path)).render(
@@ -52,9 +53,7 @@ def generate_code(
             imports=parsed_object.imports,
             info=parsed_object.info,
         )
-        results[relative_path] = format_code(
-            result, PythonVersion.PY_38, Path().resolve()
-        )
+        results[relative_path] = code_formatter.format_code(result)
 
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     header = f"""\

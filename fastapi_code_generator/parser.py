@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Pattern, Union
+from typing import Any, Dict, List, Optional, Pattern, Union
 
 import stringcase
-import yaml
-from datamodel_code_generator import DataModelField, snooper_to_methods
+from datamodel_code_generator import (
+    DataModelField,
+    cached_property,
+    load_yaml,
+    snooper_to_methods,
+)
 from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
@@ -14,18 +18,6 @@ from datamodel_code_generator.parser.jsonschema import (
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.types import DataType
 from pydantic import BaseModel, root_validator
-
-if TYPE_CHECKING:
-    from typing import Any, Callable
-
-    cached_property: Callable[..., Any]
-else:
-    try:
-        from functools import cached_property
-    except ImportError:
-        # For Python3.7
-        from cached_property import cached_property
-
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
@@ -452,7 +444,7 @@ class OpenAPIParser:
             self.openapi_model_parser.current_source_path = '.models'
 
     def parse(self) -> ParsedObject:
-        openapi = yaml.safe_load(self.input_text)
+        openapi = load_yaml(self.input_text)
         return self.parse_paths(openapi)
 
     def parse_security(
