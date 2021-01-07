@@ -4,6 +4,11 @@ info:
   title: Swagger Petstore
   license:
     name: MIT
+  description: |
+    This description is for testing
+    multi-line
+    description
+
 servers:
   - url: http://petstore.swagger.io/v1
 security:

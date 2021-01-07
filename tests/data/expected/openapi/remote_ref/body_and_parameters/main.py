@@ -10,7 +10,12 @@ from fastapi import FastAPI, Query
 
 from .models import Pet, PetForm
 
-app = FastAPI(version="1.0.0", title="Swagger Petstore", license="{'name': 'MIT'}",)
+app = FastAPI(
+    version='1.0.0',
+    title='Swagger Petstore',
+    license={'name': 'MIT'},
+    description='This description is for testing\nmulti-line\ndescription\n',
+)
 
 
 @app.get('/foo', response_model=str)
