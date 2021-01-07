@@ -63,14 +63,6 @@ typed-ast = ">=1.4.0"
 d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
 
 [[package]]
-name = "cached-property"
-version = "1.5.2"
-description = "A decorator for caching properties in classes."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "certifi"
 version = "2020.11.8"
 description = "Python package for providing Mozilla's CA Bundle."
@@ -115,7 +107,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.6.14"
+version = "0.6.17"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -702,7 +694,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "b56dd154f026ba6f92b29d5fcea5bf112c5b30c39066076b9769f31903443b6d"
+content-hash = "d27051fdac2728a45e06fd28335658d1b36bbd0cdc2984da04d66bb8be33d990"
 
 [metadata.files]
 appdirs = [
@@ -724,10 +716,6 @@ attrs = [
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
     {file = "black-19.10b0.tar.gz", hash = "sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539"},
-]
-cached-property = [
-    {file = "cached-property-1.5.2.tar.gz", hash = "sha256:9fa5755838eecbb2d234c3aa390bd80fbd3ac6b6869109bfc1b499f7bd89a130"},
-    {file = "cached_property-1.5.2-py2.py3-none-any.whl", hash = "sha256:df4f613cf7ad9a588cc381aaf4a512d26265ecebd5eb9e1ba12f1319eb85a6a0"},
 ]
 certifi = [
     {file = "certifi-2020.11.8-py2.py3-none-any.whl", hash = "sha256:1f422849db327d534e3d0c5f02a263458c3955ec0aae4ff09b95f195c59f4edd"},
@@ -782,8 +770,8 @@ coverage = [
     {file = "coverage-5.3.tar.gz", hash = "sha256:280baa8ec489c4f542f8940f9c4c2181f0306a8ee1a54eceba071a449fb870a0"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.6.14.tar.gz", hash = "sha256:6236add6469107399e11c3bee57d60bca7d64c2d30e07d8d6b5625f5abd08b06"},
-    {file = "datamodel_code_generator-0.6.14-py3-none-any.whl", hash = "sha256:34b95ffef3f58aec013714b7791c4737aee21942ddcf5a8796a7646bca1bc16f"},
+    {file = "datamodel-code-generator-0.6.17.tar.gz", hash = "sha256:46976d526d3e27f5a8ffef07691ee3d594d9466b9190a55d751461401827b2a5"},
+    {file = "datamodel_code_generator-0.6.17-py3-none-any.whl", hash = "sha256:099f432ecb21a3811883268f7761101295a3f702e2a4fca4ea62932cd40b6ccf"},
 ]
 dnspython = [
     {file = "dnspython-2.0.0-py3-none-any.whl", hash = "sha256:40bb3c24b9d4ec12500f0124288a65df232a3aa749bb0c39734b782873a2544d"},
