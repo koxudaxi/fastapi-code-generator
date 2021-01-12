@@ -47,7 +47,7 @@ def generate_code(
     results: Dict[Path, str] = {}
     code_formatter = CodeFormatter(PythonVersion.PY_38, Path().resolve())
     for target in template_dir.rglob("*"):
-        relative_path = target.relative_to(template_dir.absolute())
+        relative_path = target.relative_to(template_dir)
         result = environment.get_template(str(relative_path)).render(
             operations=parsed_object.operations,
             imports=parsed_object.imports,
