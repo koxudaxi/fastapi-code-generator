@@ -128,22 +128,7 @@ class Operation(CachedPropertyModel):
             for content_type, schema in requests.contents.items():
                 # TODO: support other content-types
                 if RE_APPLICATION_JSON_PATTERN.match(content_type):
-                    if schema.is_object:
-                        camelcase_path = stringcase.camelcase(
-                            self.path[1:].replace("/", "_")
-                        )
-                        name: str = f'{camelcase_path}{self.type.capitalize()}Request'
-                        data_model = self.openapi_model_parser.parse_object(
-                            name, schema, ['paths', self.path, self.type, 'request']
-                        )
-                        data_type = self.openapi_model_parser.data_type.from_model_name(
-                            data_model.name
-                        )
-                        self.imports.append(
-                            Import(from_=f'.{MODEL_PATH.stem}', import_=data_type.type,)
-                        )
-                    else:
-                        data_type = self.get_data_type(schema)
+                    data_type = self.get_data_type(schema, 'request')
                     arguments.append(
                         # TODO: support multiple body
                         Argument(
@@ -244,7 +229,7 @@ class Operation(CachedPropertyModel):
             arguments.append(self.request)
         return arguments
 
-    def get_data_type(self, schema: JsonSchemaObject) -> DataType:
+    def get_data_type(self, schema: JsonSchemaObject, suffix: str = '') -> DataType:
         if schema.ref:
             data_type = self.openapi_model_parser.get_ref_data_type(schema.ref)
             data_type.imports_.append(
@@ -259,8 +244,23 @@ class Operation(CachedPropertyModel):
             # TODO: Improve handling array
             items = schema.items if isinstance(schema.items, list) else [schema.items]
             return self.openapi_model_parser.data_type(
-                data_types=[self.get_data_type(i) for i in items], is_list=True
+                data_types=[self.get_data_type(i, suffix) for i in items], is_list=True
             )
+        elif schema.is_object:
+            camelcase_path = stringcase.camelcase(self.path[1:].replace("/", "_"))
+            capitalized_suffix = suffix.capitalize()
+            name: str = f'{camelcase_path}{self.type.capitalize()}{capitalized_suffix}'
+            path = ['paths', self.path, self.type, capitalized_suffix]
+
+            data_model = self.openapi_model_parser.parse_object(name, schema, path)
+            data_type = self.openapi_model_parser.data_type.from_model_name(
+                data_model.name
+            )
+            self.imports.append(
+                Import(from_=f'.{MODEL_PATH.stem}', import_=data_type.type,)
+            )
+            return data_type
+
         return self.openapi_model_parser.get_data_type(schema)
 
     def get_parameter_type(
@@ -277,7 +277,7 @@ class Operation(CachedPropertyModel):
 
         field = DataModelField(
             name=name,
-            data_type=self.get_data_type(schema),
+            data_type=self.get_data_type(schema, 'parameter'),
             required=parameter.get("required") or parameter.get("in") == "path",
         )
         self.imports.extend(field.imports)
@@ -304,26 +304,7 @@ class Operation(CachedPropertyModel):
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
                     if RE_APPLICATION_JSON_PATTERN.match(content_type):
-                        if schema.is_object:
-                            camelcase_path = stringcase.camelcase(
-                                self.path[1:].replace("/", "_")
-                            )
-                            name: str = f'{camelcase_path}{self.type.capitalize()}Response'
-                            data_model = self.openapi_model_parser.parse_object(
-                                name,
-                                schema,
-                                ['paths', self.path, self.type, 'response'],
-                            )
-                            data_type = self.openapi_model_parser.data_type.from_model_name(
-                                data_model.name
-                            )
-                            self.imports.append(
-                                Import(
-                                    from_=f'.{MODEL_PATH.stem}', import_=data_type.type
-                                )
-                            )
-                        else:
-                            data_type = self.get_data_type(schema)
+                        data_type = self.get_data_type(schema, 'response')
                         data_types.append(data_type)
                         self.imports.extend(data_type.imports_)
 

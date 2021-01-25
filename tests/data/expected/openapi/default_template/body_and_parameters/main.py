@@ -8,7 +8,14 @@ from typing import List, Optional
 
 from fastapi import FastAPI, Query
 
-from .models import Pet, PetForm, UserGetResponse, UserPostRequest
+from .models import (
+    Pet,
+    PetForm,
+    UserGetResponse,
+    UserPostRequest,
+    UsersGetResponse,
+    UsersPostRequest,
+)
 
 app = FastAPI(
     version='1.0.0',
@@ -86,4 +93,14 @@ def get_user() -> UserGetResponse:
 
 @app.post('/user', response_model=None)
 def post_user(body: UserPostRequest) -> None:
+    pass
+
+
+@app.get('/users', response_model=List[UsersGetResponse])
+def get_users() -> List[UsersGetResponse]:
+    pass
+
+
+@app.post('/users', response_model=None)
+def post_users(body: List[UsersPostRequest]) -> None:
     pass
