@@ -22,6 +22,18 @@ class UserPostRequest(BaseModel):
     age: Optional[str] = None
 
 
+class UsersGetResponse(BaseModel):
+    timestamp: datetime
+    name: str
+    age: Optional[str] = None
+
+
+class UsersPostRequest(BaseModel):
+    timestamp: datetime
+    name: str
+    age: Optional[str] = None
+
+
 class Pet(BaseModel):
     id: int
     name: str
