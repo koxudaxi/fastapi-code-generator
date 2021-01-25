@@ -213,6 +213,51 @@ paths:
                 type: string
     parameters:
     - $ref: '#/components/parameters/MyParam'
+  /user:
+    get:
+      tags:
+        - user
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  name:
+                    type: string
+                  age:
+                    type: string
+                required:
+                  - name
+                  - timestamp
+    post:
+      tags:
+        - user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timestamp:
+                  type: string
+                  format: date-time
+                name:
+                  type: string
+                age:
+                  type: string
+              required:
+                - name
+                - timestamp
+      responses:
+        '201':
+          description: OK
 components:
   parameters:
     MyParam:

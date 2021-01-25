@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from fastapi import FastAPI, Query
 
-from .models import Pet, PetForm
+from .models import Pet, PetForm, UserGetResponse, UserPostRequest
 
 app = FastAPI(
     version='1.0.0',
@@ -76,4 +76,14 @@ def put_pets_pet_id(
     """
     update a pet
     """
+    pass
+
+
+@app.get('/user', response_model=UserGetResponse)
+def get_user() -> UserGetResponse:
+    pass
+
+
+@app.post('/user', response_model=None)
+def post_user(body: UserPostRequest) -> None:
     pass
