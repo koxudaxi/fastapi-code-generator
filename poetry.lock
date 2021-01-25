@@ -168,7 +168,7 @@ idna = ">=2.0.0"
 
 [[package]]
 name = "freezegun"
-version = "1.0.0"
+version = "1.1.0"
 description = "Let your Python tests travel through time"
 category = "dev"
 optional = false
@@ -694,7 +694,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "1c0330257fad3a25e410cfbe396b5fe0323cfd04e88ee223c4ce151c99f3a306"
+content-hash = "f7c777a6d991c00771282cdc6faa9af70c3ad54317a42df2dbcb82fc0aebaf28"
 
 [metadata.files]
 appdirs = [
@@ -782,8 +782,8 @@ email-validator = [
     {file = "email_validator-1.1.2-py2.py3-none-any.whl", hash = "sha256:094b1d1c60d790649989d38d34f69e1ef07792366277a2cf88684d03495d018f"},
 ]
 freezegun = [
-    {file = "freezegun-1.0.0-py2.py3-none-any.whl", hash = "sha256:02b35de52f4699a78f6ac4518e4cd3390dddc43b0aeb978335a8f270a2d9668b"},
-    {file = "freezegun-1.0.0.tar.gz", hash = "sha256:1cf08e441f913ff5e59b19cc065a8faa9dd1ddc442eaf0375294f344581a0643"},
+    {file = "freezegun-1.1.0-py2.py3-none-any.whl", hash = "sha256:2ae695f7eb96c62529f03a038461afe3c692db3465e215355e1bb4b0ab408712"},
+    {file = "freezegun-1.1.0.tar.gz", hash = "sha256:177f9dd59861d871e27a484c3332f35a6e3f5d14626f2bf91be37891f18927f3"},
 ]
 genson = [
     {file = "genson-1.2.2.tar.gz", hash = "sha256:8caf69aa10af7aee0e1a1351d1d06801f4696e005f06cedef438635384346a16"},
