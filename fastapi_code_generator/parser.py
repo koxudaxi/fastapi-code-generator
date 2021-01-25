@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pathlib
 import re
 from typing import Any, Dict, List, Optional, Pattern, Union
 
@@ -18,6 +19,8 @@ from datamodel_code_generator.parser.jsonschema import (
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.types import DataType
 from pydantic import BaseModel, root_validator
+
+MODEL_PATH: pathlib.Path = pathlib.Path("models.py")
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
@@ -125,7 +128,22 @@ class Operation(CachedPropertyModel):
             for content_type, schema in requests.contents.items():
                 # TODO: support other content-types
                 if RE_APPLICATION_JSON_PATTERN.match(content_type):
-                    data_type = self.get_data_type(schema)
+                    if schema.is_object:
+                        camelcase_path = stringcase.camelcase(
+                            self.path[1:].replace("/", "_")
+                        )
+                        name: str = f'{camelcase_path}{self.type.capitalize()}Request'
+                        data_model = self.openapi_model_parser.parse_object(
+                            name, schema, ['paths', self.path, self.type, 'request']
+                        )
+                        data_type = self.openapi_model_parser.data_type.from_model_name(
+                            data_model.name
+                        )
+                        self.imports.append(
+                            Import(from_=f'.{MODEL_PATH.stem}', import_=data_type.type,)
+                        )
+                    else:
+                        data_type = self.get_data_type(schema)
                     arguments.append(
                         # TODO: support multiple body
                         Argument(
@@ -232,7 +250,7 @@ class Operation(CachedPropertyModel):
             data_type.imports_.append(
                 Import(
                     # TODO: Improve import statements
-                    from_=self.openapi_model_parser.current_source_path,  # model_path_var.get(),
+                    from_=f'.{MODEL_PATH.stem}',
                     import_=data_type.type,
                 )
             )
@@ -286,7 +304,26 @@ class Operation(CachedPropertyModel):
             if response.status_code.startswith("2"):
                 for content_type, schema in response.contents.items():
                     if RE_APPLICATION_JSON_PATTERN.match(content_type):
-                        data_type = self.get_data_type(schema)
+                        if schema.is_object:
+                            camelcase_path = stringcase.camelcase(
+                                self.path[1:].replace("/", "_")
+                            )
+                            name: str = f'{camelcase_path}{self.type.capitalize()}Response'
+                            data_model = self.openapi_model_parser.parse_object(
+                                name,
+                                schema,
+                                ['paths', self.path, self.type, 'response'],
+                            )
+                            data_type = self.openapi_model_parser.data_type.from_model_name(
+                                data_model.name
+                            )
+                            self.imports.append(
+                                Import(
+                                    from_=f'.{MODEL_PATH.stem}', import_=data_type.type
+                                )
+                            )
+                        else:
+                            data_type = self.get_data_type(schema)
                         data_types.append(data_type)
                         self.imports.extend(data_type.imports_)
 
@@ -435,13 +472,16 @@ class ParsedObject:
 @snooper_to_methods(max_variable_length=None)
 class OpenAPIParser:
     def __init__(
-        self, input_name: str, input_text: str, model_path: Optional[str] = None
+        self,
+        input_name: str,
+        input_text: str,
+        openapi_model_parser: Optional[OpenAPIModelParser] = None,
     ) -> None:
         self.input_name: str = input_name
         self.input_text: str = input_text
-        self.openapi_model_parser: OpenAPIModelParser = OpenAPIModelParser(source='')
-        if model_path:
-            self.openapi_model_parser.current_source_path = '.models'
+        self.openapi_model_parser: OpenAPIModelParser = openapi_model_parser or OpenAPIModelParser(
+            source=''
+        )
 
     def parse(self) -> ParsedObject:
         openapi = load_yaml(self.input_text)
