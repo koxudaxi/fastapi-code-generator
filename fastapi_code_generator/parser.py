@@ -252,10 +252,8 @@ class Operation(CachedPropertyModel):
             name: str = f'{camelcase_path}{self.type.capitalize()}{capitalized_suffix}'
             path = ['paths', self.path, self.type, capitalized_suffix]
 
-            data_model = self.openapi_model_parser.parse_object(name, schema, path)
-            data_type = self.openapi_model_parser.data_type.from_model_name(
-                data_model.name
-            )
+            data_type = self.openapi_model_parser.parse_object(name, schema, path)
+
             self.imports.append(
                 Import(from_=f'.{MODEL_PATH.stem}', import_=data_type.type,)
             )
