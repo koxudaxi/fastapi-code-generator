@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+from contextvars import ContextVar
 from typing import Any, Dict, List, Optional, Pattern, Union
 
 import stringcase
@@ -21,6 +22,10 @@ from datamodel_code_generator.types import DataType
 from pydantic import BaseModel, root_validator
 
 MODEL_PATH: pathlib.Path = pathlib.Path("models.py")
+
+model_module_name_var: ContextVar[str] = ContextVar(
+    'model_module_name', default=f'.{MODEL_PATH.stem}'
+)
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
@@ -235,7 +240,7 @@ class Operation(CachedPropertyModel):
             data_type.imports_.append(
                 Import(
                     # TODO: Improve import statements
-                    from_=f'.{MODEL_PATH.stem}',
+                    from_=model_module_name_var.get(),
                     import_=data_type.type,
                 )
             )
@@ -255,7 +260,7 @@ class Operation(CachedPropertyModel):
             data_type = self.openapi_model_parser.parse_object(name, schema, path)
 
             self.imports.append(
-                Import(from_=f'.{MODEL_PATH.stem}', import_=data_type.type,)
+                Import(from_=model_module_name_var.get(), import_=data_type.type,)
             )
             return data_type
 
@@ -455,12 +460,15 @@ class OpenAPIParser:
         input_name: str,
         input_text: str,
         openapi_model_parser: Optional[OpenAPIModelParser] = None,
+        model_module_name: Optional[str] = None,
     ) -> None:
         self.input_name: str = input_name
         self.input_text: str = input_text
         self.openapi_model_parser: OpenAPIModelParser = openapi_model_parser or OpenAPIModelParser(
             source=''
         )
+        if model_module_name:
+            model_module_name_var.set(model_module_name)
 
     def parse(self) -> ParsedObject:
         openapi = load_yaml(self.input_text)
