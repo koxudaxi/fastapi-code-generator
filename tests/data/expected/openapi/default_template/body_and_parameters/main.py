@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import List, Optional
 
 from fastapi import FastAPI, Query
+from starlette.requests import Request
 
 from .models import (
     Pet,
@@ -23,6 +24,14 @@ app = FastAPI(
     license={'name': 'MIT'},
     description='This description is for testing\nmulti-line\ndescription\n',
 )
+
+
+@app.post('/bar', response_model=None)
+def post_bar(request: Request) -> None:
+    """
+    Create a bar
+    """
+    pass
 
 
 @app.get('/foo', response_model=str)
