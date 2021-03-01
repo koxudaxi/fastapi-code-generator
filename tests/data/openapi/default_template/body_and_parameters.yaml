@@ -213,6 +213,16 @@ paths:
                 type: string
     parameters:
     - $ref: '#/components/parameters/MyParam'
+  /bar:
+    post:
+      summary: Create a bar
+      tags:
+        - bar
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PetForm'
   /user:
     get:
       tags:

@@ -143,7 +143,18 @@ class Operation(CachedPropertyModel):
                         )
                     )
                     self.imports.extend(data_type.imports_)
-
+                elif content_type == 'application/x-www-form-urlencoded':
+                    arguments.append(
+                        # TODO: support form with `Form()`
+                        Argument(
+                            name='request',  # type: ignore
+                            type_hint='Request',  # type: ignore
+                            required=True,
+                        )
+                    )
+                    self.imports.append(
+                        Import.from_full_path('starlette.requests.Request')
+                    )
         if not arguments:
             return None
         return arguments[0]
