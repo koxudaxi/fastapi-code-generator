@@ -107,7 +107,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.8.3"
+version = "0.9.0"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -695,7 +695,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "e5ad21ac74fe595d87f2db1a9ca3c77e0d0e9ded3b5ffd4ea5742f3c4daf0a57"
+content-hash = "59b04f7474029a067bd252cc20bbbac1f991ec480e7f99fee78f80e6f10474d7"
 
 [metadata.files]
 appdirs = [
@@ -786,8 +786,8 @@ coverage = [
     {file = "coverage-5.4.tar.gz", hash = "sha256:6d2e262e5e8da6fa56e774fb8e2643417351427604c2b177f8e8c5f75fc928ca"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.8.3.tar.gz", hash = "sha256:9b70f9ebd583cdceecacaec1133f6d6442e5ba6ed5f22f5650e2a048d1f3a33b"},
-    {file = "datamodel_code_generator-0.8.3-py3-none-any.whl", hash = "sha256:c5bafde21d23c8a3116ba5697696f469c37ae875df08e718cf1ec3e19da8a135"},
+    {file = "datamodel-code-generator-0.9.0.tar.gz", hash = "sha256:85dcd48f19c8584c8b8def32b65be5fcbd3cda5a07c17988c8bd86472dde7c0f"},
+    {file = "datamodel_code_generator-0.9.0-py3-none-any.whl", hash = "sha256:a9bdbd579a7d2c8553cb86e148ba60e2a46dd2e52c87fe6c15793fba710b90ff"},
 ]
 dnspython = [
     {file = "dnspython-2.1.0-py3-none-any.whl", hash = "sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216"},
