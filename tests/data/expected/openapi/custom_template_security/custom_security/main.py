@@ -45,7 +45,7 @@ async def valid_current_user(token: str = Depends(valid_token)) -> User:
     return get_dummy_user(token)
 
 
-@app.get('/food/{food_id}', response_model=None)
+@app.get('/food/{food_id}', response_model=None, tags=['foods'])
 def show_food_by_id(food_id: str, user: User = Depends(valid_current_user)) -> None:
     pass
 
@@ -59,19 +59,19 @@ def list_pets(
     pass
 
 
-@app.post('/pets', response_model=None)
+@app.post('/pets', response_model=None, tags=['pets'])
 def post_pets(body: PetForm, user: User = Depends(valid_current_user)) -> None:
     pass
 
 
-@app.get('/pets/{pet_id}', response_model=Pet)
+@app.get('/pets/{pet_id}', response_model=Pet, tags=['pets'])
 def show_pet_by_id(
     pet_id: str = Query(..., alias='petId'), user: User = Depends(valid_current_user)
 ) -> Pet:
     pass
 
 
-@app.put('/pets/{pet_id}', response_model=None)
+@app.put('/pets/{pet_id}', response_model=None, tags=['pets'])
 def put_pets_pet_id(
     pet_id: str = Query(..., alias='petId'),
     body: PetForm = None,

@@ -41,7 +41,7 @@ async def valid_current_user(token: str = Depends(valid_token)) -> User:
 
 
 {% for operation in operations %}
-@app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}})
+@app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}}{% if operation.tags -%}, tags={{operation.tags}}{%- endif -%})
 def {{operation.function_name}}({{operation.snake_case_arguments}}{%- if operation.security -%}{%- if operation.snake_case_arguments -%}, {%- endif -%}user: User = Depends(valid_current_user){%- endif -%}) -> {{operation.response}}:
     pass
 {% endfor %}

@@ -113,6 +113,7 @@ class Operation(CachedPropertyModel):
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
     components: Dict[str, Any] = {}
+    tags: Optional[List[str]]
     openapi_model_parser: OpenAPIModelParser
 
     @cached_property
