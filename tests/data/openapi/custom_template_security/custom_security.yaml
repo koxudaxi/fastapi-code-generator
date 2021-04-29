@@ -13,8 +13,6 @@ paths:
     get:
       summary: List all pets
       operationId: listPets
-      tags:
-        - pets
       security: []
       parameters:
         - name: limit
