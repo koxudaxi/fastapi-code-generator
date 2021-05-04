@@ -288,10 +288,12 @@ class Operation(CachedPropertyModel):
         schema: Optional[JsonSchemaObject] = None
         if content and isinstance(content, dict):
             content_schema = [
-                c for c in content.values() if isinstance(c.get("schema"), dict)
+                c.get("schema")
+                for c in content.values()
+                if isinstance(c.get("schema"), dict)
             ]
             if content_schema:
-                schema: JsonSchemaObject = JsonSchemaObject.parse_obj(content_schema)
+                schema: JsonSchemaObject = JsonSchemaObject.parse_obj(content_schema[0])
         if not schema:
             schema = JsonSchemaObject.parse_obj(parameter["schema"])
 
@@ -307,7 +309,7 @@ class Operation(CachedPropertyModel):
             ] = f"Query({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
             self.imports.append(Import(from_='fastapi', import_='Query'))
         else:
-            default = repr(schema.default) if 'default' in parameter["schema"] else None
+            default = repr(schema.default) if schema.has_default else None
         return Argument(
             name=field.name,
             type_hint=field.type_hint,
