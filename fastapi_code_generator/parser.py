@@ -6,13 +6,9 @@ from contextvars import ContextVar
 from typing import Any, Dict, List, Optional, Pattern, Union
 
 import stringcase
-from datamodel_code_generator import (
-    DataModelField,
-    cached_property,
-    load_yaml,
-    snooper_to_methods,
-)
+from datamodel_code_generator import cached_property, load_yaml, snooper_to_methods
 from datamodel_code_generator.imports import Import, Imports
+from datamodel_code_generator.model.pydantic import DataModelField
 from datamodel_code_generator.parser.jsonschema import (
     JsonSchemaObject,
     get_model_by_path,
@@ -143,7 +139,7 @@ class Operation(CachedPropertyModel):
                             required=requests.required,
                         )
                     )
-                    self.imports.extend(data_type.imports_)
+                    self.imports.extend(data_type.imports)
                 elif content_type == 'application/x-www-form-urlencoded':
                     arguments.append(
                         # TODO: support form with `Form()`
@@ -249,11 +245,11 @@ class Operation(CachedPropertyModel):
     def get_data_type(self, schema: JsonSchemaObject, suffix: str = '') -> DataType:
         if schema.ref:
             data_type = self.openapi_model_parser.get_ref_data_type(schema.ref)
-            data_type.imports_.append(
+            self.imports.append(
                 Import(
                     # TODO: Improve import statements
                     from_=model_module_name_var.get(),
-                    import_=data_type.type,
+                    import_=data_type.type_hint,
                 )
             )
             return data_type
@@ -272,7 +268,7 @@ class Operation(CachedPropertyModel):
             data_type = self.openapi_model_parser.parse_object(name, schema, path)
 
             self.imports.append(
-                Import(from_=model_module_name_var.get(), import_=data_type.type,)
+                Import(from_=model_module_name_var.get(), import_=data_type.type_hint,)
             )
             return data_type
 
@@ -325,7 +321,7 @@ class Operation(CachedPropertyModel):
                     if RE_APPLICATION_JSON_PATTERN.match(content_type):
                         data_type = self.get_data_type(schema, 'response')
                         data_types.append(data_type)
-                        self.imports.extend(data_type.imports_)
+                        self.imports.extend(data_type.imports)
 
         if not data_types:
             return "None"
