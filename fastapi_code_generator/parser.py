@@ -285,9 +285,14 @@ class Operation(CachedPropertyModel):
         if snake_case:
             name = stringcase.snakecase(name)
         content = parameter.get('content')
+        schema: Optional[JsonSchemaObject] = None
         if content and isinstance(content, dict):
-            schema: JsonSchemaObject = JsonSchemaObject.parse_obj(list(content.values())[0].get("schema"))
-        else:
+            content_schema = [
+                c for c in content.values() if isinstance(c.get("schema"), dict)
+            ]
+            if content_schema:
+                schema: JsonSchemaObject = JsonSchemaObject.parse_obj(content_schema)
+        if not schema:
             schema = JsonSchemaObject.parse_obj(parameter["schema"])
 
         field = DataModelField(
