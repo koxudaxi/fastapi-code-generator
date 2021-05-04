@@ -288,7 +288,11 @@ class Operation(CachedPropertyModel):
         orig_name = name
         if snake_case:
             name = stringcase.snakecase(name)
-        schema: JsonSchemaObject = JsonSchemaObject.parse_obj(parameter["schema"])
+        content = parameter.get('content')
+        if content and isinstance(content, dict):
+            schema: JsonSchemaObject = JsonSchemaObject.parse_obj(list(content.values())[0].get("schema"))
+        else:
+            schema = JsonSchemaObject.parse_obj(parameter["schema"])
 
         field = DataModelField(
             name=name,
