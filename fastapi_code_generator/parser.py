@@ -275,7 +275,7 @@ class Operation(CachedPropertyModel):
         return self.openapi_model_parser.get_data_type(schema)
 
     def get_parameter_type(
-        self, parameter: Dict[str, Union[str, Dict[str, str]]], snake_case: bool
+        self, parameter: Dict[str, Union[str, Dict[str, Any]]], snake_case: bool
     ) -> Argument:
         ref: Optional[str] = parameter.get('$ref')  # type: ignore
         if ref:
@@ -293,7 +293,7 @@ class Operation(CachedPropertyModel):
                 if isinstance(c.get("schema"), dict)
             ]
             if content_schema:
-                schema: JsonSchemaObject = JsonSchemaObject.parse_obj(content_schema[0])
+                schema = JsonSchemaObject.parse_obj(content_schema[0])
         if not schema:
             schema = JsonSchemaObject.parse_obj(parameter["schema"])
 
