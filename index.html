@@ -238,8 +238,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#this-project-is-an-experimental-phase" class="md-nav__link">
-    This project is an experimental phase.
+  <a href="#this-project-is-in-experimental-phase" class="md-nav__link">
+    This project is in experimental phase.
   </a>
   
 </li>
@@ -375,8 +375,8 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#this-project-is-an-experimental-phase" class="md-nav__link">
-    This project is an experimental phase.
+  <a href="#this-project-is-in-experimental-phase" class="md-nav__link">
+    This project is in experimental phase.
   </a>
   
 </li>
@@ -481,14 +481,14 @@
                 
                 
                 <h1 id="fastapi-code-generator">fastapi-code-generator<a class="headerlink" href="#fastapi-code-generator" title="Permanent link">🔗</a></h1>
-<p>This code generator creates FastAPI app from an openapi file.</p>
+<p>This code generator creates a FastAPI app from an openapi file.</p>
 <p><a href="https://pypi.python.org/pypi/fastapi-code-generator"><img alt="PyPI version" src="https://badge.fury.io/py/fastapi-code-generator.svg" /></a>
 <a href="https://pepy.tech/project/fastapi-code-generator"><img alt="Downloads" src="https://pepy.tech/badge/fastapi-code-generator/month" /></a>
 <a href="https://pypi.python.org/pypi/fastapi-code-generator"><img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/fastapi-code-generator" /></a>
 <a href="https://codecov.io/gh/koxudaxi/fastapi-code-generator"><img alt="codecov" src="https://codecov.io/gh/koxudaxi/fastapi-code-generator/branch/master/graph/badge.svg" /></a>
 <img alt="license" src="https://img.shields.io/github/license/koxudaxi/fastapi-code-generator.svg" />
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg" /></a></p>
-<h2 id="this-project-is-an-experimental-phase">This project is an experimental phase.<a class="headerlink" href="#this-project-is-an-experimental-phase" title="Permanent link">🔗</a></h2>
+<h2 id="this-project-is-in-experimental-phase">This project is in experimental phase.<a class="headerlink" href="#this-project-is-in-experimental-phase" title="Permanent link">🔗</a></h2>
 <p>fastapi-code-generator uses <a href="https://github.com/koxudaxi/datamodel-code-generator">datamodel-code-generator</a> to generate pydantic models</p>
 <h2 id="help">Help<a class="headerlink" href="#help" title="Permanent link">🔗</a></h2>
 <p>See <a href="https://koxudaxi.github.io/fastapi-code-generator">documentation</a> for more details.</p>
@@ -719,11 +719,14 @@ components:
 </code></pre></div>
 
 <h2 id="custom-template">Custom Template<a class="headerlink" href="#custom-template" title="Permanent link">🔗</a></h2>
-<p>If you want to generate custom <code>*.py</code> files then you can give custom template directory fastapi-code-generator as <code>-t</code> or <code>--template-dir</code> options of the command.</p>
-<p>fastapi-code-generator search <a href="https://jinja.palletsprojects.com/">jinja2</a> template files in given template directory.</p>
-<p>These files will be rendered and write to the output directory. Also, the generated file name will be created template file name which extension is replace to <code>*.py</code>.</p>
+<p>If you want to generate custom <code>*.py</code> files then you can give a custom template directory to fastapi-code-generator with <code>-t</code> or <code>--template-dir</code> options of the command.</p>
+<p>fastapi-code-generator will search for <a href="https://jinja.palletsprojects.com/">jinja2</a> template files in given template directory, for example <code>some_jinja_templates/list_pets.py</code>.</p>
+<div class="codehilite"><pre><span></span><code>fastapi-code-generator --template-dir some_jinja_templates --output app --input api.yaml
+</code></pre></div>
+
+<p>These files will be rendered and written to the output directory. Also, the generated file names will be created with the template name and extension of <code>*.py</code>, for example <code>app/list_pets.py</code> will be a separate file generated from the jinja template alongside the default <code>app/main.py</code></p>
 <h3 id="variables">Variables<a class="headerlink" href="#variables" title="Permanent link">🔗</a></h3>
-<p>You can use below variables in jinja2 template</p>
+<p>You can use the following variables in the jinja2 templates</p>
 <ul>
 <li><code>imports</code>  all imports statements</li>
 <li><code>info</code>  all info statements</li>
