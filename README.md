@@ -1,6 +1,6 @@
 # fastapi-code-generator
 
-This code generator creates FastAPI app from an openapi file.
+This code generator creates a FastAPI app from an openapi file.
 
 [![PyPI version](https://badge.fury.io/py/fastapi-code-generator.svg)](https://pypi.python.org/pypi/fastapi-code-generator)
 [![Downloads](https://pepy.tech/badge/fastapi-code-generator/month)](https://pepy.tech/project/fastapi-code-generator)
@@ -10,7 +10,7 @@ This code generator creates FastAPI app from an openapi file.
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 
-## This project is an experimental phase.
+## This project is in experimental phase.
 
 fastapi-code-generator uses [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator) to generate pydantic models
 
@@ -254,14 +254,18 @@ class Error(BaseModel):
 ```
 
 ## Custom Template
-If you want to generate custom `*.py` files then you can give custom template directory fastapi-code-generator as `-t` or `--template-dir` options of the command.
+If you want to generate custom `*.py` files then you can give a custom template directory to fastapi-code-generator with `-t` or `--template-dir` options of the command.
 
-fastapi-code-generator search [jinja2](https://jinja.palletsprojects.com/) template files in given template directory.
+fastapi-code-generator will search for [jinja2](https://jinja.palletsprojects.com/) template files in given template directory, for example `some_jinja_templates/list_pets.py`.
 
-These files will be rendered and write to the output directory. Also, the generated file name will be created template file name which extension is replace to `*.py`.
+```bash
+fastapi-code-generator --template-dir some_jinja_templates --output app --input api.yaml
+```
+
+These files will be rendered and written to the output directory. Also, the generated file names will be created with the template name and extension of `*.py`, for example `app/list_pets.py` will be a separate file generated from the jinja template alongside the default `app/main.py`
 
 ### Variables
-You can use below variables in jinja2 template
+You can use the following variables in the jinja2 templates
 
 - `imports`  all imports statements
 - `info`  all info statements
