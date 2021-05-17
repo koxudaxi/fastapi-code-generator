@@ -107,7 +107,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.11.4"
+version = "0.11.5"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -572,7 +572,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
 name = "rfc3986"
-version = "1.4.0"
+version = "1.5.0"
 description = "Validating URI References per RFC 3986"
 category = "main"
 optional = false
@@ -786,8 +786,8 @@ coverage = [
     {file = "coverage-5.4.tar.gz", hash = "sha256:6d2e262e5e8da6fa56e774fb8e2643417351427604c2b177f8e8c5f75fc928ca"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.11.4.tar.gz", hash = "sha256:5d99a7411166906653d9325c2b1791989be29509241df60870b5239e2ce29498"},
-    {file = "datamodel_code_generator-0.11.4-py3-none-any.whl", hash = "sha256:f24f965ad9e064a67f5b09b312c5654f96364583a7cdd275e773fd1a9da259c0"},
+    {file = "datamodel-code-generator-0.11.5.tar.gz", hash = "sha256:e0e7433a0f2567da4332c50dd14988866f434658ad4288b4c75436ace9e5b4f9"},
+    {file = "datamodel_code_generator-0.11.5-py3-none-any.whl", hash = "sha256:cac3134316ba6355aa18fff810fe5b3470ae07680b23ef748a9ab786feec3374"},
 ]
 dnspython = [
     {file = "dnspython-2.1.0-py3-none-any.whl", hash = "sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216"},
@@ -1081,8 +1081,8 @@ requests = [
     {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
 ]
 rfc3986 = [
-    {file = "rfc3986-1.4.0-py2.py3-none-any.whl", hash = "sha256:af9147e9aceda37c91a05f4deb128d4b4b49d6b199775fd2d2927768abdc8f50"},
-    {file = "rfc3986-1.4.0.tar.gz", hash = "sha256:112398da31a3344dc25dbf477d8df6cb34f9278a94fee2625d89e4514be8bb9d"},
+    {file = "rfc3986-1.5.0-py2.py3-none-any.whl", hash = "sha256:a86d6e1f5b1dc238b218b012df0aa79409667bb209e58da56d0b94704e712a97"},
+    {file = "rfc3986-1.5.0.tar.gz", hash = "sha256:270aaf10d87d0d4e095063c65bf3ddbc6ee3d0b226328ce21e036f946e421835"},
 ]
 semver = [
     {file = "semver-2.13.0-py2.py3-none-any.whl", hash = "sha256:ced8b23dceb22134307c1b8abfa523da14198793d9787ac838e70e29e77458d4"},
