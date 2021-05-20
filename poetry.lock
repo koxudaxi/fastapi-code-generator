@@ -465,7 +465,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pysnooper"
-version = "0.4.2"
+version = "0.5.0"
 description = "A poor man's debugger for Python."
 category = "main"
 optional = false
@@ -572,7 +572,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
 name = "rfc3986"
-version = "1.4.0"
+version = "1.5.0"
 description = "Validating URI References per RFC 3986"
 category = "main"
 optional = false
@@ -695,7 +695,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "90af1efbe8bd97e552e6d5d1e121a7e67d9716186143bf272ed8aa945773777a"
+content-hash = "5a5efa2e5172cd4d2fbc074ce8a51362473e6787c993eaeb6368fe8ef0e6988b"
 
 [metadata.files]
 appdirs = [
@@ -983,8 +983,8 @@ pyrsistent = [
     {file = "pyrsistent-0.17.3.tar.gz", hash = "sha256:2e636185d9eb976a18a8a8e96efce62f2905fea90041958d8cc2a189756ebf3e"},
 ]
 pysnooper = [
-    {file = "PySnooper-0.4.2-py2.py3-none-any.whl", hash = "sha256:79b007ab42f00aed78c22418940eed9910c20c563804c86d064b42cb1cdc95fb"},
-    {file = "PySnooper-0.4.2.tar.gz", hash = "sha256:b0dfd414a48d6840f7cd20bcdf5f37bbafc8c623dc840f48f6dc8d646609d751"},
+    {file = "PySnooper-0.5.0-py2.py3-none-any.whl", hash = "sha256:7280fd86cd1da732fade981e00998bf01be39e9e4a58b418469f47203cc329b1"},
+    {file = "PySnooper-0.5.0.tar.gz", hash = "sha256:ec3c4648dbe3bc848a0ecea5e2ffea3a5947797599afb627a68ac4e44454116b"},
 ]
 pytest = [
     {file = "pytest-6.2.4-py3-none-any.whl", hash = "sha256:91ef2131a9bd6be8f76f1f08eac5c5317221d6ad1e143ae03894b862e8976890"},
@@ -1081,8 +1081,8 @@ requests = [
     {file = "requests-2.25.1.tar.gz", hash = "sha256:27973dd4a904a4f13b263a19c866c13b92a39ed1c964655f025f3f8d3d75b804"},
 ]
 rfc3986 = [
-    {file = "rfc3986-1.4.0-py2.py3-none-any.whl", hash = "sha256:af9147e9aceda37c91a05f4deb128d4b4b49d6b199775fd2d2927768abdc8f50"},
-    {file = "rfc3986-1.4.0.tar.gz", hash = "sha256:112398da31a3344dc25dbf477d8df6cb34f9278a94fee2625d89e4514be8bb9d"},
+    {file = "rfc3986-1.5.0-py2.py3-none-any.whl", hash = "sha256:a86d6e1f5b1dc238b218b012df0aa79409667bb209e58da56d0b94704e712a97"},
+    {file = "rfc3986-1.5.0.tar.gz", hash = "sha256:270aaf10d87d0d4e095063c65bf3ddbc6ee3d0b226328ce21e036f946e421835"},
 ]
 semver = [
     {file = "semver-2.13.0-py2.py3-none-any.whl", hash = "sha256:ced8b23dceb22134307c1b8abfa523da14198793d9787ac838e70e29e77458d4"},
