@@ -304,10 +304,16 @@ class Operation(CachedPropertyModel):
         )
         self.imports.extend(field.imports)
         if orig_name != name:
+            has_in = parameter.get('in')
+            if has_in:
+                param_is = has_in.lower().capitalize()
+                self.imports.append(Import(from_='fastapi', import_=param_is))
+            else:
+                param_is = "Query"
+                self.imports.append(Import(from_='fastapi', import_='Query'))
             default: Optional[
                 str
-            ] = f"Query({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
-            self.imports.append(Import(from_='fastapi', import_='Query'))
+            ] = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
         else:
             default = repr(schema.default) if schema.has_default else None
         return Argument(
