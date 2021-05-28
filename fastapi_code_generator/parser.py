@@ -311,7 +311,7 @@ class Operation(CachedPropertyModel):
             else:
                 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
                 # the spec says 'in' is a str type
-                raise ValueError(
+                raise TypeError(
                     f'Issue processing parameter for "in", expected a str, but got something else: {str(parameter)}'
                 )
             default: Optional[
