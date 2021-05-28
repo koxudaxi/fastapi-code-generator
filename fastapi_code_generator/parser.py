@@ -305,9 +305,13 @@ class Operation(CachedPropertyModel):
         self.imports.extend(field.imports)
         if orig_name != name:
             has_in = parameter.get('in')
-            if has_in:
+            if has_in and isinstance(has_in, str):
                 param_is = has_in.lower().capitalize()
                 self.imports.append(Import(from_='fastapi', import_=param_is))
+            elif has_in and isinstance(has_in, dict):
+                # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
+                # the spec says 'in' is a str type
+                pass
             else:
                 param_is = "Query"
                 self.imports.append(Import(from_='fastapi', import_='Query'))
