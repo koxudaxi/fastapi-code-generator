@@ -308,13 +308,10 @@ class Operation(CachedPropertyModel):
             if has_in and isinstance(has_in, str):
                 param_is = has_in.lower().capitalize()
                 self.imports.append(Import(from_='fastapi', import_=param_is))
-            elif has_in and isinstance(has_in, dict):
+            else:
                 # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
                 # the spec says 'in' is a str type
-                pass
-            else:
-                param_is = "Query"
-                self.imports.append(Import(from_='fastapi', import_='Query'))
+                raise ValueError(f'Issue processing parameter for "in", expected a str, but got something else: {str(parameter)}')
             default: Optional[
                 str
             ] = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
