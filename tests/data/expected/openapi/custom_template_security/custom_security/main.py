@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette import status
 
@@ -66,14 +66,14 @@ def post_pets(body: PetForm, user: User = Depends(valid_current_user)) -> None:
 
 @app.get('/pets/{pet_id}', response_model=Pet, tags=['pets'])
 def show_pet_by_id(
-    pet_id: str = Query(..., alias='petId'), user: User = Depends(valid_current_user)
+    pet_id: str = Path(..., alias='petId'), user: User = Depends(valid_current_user)
 ) -> Pet:
     pass
 
 
 @app.put('/pets/{pet_id}', response_model=None, tags=['pets'])
 def put_pets_pet_id(
-    pet_id: str = Query(..., alias='petId'),
+    pet_id: str = Path(..., alias='petId'),
     body: PetForm = None,
     user: User = Depends(valid_current_user),
 ) -> None:

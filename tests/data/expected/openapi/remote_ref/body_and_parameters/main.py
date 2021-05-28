@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Path, Query
 
 from .models import Pet, PetForm
 
@@ -62,7 +62,7 @@ def post_pets(body: PetForm) -> None:
 
 
 @app.get('/pets/{pet_id}', response_model=Pet)
-def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pet:
+def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Pet:
     """
     Info for a specific pet
     """
@@ -71,7 +71,7 @@ def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pet:
 
 @app.put('/pets/{pet_id}', response_model=None)
 def put_pets_pet_id(
-    pet_id: str = Query(..., alias='petId'), body: PetForm = None
+    pet_id: str = Path(..., alias='petId'), body: PetForm = None
 ) -> None:
     """
     update a pet

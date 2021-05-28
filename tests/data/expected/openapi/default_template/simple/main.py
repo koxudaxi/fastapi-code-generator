@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Path
 
 from .models import Pets
 
@@ -35,7 +35,7 @@ def create_pets() -> None:
 
 
 @app.get('/pets/{pet_id}', response_model=Pets)
-def show_pet_by_id(pet_id: str = Query(..., alias='petId')) -> Pets:
+def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Pets:
     """
     Info for a specific pet
     """
