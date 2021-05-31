@@ -110,7 +110,7 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.11.5"
+version = "0.11.6"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -792,8 +792,8 @@ coverage = [
     {file = "coverage-5.5.tar.gz", hash = "sha256:ebe78fe9a0e874362175b02371bdfbee64d8edc42a044253ddf4ee7d3c15212c"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.11.5.tar.gz", hash = "sha256:e0e7433a0f2567da4332c50dd14988866f434658ad4288b4c75436ace9e5b4f9"},
-    {file = "datamodel_code_generator-0.11.5-py3-none-any.whl", hash = "sha256:cac3134316ba6355aa18fff810fe5b3470ae07680b23ef748a9ab786feec3374"},
+    {file = "datamodel-code-generator-0.11.6.tar.gz", hash = "sha256:18c3b416d7c43fc98248b42a29539a1729ac596aa2b490bf7b29a952c4728969"},
+    {file = "datamodel_code_generator-0.11.6-py3-none-any.whl", hash = "sha256:e2ef31f89a136536b61bdb8862e7c1361b335da9f70b46cf62c17aa41c7a94a9"},
 ]
 dnspython = [
     {file = "dnspython-2.1.0-py3-none-any.whl", hash = "sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216"},
