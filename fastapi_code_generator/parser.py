@@ -421,32 +421,6 @@ class Path(CachedPropertyModel):
     components: Dict[str, Any] = {}
     openapi_model_parser: OpenAPIModelParser
 
-    @root_validator(pre=True)
-    def validate_root(cls, values: Dict[str, Any]) -> Any:
-        path = values.get('path')
-        if path:
-            if isinstance(path, str):
-                operations = values.get('operations')
-                if operations:
-                    if isinstance(operations, dict):
-                        security = values.get('security', [])
-                        components = values.get('components', {})
-                        openapi_model_parser = values.get('openapi_model_parser')
-                        return {
-                            'path': path,
-                            'operations': dict(
-                                **operations,
-                                path=path,
-                                security=security,
-                                components=components,
-                                openapi_model_parser=openapi_model_parser,
-                            ),
-                            'security': security,
-                            'components': components,
-                            'openapi_model_parser': openapi_model_parser,
-                        }
-        return values
-
     @cached_property
     def exists_operations(self) -> List[Operation]:
         if self.operations:
@@ -512,6 +486,27 @@ class OpenAPIParser:
     ) -> Optional[List[Dict[str, List[str]]]]:
         return openapi.get('info')
 
+    def parse_path(
+        self,
+        path: str,
+        operations: Dict[str, Any],
+        security: Optional[List[Dict[str, Any]]] = None,
+        components: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Path]:
+        return Path(
+            path=path,
+            operations=Operations(
+                **operations,
+                path=path,
+                security=security,
+                components=components,
+                openapi_model_parser=self.openapi_model_parser,
+            ),
+            security=security,
+            components=components,
+            openapi_model_parser=self.openapi_model_parser,
+        )
+
     def parse_paths(self, openapi: Dict[str, Any]) -> ParsedObject:
         security = self.parse_security(openapi)
         info = self.parse_info(openapi)
@@ -519,13 +514,13 @@ class OpenAPIParser:
             [
                 operation
                 for path_name, operations in openapi['paths'].items()
-                for operation in Path(
+                for operation in self.parse_path(
                     path=UsefulStr(path_name),
                     operations=operations,
                     security=security,
                     components=openapi.get('components', {}),
-                    openapi_model_parser=self.openapi_model_parser,
                 ).exists_operations
+                if path_name and operations
             ],
             info,
         )
