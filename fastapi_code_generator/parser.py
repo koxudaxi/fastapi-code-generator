@@ -99,7 +99,7 @@ class Argument(CachedPropertyModel):
 
 
 class Operation(CachedPropertyModel):
-    type: UsefulStr
+    method: UsefulStr
     path: UsefulStr
     operationId: Optional[UsefulStr]
     summary: Optional[str]
@@ -119,6 +119,13 @@ class Operation(CachedPropertyModel):
         self.snake_case_arguments
         self.request
         self.response
+
+    @cached_property
+    def type(self) -> UsefulStr:
+        """
+        backwards compatibility
+        """
+        return self.method
 
     @cached_property
     def root_path(self) -> UsefulStr:
@@ -414,7 +421,7 @@ class OpenAPIParser:
 
     def parse_operation(
         self,
-        type_: str,
+        method: str,
         path: str,
         operation: Dict[str, Any],
         components: Dict[str, Any],
@@ -430,7 +437,7 @@ class OpenAPIParser:
         return Operation(
             **operation,
             path=path,  # type: ignore
-            type=type_,  # type: ignore
+            method=method,  # type: ignore
             components=components,
             openapi_model_parser=self.openapi_model_parser,
         )
@@ -439,19 +446,21 @@ class OpenAPIParser:
         security = self.parse_security(openapi)
         info = self.parse_info(openapi)
         components = openapi.get('components', {})
-        results = []
-        for path_name, operations in openapi['paths'].items():
-            parameters = operations.get('parameters', [])
-            for operation in operations:
-                if operation not in OPERATION_NAMES:
-                    continue
-                parsed_operation = self.parse_operation(
-                    operation=operations[operation],
+        return ParsedObject(
+            [
+                self.parse_operation(
+                    operation=raw_operation,
                     path=path_name,
-                    type_=operation,
+                    method=method,
                     components=components,
-                    parameters=parameters,
+                    parameters=raw_operations.get('parameters', []),
                     security=security,
                 )
-                results.append(parsed_operation)
-        return ParsedObject(results, info,)
+                for path_name, raw_operations in openapi[
+                    'paths'
+                ].items()  # type: str, Dict[str, Any]
+                for method, raw_operation in raw_operations.items()
+                if method in OPERATION_NAMES
+            ],
+            info,
+        )
