@@ -421,17 +421,19 @@ class OpenAPIParser:
 
     def parse_operation(
         self,
+        *,
         method: str,
         path: str,
         operation: Dict[str, Any],
         components: Dict[str, Any],
-        parameters: List[Any],
-        security: Optional[List[Dict[str, List[str]]]] = None,
+        parameters: Optional[List[Any]],
+        security: Optional[List[Dict[str, List[str]]]],
     ) -> Operation:
-        if 'parameters' in operation:
-            operation['parameters'].extend(parameters)
-        else:
-            operation['parameters'] = parameters
+        if parameters:
+            if 'parameters' in operation:
+                operation['parameters'].extend(parameters)
+            else:
+                operation['parameters'] = parameters
         if security is not None and 'security' not in operation:
             operation['security'] = security
         return Operation(
@@ -453,12 +455,10 @@ class OpenAPIParser:
                     path=path_name,
                     method=method,
                     components=components,
-                    parameters=raw_operations.get('parameters', []),
+                    parameters=raw_operations.get('parameters'),
                     security=security,
                 )
-                for path_name, raw_operations in openapi[
-                    'paths'
-                ].items()  # type: str, Dict[str, Any]
+                for path_name, raw_operations in openapi['paths'].items()
                 for method, raw_operation in raw_operations.items()
                 if method in OPERATION_NAMES
             ],
