@@ -366,60 +366,6 @@ OPERATION_NAMES: List[str] = [
 ]
 
 
-class Operations(BaseModel):
-    class Config:
-        arbitrary_types_allowed = (OpenAPIModelParser,)
-
-    parameters: List[Dict[str, Any]] = []
-    get: Optional[Operation] = None
-    put: Optional[Operation] = None
-    post: Optional[Operation] = None
-    delete: Optional[Operation] = None
-    patch: Optional[Operation] = None
-    head: Optional[Operation] = None
-    options: Optional[Operation] = None
-    trace: Optional[Operation] = None
-    path: UsefulStr
-    security: Optional[List[Dict[str, List[str]]]] = []
-    components: Dict[str, Any] = {}
-    openapi_model_parser: OpenAPIModelParser
-
-    @root_validator
-    def inject_parameters_and_security_to_operation(cls, values: Dict[str, Any]) -> Any:
-        security = values.get('security')
-        parameters = values.get('parameters')
-        for operation_name in OPERATION_NAMES:
-            operation = values.get(operation_name)
-            if not operation:
-                continue
-            if parameters:
-                operation.parameters.extend(parameters)
-            if security is not None and operation.security is None:
-                operation.security = security
-        return values
-
-
-class Path(CachedPropertyModel):
-    path: UsefulStr
-    operations: Optional[Operations] = None
-    security: Optional[List[Dict[str, List[str]]]] = []
-    components: Dict[str, Any] = {}
-    openapi_model_parser: OpenAPIModelParser
-
-    @cached_property
-    def exists_operations(self) -> List[Operation]:
-        if self.operations:
-            return [
-                getattr(self.operations, operation_name)
-                for operation_name in OPERATION_NAMES
-                if getattr(self.operations, operation_name)
-            ]
-        return []
-
-
-Path.update_forward_refs()
-
-
 class ParsedObject:
     def __init__(
         self,
@@ -473,11 +419,14 @@ class OpenAPIParser:
         operation: Dict[str, Any],
         components: Dict[str, Any],
         parameters: List[Any],
+        security: Optional[List[Dict[str, List[str]]]] = None,
     ) -> Operation:
         if 'parameters' in operation:
             operation['parameters'].extend(parameters)
         else:
             operation['parameters'] = parameters
+        if security is not None and 'security' not in operation:
+            operation['security'] = security
         return Operation(
             **operation,
             path=path,  # type: ignore
@@ -486,69 +435,23 @@ class OpenAPIParser:
             openapi_model_parser=self.openapi_model_parser,
         )
 
-    def parse_operations(
-        self,
-        *,
-        path: str,
-        operations: Dict[str, Any],
-        components: Dict[str, Any],
-        security: Optional[List[Dict[str, List[str]]]] = None,
-    ) -> Operations:
-        parameters = operations.get('parameters', [])
-        return Operations(
-            **{
-                o: self.parse_operation(
-                    operation=operations[o],
-                    path=path,
-                    type_=o,
-                    components=components,
-                    parameters=parameters,
-                )
-                for o in OPERATION_NAMES
-                if o in operations
-            },
-            path=path,  # type: ignore
-            parameters=parameters,
-            security=security,
-            components=components,
-            openapi_model_parser=self.openapi_model_parser,
-        )
-
-    def parse_path(
-        self,
-        path: str,
-        operations: Dict[str, Any],
-        components: Dict[str, Any],
-        security: Optional[List[Dict[str, Any]]] = None,
-    ) -> Path:
-        return Path(
-            path=path,  # type: ignore
-            operations=self.parse_operations(
-                path=path,
-                operations=operations,
-                components=components,
-                security=security,
-            ),
-            security=security,
-            components=components,
-            openapi_model_parser=self.openapi_model_parser,
-        )
-
     def parse_paths(self, openapi: Dict[str, Any]) -> ParsedObject:
         security = self.parse_security(openapi)
         info = self.parse_info(openapi)
         components = openapi.get('components', {})
-        return ParsedObject(
-            [
-                operation
-                for path_name, operations in openapi['paths'].items()
-                for operation in self.parse_path(
-                    path=UsefulStr(path_name),
-                    operations=operations,
-                    security=security,
+        results = []
+        for path_name, operations in openapi['paths'].items():
+            parameters = operations.get('parameters', [])
+            for operation in operations:
+                if operation not in OPERATION_NAMES:
+                    continue
+                parsed_operation = self.parse_operation(
+                    operation=operations[operation],
+                    path=path_name,
+                    type_=operation,
                     components=components,
-                ).exists_operations
-                if path_name and operations
-            ],
-            info,
-        )
+                    parameters=parameters,
+                    security=security,
+                )
+                results.append(parsed_operation)
+        return ParsedObject(results, info,)
