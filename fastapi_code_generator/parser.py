@@ -240,6 +240,13 @@ class Operation(CachedPropertyModel):
 
         if self.request:
             arguments.append(self.request)
+
+        positional_argument: bool = False
+        for argument in arguments:
+            if positional_argument and argument.required and argument.default is None:
+                argument.default = UsefulStr('...')
+            positional_argument = argument.required
+
         return arguments
 
     def get_data_type(self, schema: JsonSchemaObject, suffix: str = '') -> DataType:

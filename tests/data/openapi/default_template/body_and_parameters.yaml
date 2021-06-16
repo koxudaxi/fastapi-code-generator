@@ -317,6 +317,26 @@ paths:
       responses:
         '201':
           description: OK
+  /{ueId}/sdm-subscriptions:
+    post:
+      summary: subscribe to notifications
+      operationId: Subscribe
+      tags:
+        - Subscription Creation
+      parameters:
+        - name: ueId
+          in: path
+          description: Identity of the user
+          required: true
+          schema:
+            type: string
+      responses: {}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+        required: true
 components:
   parameters:
     MyParam:
