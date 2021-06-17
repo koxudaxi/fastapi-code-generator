@@ -6,7 +6,8 @@ theme:
     palette:
       primary: 'light blue'
       accent: 'light blue'
-
+    analytics:
+      gtag: 275257853
 markdown_extensions:
   - codehilite
   - admonition
@@ -15,10 +16,7 @@ markdown_extensions:
 
 repo_name: koxudaxi/fastapi-code-generator
 repo_url: https://github.com/koxudaxi/fastapi-code-generator
-
-google_analytics:
-    - 'UA-142130505-1'
-    - 'auto'
+site_url: https://koxudaxi.github.io/fastapi-code-generator
 
 nav:
     - Overview: index.md
