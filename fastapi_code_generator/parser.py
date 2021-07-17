@@ -174,33 +174,6 @@ class Operation(CachedPropertyModel):
         return stringcase.snakecase(name)
 
 
-OPERATION_NAMES: List[str] = [
-    "get",
-    "put",
-    "post",
-    "delete",
-    "patch",
-    "head",
-    "options",
-    "trace",
-]
-
-
-class ParsedObject:
-    def __init__(
-        self,
-        parsed_operations: List[Operation],
-        info: Optional[List[Dict[str, Any]]] = None,
-    ):
-        self.operations: List[Operation] = sorted(
-            parsed_operations, key=lambda m: m.path
-        )
-        self.imports: Imports = Imports()
-        self.info = info
-        for operation in self.operations:
-            self.imports.append(operation.imports)
-
-
 @snooper_to_methods(max_variable_length=None)
 class OpenAPIParser(OpenAPIModelParser):
     def __init__(
@@ -290,10 +263,8 @@ class OpenAPIParser(OpenAPIModelParser):
         self.imports_for_fastapi: Imports = Imports()
         self.data_types: List[DataType] = []
 
-    def parse_info(
-        self, openapi: Dict[str, Any]
-    ) -> Optional[List[Dict[str, List[str]]]]:
-        return openapi.get('info')
+    def parse_info(self) -> Optional[List[Dict[str, List[str]]]]:
+        return self.raw_obj.get('info')
 
     def parse_parameters(self, parameters: ParameterObject, path: List[str]) -> None:
         super().parse_parameters(parameters, path)
@@ -471,7 +442,3 @@ class OpenAPIParser(OpenAPIModelParser):
             path=f'/{path_name}',  # type: ignore
             method=method,  # type: ignore
         )
-
-    def parse_paths(self) -> ParsedObject:
-        info = self.parse_info(self.raw_obj)
-        return ParsedObject(list(self.operations.values()), info,)
