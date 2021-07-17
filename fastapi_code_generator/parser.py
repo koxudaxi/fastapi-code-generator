@@ -379,9 +379,6 @@ class OpenAPIParser(OpenAPIModelParser):
         if request:
             arguments.append(request)
 
-        if self.request:
-            arguments.append(self.request)
-
         positional_argument: bool = False
         for argument in arguments:
             if positional_argument and argument.required and argument.default is None:
