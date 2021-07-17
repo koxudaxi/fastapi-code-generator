@@ -107,11 +107,12 @@ toml = ["toml"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.11.8"
+version = "0.11.9.dev9+g317b434"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
 python-versions = ">=3.6.1"
+develop = false
 
 [package.dependencies]
 argcomplete = ">=1.10,<2.0"
@@ -138,6 +139,12 @@ http = ["httpx"]
 setup = ["pytest-runner", "setuptools-scm"]
 test = ["pytest (>=4.6)", "pytest-benchmark", "pytest-cov", "pytest-mock", "mypy", "isort", "freezegun", "types-jinja2", "types-pyyaml", "types-toml"]
 wheel = ["wheel", "twine"]
+
+[package.source]
+type = "git"
+url = "https://github.com/koxudaxi/datamodel-code-generator.git"
+reference = "improve_openapi_parser"
+resolved_reference = "317b434c72b69dd7616d99d50a1d44851eda3c9c"
 
 [[package]]
 name = "dnspython"
@@ -698,7 +705,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "5a5efa2e5172cd4d2fbc074ce8a51362473e6787c993eaeb6368fe8ef0e6988b"
+content-hash = "9c0d565ab05f6c99e9bf88375112fd342e844aacbe58c7f68aa51af3f9e05a5e"
 
 [metadata.files]
 appdirs = [
@@ -791,10 +798,7 @@ coverage = [
     {file = "coverage-5.5-pp37-none-any.whl", hash = "sha256:2a3859cb82dcbda1cfd3e6f71c27081d18aa251d20a17d87d26d4cd216fb0af4"},
     {file = "coverage-5.5.tar.gz", hash = "sha256:ebe78fe9a0e874362175b02371bdfbee64d8edc42a044253ddf4ee7d3c15212c"},
 ]
-datamodel-code-generator = [
-    {file = "datamodel-code-generator-0.11.8.tar.gz", hash = "sha256:5d5d654f4811d3e029fab118a5188337da72e5aea1dfc9d6a689327cfb988171"},
-    {file = "datamodel_code_generator-0.11.8-py3-none-any.whl", hash = "sha256:cd0a90bc81612e1b04b7b60e9321c73dc4e1122f05eaa657e645a03ed41be6c0"},
-]
+datamodel-code-generator = []
 dnspython = [
     {file = "dnspython-2.1.0-py3-none-any.whl", hash = "sha256:95d12f6ef0317118d2a1a6fc49aac65ffec7eb8087474158f42f26a639135216"},
     {file = "dnspython-2.1.0.zip", hash = "sha256:e4a87f0b573201a0f3727fa18a516b055fd1107e0e5477cded4a2de497df1dd4"},
