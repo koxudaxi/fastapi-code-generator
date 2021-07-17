@@ -10,6 +10,22 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class Pet(BaseModel):
+    id: int
+    name: str
+    tag: Optional[str] = None
+
+
+class Error(BaseModel):
+    code: int
+    message: str
+
+
+class PetForm(BaseModel):
+    name: Optional[str] = None
+    age: Optional[int] = None
+
+
 class UserGetResponse(BaseModel):
     timestamp: datetime
     name: str
@@ -32,19 +48,3 @@ class UsersPostRequest(BaseModel):
     timestamp: datetime
     name: str
     age: Optional[str] = None
-
-
-class Pet(BaseModel):
-    id: int
-    name: str
-    tag: Optional[str] = None
-
-
-class Error(BaseModel):
-    code: int
-    message: str
-
-
-class PetForm(BaseModel):
-    name: Optional[str] = None
-    age: Optional[int] = None

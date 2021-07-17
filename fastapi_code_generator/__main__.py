@@ -5,7 +5,10 @@ from typing import Dict, Optional
 import typer
 from datamodel_code_generator import PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
+from datamodel_code_generator.imports import Import
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
+from datamodel_code_generator.reference import Reference
+from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 
 from fastapi_code_generator.parser import MODEL_PATH, OpenAPIParser, ParsedObject
@@ -26,6 +29,16 @@ def main(
     return generate_code(input_name, input_text, output_dir, template_dir)
 
 
+def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
+    if data_type.reference:
+        return data_type.reference
+    for data_type in data_type.data_types:
+        reference = _get_most_of_reference(data_type)
+        if reference:
+            return reference
+    return None
+
+
 def generate_code(
     input_name: str, input_text: str, output_dir: Path, template_dir: Optional[Path]
 ) -> None:
@@ -34,10 +47,12 @@ def generate_code(
     if not template_dir:
         template_dir = BUILTIN_TEMPLATE_DIR
 
-    model_parser = OpenAPIModelParser(source=input_text,)
+    # model_parser = OpenAPIModelParser(source=input_text,)
 
-    parser = OpenAPIParser(input_name, input_text, openapi_model_parser=model_parser)
-    parsed_object: ParsedObject = parser.parse()
+    parser = OpenAPIParser(input_text)
+    # parsed_object: ParsedObject = parser.parse()
+    models = parser.parse()
+    parsed_object = parser.parse_paths()
 
     environment: Environment = Environment(
         loader=FileSystemLoader(
@@ -45,6 +60,16 @@ def generate_code(
             encoding="utf8",
         ),
     )
+    parsed_object.imports.update(parser.imports)
+    for data_type in parser.data_types:
+        reference = _get_most_of_reference(data_type)
+        if reference:
+            parsed_object.imports.append(data_type.all_imports)
+            parsed_object.imports.append(
+                Import.from_full_path(f'.models.{reference.name}')
+            )
+    for from_, imports in parser.imports_for_fastapi.items():
+        parsed_object.imports[from_].update(imports)
     results: Dict[Path, str] = {}
     code_formatter = CodeFormatter(PythonVersion.PY_38, Path().resolve())
     for target in template_dir.rglob("*"):
@@ -68,13 +93,13 @@ def generate_code(
             print("", file=file)
             print(code.rstrip(), file=file)
 
-    with chdir(output_dir):
-        results = model_parser.parse()
-    if not results:
+    # with chdir(output_dir):
+    #     results = parser.parse()
+    if not models:
         return
-    elif isinstance(results, str):
+    elif isinstance(models, str):
         output = output_dir / MODEL_PATH
-        modules = {output: (results, input_name)}
+        modules = {output: (models, input_name)}
     else:
         raise Exception('Modular references are not supported in this version')
 
