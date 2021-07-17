@@ -113,3 +113,11 @@ def get_users() -> List[UsersGetResponse]:
 @app.post('/users', response_model=None)
 def post_users(body: List[UsersPostRequest]) -> None:
     pass
+
+
+@app.post('/{ue_id}/sdm-subscriptions', response_model=None)
+def subscribe(ue_id: str = Path(..., alias='ueId'), body: Pet = ...) -> None:
+    """
+    subscribe to notifications
+    """
+    pass

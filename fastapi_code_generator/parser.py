@@ -378,6 +378,16 @@ class OpenAPIParser(OpenAPIModelParser):
         request = self._temporary_operation_items.get('_request')
         if request:
             arguments.append(request)
+
+        if self.request:
+            arguments.append(self.request)
+
+        positional_argument: bool = False
+        for argument in arguments:
+            if positional_argument and argument.required and argument.default is None:
+                argument.default = UsefulStr('...')
+            positional_argument = argument.required
+
         return arguments
 
     def parse_request_body(
