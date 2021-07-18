@@ -10,11 +10,13 @@ from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 
-from fastapi_code_generator.parser import MODEL_PATH, OpenAPIParser, Operation
+from fastapi_code_generator.parser import OpenAPIParser, Operation
 
 app = typer.Typer()
 
 BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
+
+MODEL_PATH: Path = Path("models.py")
 
 
 @app.command()
@@ -69,7 +71,9 @@ def generate_code(
         reference = _get_most_of_reference(data_type)
         if reference:
             imports.append(data_type.all_imports)
-            imports.append(Import.from_full_path(f'.models.{reference.name}'))
+            imports.append(
+                Import.from_full_path(f'.{MODEL_PATH.stem}.{reference.name}')
+            )
     for from_, imports_ in parser.imports_for_fastapi.items():
         imports[from_].update(imports_)
     results: Dict[Path, str] = {}

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pathlib
 import re
-from contextvars import ContextVar
 from typing import (
     Any,
     Callable,
@@ -33,10 +32,7 @@ from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.model import DataModel, DataModelFieldBase
 from datamodel_code_generator.model import pydantic as pydantic_model
 from datamodel_code_generator.model.pydantic import DataModelField
-from datamodel_code_generator.parser.jsonschema import (
-    JsonSchemaObject,
-    get_model_by_path,
-)
+from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
 from datamodel_code_generator.parser.openapi import MediaObject
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.parser.openapi import (
@@ -48,28 +44,7 @@ from datamodel_code_generator.parser.openapi import (
 from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
 from pydantic import BaseModel
 
-MODEL_PATH: pathlib.Path = pathlib.Path("models.py")
-
-model_module_name_var: ContextVar[str] = ContextVar(
-    'model_module_name', default=f'.{MODEL_PATH.stem}'
-)
-
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
-
-
-def get_ref_body(
-    ref: str, openapi_model_parser: OpenAPIModelParser, components: Dict[str, Any]
-) -> Dict[str, Any]:
-    if ref.startswith('#/components'):
-        return get_model_by_path(components, ref[13:].split('/'))
-    elif ref.startswith('http://') or ref.startswith('https://'):
-        if '#/' in ref:
-            url, path = ref.rsplit('#/', 1)
-            ref_body = openapi_model_parser._get_ref_body(url)
-            return get_model_by_path(ref_body, path.split('/'))
-        else:
-            return openapi_model_parser._get_ref_body(ref)
-    raise NotImplementedError(f'ref={ref} is not supported')
 
 
 class CachedPropertyModel(BaseModel):
@@ -136,10 +111,8 @@ class Operation(CachedPropertyModel):
     summary: Optional[str]
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
-    # requestBody: Dict[str, Any] = {}
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
-    # components: Dict[str, Any] = {}
     tags: Optional[List[str]]
     arguments: str = ''
     snake_case_arguments: str = ''
@@ -215,7 +188,6 @@ class OpenAPIParser(OpenAPIModelParser):
         custom_class_name_generator: Optional[Callable[[str], str]] = None,
         field_extra_keys: Optional[Set[str]] = None,
         field_include_all_keys: bool = False,
-        model_module_name: Optional[str] = None,
     ):
         super().__init__(
             source=source,
@@ -256,8 +228,6 @@ class OpenAPIParser(OpenAPIModelParser):
             field_include_all_keys=field_include_all_keys,
             openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
         )
-        if model_module_name:
-            model_module_name_var.set(model_module_name)
         self.operations: Dict[str, Operation] = {}
         self._temporary_operation_items: Dict[str, Any] = {}
         self.imports_for_fastapi: Imports = Imports()
