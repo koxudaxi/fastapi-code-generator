@@ -36,6 +36,7 @@ from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
 from datamodel_code_generator.parser.openapi import MediaObject
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.parser.openapi import (
+    ParameterLocation,
     ParameterObject,
     ReferenceObject,
     RequestBodyObject,
@@ -229,7 +230,7 @@ class OpenAPIParser(OpenAPIModelParser):
             openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
         )
         self.operations: Dict[str, Operation] = {}
-        self._temporary_operation_items: Dict[str, Any] = {}
+        self._temporary_operation: Dict[str, Any] = {}
         self.imports_for_fastapi: Imports = Imports()
         self.data_types: List[DataType] = []
 
@@ -238,55 +239,47 @@ class OpenAPIParser(OpenAPIModelParser):
 
     def parse_parameters(self, parameters: ParameterObject, path: List[str]) -> None:
         super().parse_parameters(parameters, path)
+        self._temporary_operation['_parameters'].append(parameters)
 
     def get_parameter_type(
-        self,
-        parameter: Dict[str, Union[str, Dict[str, Any]]],
-        snake_case: bool,
-        path: List[str],
+        self, parameters: ParameterObject, snake_case: bool, path: List[str],
     ) -> Argument:
-        ref: Optional[str] = parameter.get('$ref')  # type: ignore
-        if ref:
-            parameter = self.get_ref_model(ref)
-        name: str = parameter["name"]  # type: ignore
-        orig_name = name
+        orig_name = parameters.name
         if snake_case:
-            name = stringcase.snakecase(name)
-        content = parameter.get('content')
+            name = stringcase.snakecase(parameters.name)
+        else:
+            name = parameters.name
+
         schema: Optional[JsonSchemaObject] = None
-        if content and isinstance(content, dict):
-            content_schema = [
-                c.get("schema")
-                for c in content.values()
-                if isinstance(c.get("schema"), dict)
-            ]
-            if content_schema:
-                schema = JsonSchemaObject.parse_obj(content_schema[0])
-        if not schema:
-            schema = JsonSchemaObject.parse_obj(parameter["schema"])
+        data_type: Optional[DataType] = None
+        for content in parameters.content.values():
+            if isinstance(content.schema_, ReferenceObject):
+                data_type = self.get_ref_data_type(content.schema_.ref)
+                ref_model = self.get_ref_model(content.schema_.ref)
+                schema = JsonSchemaObject.parse_obj(ref_model)
+            else:
+                schema = content.schema_
+            break
+        if not data_type:
+            if not schema:
+                schema = parameters.schema_
+            self.parse_schema(name, schema, [*path, name])
 
         field = DataModelField(
             name=name,
-            data_type=self.parse_schema(name, schema, [*path, name]),
-            required=parameter.get("required") or parameter.get("in") == "path",
+            data_type=data_type,
+            required=parameters.required or parameters.in_ == ParameterLocation.path,
         )
 
         if orig_name != name:
-            has_in = parameter.get('in')
-            if has_in and isinstance(has_in, str):
-                param_is = has_in.lower().capitalize()
+            if parameters.in_:
+                param_is = parameters.in_.value.lower().capitalize()
                 self.imports_for_fastapi.append(
                     Import(from_='fastapi', import_=param_is)
                 )
                 default: Optional[
                     str
                 ] = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
-            else:
-                # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
-                # the spec says 'in' is a str type
-                raise TypeError(
-                    f'Issue processing parameter for "in", expected a str, but got something else: {str(parameter)}'
-                )
         else:
             default = repr(schema.default) if schema.has_default else None
         self.imports_for_fastapi.append(field.imports)
@@ -307,7 +300,7 @@ class OpenAPIParser(OpenAPIModelParser):
     def get_argument_list(self, snake_case: bool, path: List[str]) -> List[Argument]:
         arguments: List[Argument] = []
 
-        parameters = self._temporary_operation_items.get('_parameters')
+        parameters = self._temporary_operation.get('_parameters')
         if parameters:
             for parameter in parameters:
                 arguments.append(
@@ -316,7 +309,7 @@ class OpenAPIParser(OpenAPIModelParser):
                     )
                 )
 
-        request = self._temporary_operation_items.get('_request')
+        request = self._temporary_operation.get('_request')
         if request:
             arguments.append(request)
 
@@ -369,9 +362,7 @@ class OpenAPIParser(OpenAPIModelParser):
                     self.imports_for_fastapi.append(
                         Import.from_full_path('starlette.requests.Request')
                     )
-        self._temporary_operation_items['_request'] = (
-            arguments[0] if arguments else None
-        )
+        self._temporary_operation['_request'] = arguments[0] if arguments else None
 
     def parse_responses(
         self,
@@ -388,27 +379,27 @@ class OpenAPIParser(OpenAPIModelParser):
             type_hint = data_type.type_hint  # TODO: change to lazy loading
         else:
             type_hint = 'None'
-        self._temporary_operation_items['response'] = type_hint
+        self._temporary_operation['response'] = type_hint
 
         return data_types
 
     def parse_operation(self, raw_operation: Dict[str, Any], path: List[str],) -> None:
-        self._temporary_operation_items = {}
+        self._temporary_operation = {}
+        self._temporary_operation['_parameters'] = []
         super().parse_operation(raw_operation, path)
         resolved_path = self.model_resolver.resolve_ref(path)
         path_name, method = path[-2:]
 
-        self._temporary_operation_items['_parameters'] = raw_operation.get('parameters')
-        self._temporary_operation_items['arguments'] = self.get_arguments(
+        self._temporary_operation['arguments'] = self.get_arguments(
             snake_case=False, path=path
         )
-        self._temporary_operation_items['snake_case_arguments'] = self.get_arguments(
+        self._temporary_operation['snake_case_arguments'] = self.get_arguments(
             snake_case=True, path=path
         )
 
         self.operations[resolved_path] = Operation(
             **raw_operation,
-            **self._temporary_operation_items,
+            **self._temporary_operation,
             path=f'/{path_name}',  # type: ignore
             method=method,  # type: ignore
         )
