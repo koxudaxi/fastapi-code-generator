@@ -263,7 +263,7 @@ class OpenAPIParser(OpenAPIModelParser):
         if not data_type:
             if not schema:
                 schema = parameters.schema_
-            self.parse_schema(name, schema, [*path, name])
+            data_type = self.parse_schema(name, schema, [*path, name])
         if not schema:
             return None
 
