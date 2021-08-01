@@ -2,43 +2,50 @@ from __future__ import annotations
 
 import pathlib
 import re
-from contextvars import ContextVar
-from typing import Any, Dict, List, Optional, Pattern, Union
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Pattern,
+    Sequence,
+    Set,
+    Type,
+    Union,
+)
+from urllib.parse import ParseResult
 
 import stringcase
-from datamodel_code_generator import cached_property, load_yaml, snooper_to_methods
+from datamodel_code_generator import (
+    DefaultPutDict,
+    LiteralType,
+    OpenAPIScope,
+    PythonVersion,
+    cached_property,
+    snooper_to_methods,
+)
 from datamodel_code_generator.imports import Import, Imports
+from datamodel_code_generator.model import DataModel, DataModelFieldBase
+from datamodel_code_generator.model import pydantic as pydantic_model
 from datamodel_code_generator.model.pydantic import DataModelField
-from datamodel_code_generator.parser.jsonschema import (
-    JsonSchemaObject,
-    get_model_by_path,
-)
+from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
+from datamodel_code_generator.parser.openapi import MediaObject
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
-from datamodel_code_generator.types import DataType
-from pydantic import BaseModel, root_validator
-
-MODEL_PATH: pathlib.Path = pathlib.Path("models.py")
-
-model_module_name_var: ContextVar[str] = ContextVar(
-    'model_module_name', default=f'.{MODEL_PATH.stem}'
+from datamodel_code_generator.parser.openapi import (
+    ParameterLocation,
+    ParameterObject,
+    ReferenceObject,
+    RequestBodyObject,
+    ResponseObject,
 )
+from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
+from pydantic import BaseModel
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
-
-
-def get_ref_body(
-    ref: str, openapi_model_parser: OpenAPIModelParser, components: Dict[str, Any]
-) -> Dict[str, Any]:
-    if ref.startswith('#/components'):
-        return get_model_by_path(components, ref[13:].split('/'))
-    elif ref.startswith('http://') or ref.startswith('https://'):
-        if '#/' in ref:
-            url, path = ref.rsplit('#/', 1)
-            ref_body = openapi_model_parser._get_ref_body(url)
-            return get_model_by_path(ref_body, path.split('/'))
-        else:
-            return openapi_model_parser._get_ref_body(ref)
-    raise NotImplementedError(f'ref={ref} is not supported')
 
 
 class CachedPropertyModel(BaseModel):
@@ -99,18 +106,26 @@ class Argument(CachedPropertyModel):
 
 
 class Operation(CachedPropertyModel):
-    type: UsefulStr
+    method: UsefulStr
     path: UsefulStr
     operationId: Optional[UsefulStr]
     summary: Optional[str]
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
-    requestBody: Dict[str, Any] = {}
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
-    components: Dict[str, Any] = {}
     tags: Optional[List[str]]
-    openapi_model_parser: OpenAPIModelParser
+    arguments: str = ''
+    snake_case_arguments: str = ''
+    request: Optional[Argument] = None
+    response: str = ''
+
+    @cached_property
+    def type(self) -> UsefulStr:
+        """
+        backwards compatibility
+        """
+        return self.method
 
     @cached_property
     def root_path(self) -> UsefulStr:
@@ -124,88 +139,6 @@ class Operation(CachedPropertyModel):
         )
 
     @cached_property
-    def request(self) -> Optional[Argument]:
-        arguments: List[Argument] = []
-        for requests in self.request_objects:
-            for content_type, schema in requests.contents.items():
-                # TODO: support other content-types
-                if RE_APPLICATION_JSON_PATTERN.match(content_type):
-                    data_type = self.get_data_type(schema, 'request')
-                    arguments.append(
-                        # TODO: support multiple body
-                        Argument(
-                            name='body',  # type: ignore
-                            type_hint=data_type.type_hint,
-                            required=requests.required,
-                        )
-                    )
-                    self.imports.extend(data_type.imports)
-                elif content_type == 'application/x-www-form-urlencoded':
-                    arguments.append(
-                        # TODO: support form with `Form()`
-                        Argument(
-                            name='request',  # type: ignore
-                            type_hint='Request',  # type: ignore
-                            required=True,
-                        )
-                    )
-                    self.imports.append(
-                        Import.from_full_path('starlette.requests.Request')
-                    )
-        if not arguments:
-            return None
-        return arguments[0]
-
-    @cached_property
-    def request_objects(self) -> List[Request]:
-        requests: List[Request] = []
-        contents: Dict[str, JsonSchemaObject] = {}
-        ref: Optional[str] = self.requestBody.get('$ref')
-        if ref:
-            request_body = get_ref_body(ref, self.openapi_model_parser, self.components)
-        else:
-            request_body = self.requestBody
-        for content_type, obj in request_body.get('content', {}).items():
-            contents[content_type] = (
-                JsonSchemaObject.parse_obj(obj['schema']) if 'schema' in obj else None
-            )
-            requests.append(
-                Request(
-                    description=request_body.get("description"),
-                    contents=contents,
-                    required=request_body.get("required") is True,
-                )
-            )
-        return requests
-
-    @cached_property
-    def response_objects(self) -> List[Response]:
-        responses: List[Response] = []
-        for status_code, detail in self.responses.items():
-            ref: Optional[str] = detail.get('$ref')
-            if ref:
-                ref_body = get_ref_body(ref, self.openapi_model_parser, self.components)
-                content = ref_body.get("content", {})
-                description = ref_body.get("description")
-            else:
-                content = detail.get("content", {})
-                description = detail.get("description")
-            contents = {}
-            for content_type, obj in content.items():
-                contents[content_type] = (
-                    JsonSchemaObject.parse_obj(obj["schema"])
-                    if "schema" in obj
-                    else None
-                )
-
-            responses.append(
-                Response(
-                    status_code=status_code, description=description, contents=contents,
-                )
-            )
-        return responses
-
-    @cached_property
     def function_name(self) -> str:
         if self.operationId:
             name: str = self.operationId
@@ -214,32 +147,173 @@ class Operation(CachedPropertyModel):
             name = f"{self.type}{path}"
         return stringcase.snakecase(name)
 
-    @cached_property
-    def arguments(self) -> str:
-        return self.get_arguments(snake_case=False)
 
-    @cached_property
-    def snake_case_arguments(self) -> str:
-        return self.get_arguments(snake_case=True)
+@snooper_to_methods(max_variable_length=None)
+class OpenAPIParser(OpenAPIModelParser):
+    def __init__(
+        self,
+        source: Union[str, pathlib.Path, List[pathlib.Path], ParseResult],
+        *,
+        data_model_type: Type[DataModel] = pydantic_model.BaseModel,
+        data_model_root_type: Type[DataModel] = pydantic_model.CustomRootType,
+        data_type_manager_type: Type[DataTypeManager] = pydantic_model.DataTypeManager,
+        data_model_field_type: Type[DataModelFieldBase] = pydantic_model.DataModelField,
+        base_class: Optional[str] = None,
+        custom_template_dir: Optional[pathlib.Path] = None,
+        extra_template_data: Optional[DefaultDict[str, Dict[str, Any]]] = None,
+        target_python_version: PythonVersion = PythonVersion.PY_37,
+        dump_resolve_reference_action: Optional[Callable[[Iterable[str]], str]] = None,
+        validation: bool = False,
+        field_constraints: bool = False,
+        snake_case_field: bool = False,
+        strip_default_none: bool = False,
+        aliases: Optional[Mapping[str, str]] = None,
+        allow_population_by_field_name: bool = False,
+        apply_default_values_for_required_fields: bool = False,
+        force_optional_for_required_fields: bool = False,
+        class_name: Optional[str] = None,
+        use_standard_collections: bool = False,
+        base_path: Optional[pathlib.Path] = None,
+        use_schema_description: bool = False,
+        reuse_model: bool = False,
+        encoding: str = 'utf-8',
+        enum_field_as_literal: Optional[LiteralType] = None,
+        set_default_enum_member: bool = False,
+        strict_nullable: bool = False,
+        use_generic_container_types: bool = False,
+        enable_faux_immutability: bool = False,
+        remote_text_cache: Optional[DefaultPutDict[str, str]] = None,
+        disable_appending_item_suffix: bool = False,
+        strict_types: Optional[Sequence[StrictTypes]] = None,
+        empty_enum_field_name: Optional[str] = None,
+        custom_class_name_generator: Optional[Callable[[str], str]] = None,
+        field_extra_keys: Optional[Set[str]] = None,
+        field_include_all_keys: bool = False,
+    ):
+        super().__init__(
+            source=source,
+            data_model_type=data_model_type,
+            data_model_root_type=data_model_root_type,
+            data_type_manager_type=data_type_manager_type,
+            data_model_field_type=data_model_field_type,
+            base_class=base_class,
+            custom_template_dir=custom_template_dir,
+            extra_template_data=extra_template_data,
+            target_python_version=target_python_version,
+            dump_resolve_reference_action=dump_resolve_reference_action,
+            validation=validation,
+            field_constraints=field_constraints,
+            snake_case_field=snake_case_field,
+            strip_default_none=strip_default_none,
+            aliases=aliases,
+            allow_population_by_field_name=allow_population_by_field_name,
+            apply_default_values_for_required_fields=apply_default_values_for_required_fields,
+            force_optional_for_required_fields=force_optional_for_required_fields,
+            class_name=class_name,
+            use_standard_collections=use_standard_collections,
+            base_path=base_path,
+            use_schema_description=use_schema_description,
+            reuse_model=reuse_model,
+            encoding=encoding,
+            enum_field_as_literal=enum_field_as_literal,
+            set_default_enum_member=set_default_enum_member,
+            strict_nullable=strict_nullable,
+            use_generic_container_types=use_generic_container_types,
+            enable_faux_immutability=enable_faux_immutability,
+            remote_text_cache=remote_text_cache,
+            disable_appending_item_suffix=disable_appending_item_suffix,
+            strict_types=strict_types,
+            empty_enum_field_name=empty_enum_field_name,
+            custom_class_name_generator=custom_class_name_generator,
+            field_extra_keys=field_extra_keys,
+            field_include_all_keys=field_include_all_keys,
+            openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
+        )
+        self.operations: Dict[str, Operation] = {}
+        self._temporary_operation: Dict[str, Any] = {}
+        self.imports_for_fastapi: Imports = Imports()
+        self.data_types: List[DataType] = []
 
-    def get_arguments(self, snake_case: bool) -> str:
-        return ", ".join(
-            argument.argument for argument in self.get_argument_list(snake_case)
+    def parse_info(self) -> Optional[List[Dict[str, List[str]]]]:
+        return self.raw_obj.get('info')
+
+    def parse_parameters(self, parameters: ParameterObject, path: List[str]) -> None:
+        super().parse_parameters(parameters, path)
+        self._temporary_operation['_parameters'].append(parameters)
+
+    def get_parameter_type(
+        self, parameters: ParameterObject, snake_case: bool, path: List[str],
+    ) -> Optional[Argument]:
+        orig_name = parameters.name
+        if snake_case:
+            name = stringcase.snakecase(parameters.name)
+        else:
+            name = parameters.name
+
+        schema: Optional[JsonSchemaObject] = None
+        data_type: Optional[DataType] = None
+        for content in parameters.content.values():
+            if isinstance(content.schema_, ReferenceObject):
+                data_type = self.get_ref_data_type(content.schema_.ref)
+                ref_model = self.get_ref_model(content.schema_.ref)
+                schema = JsonSchemaObject.parse_obj(ref_model)
+            else:
+                schema = content.schema_
+            break
+        if not data_type:
+            if not schema:
+                schema = parameters.schema_
+            data_type = self.parse_schema(name, schema, [*path, name])
+        if not schema:
+            return None
+
+        field = DataModelField(
+            name=name,
+            data_type=data_type,
+            required=parameters.required or parameters.in_ == ParameterLocation.path,
         )
 
-    @cached_property
-    def argument_list(self) -> List[Argument]:
-        return self.get_argument_list(False)
+        if orig_name != name:
+            if parameters.in_:
+                param_is = parameters.in_.value.lower().capitalize()
+                self.imports_for_fastapi.append(
+                    Import(from_='fastapi', import_=param_is)
+                )
+                default: Optional[
+                    str
+                ] = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
+        else:
+            default = repr(schema.default) if schema.has_default else None
+        self.imports_for_fastapi.append(field.imports)
+        self.data_types.append(field.data_type)
+        return Argument(
+            name=field.name,
+            type_hint=field.type_hint,
+            default=default,  # type: ignore
+            default_value=schema.default,
+            required=field.required,
+        )
 
-    def get_argument_list(self, snake_case: bool) -> List[Argument]:
+    def get_arguments(self, snake_case: bool, path: List[str]) -> str:
+        return ", ".join(
+            argument.argument for argument in self.get_argument_list(snake_case, path)
+        )
+
+    def get_argument_list(self, snake_case: bool, path: List[str]) -> List[Argument]:
         arguments: List[Argument] = []
 
-        if self.parameters:
-            for parameter in self.parameters:
-                arguments.append(self.get_parameter_type(parameter, snake_case))
+        parameters = self._temporary_operation.get('_parameters')
+        if parameters:
+            for parameter in parameters:
+                parameter_type = self.get_parameter_type(
+                    parameter, snake_case, [*path, 'parameters']
+                )
+                if parameter_type:
+                    arguments.append(parameter_type)
 
-        if self.request:
-            arguments.append(self.request)
+        request = self._temporary_operation.get('_request')
+        if request:
+            arguments.append(request)
 
         positional_argument: bool = False
         for argument in arguments:
@@ -249,290 +323,85 @@ class Operation(CachedPropertyModel):
 
         return arguments
 
-    def get_data_type(self, schema: JsonSchemaObject, suffix: str = '') -> DataType:
-        if schema.ref:
-            data_type = self.openapi_model_parser.get_ref_data_type(schema.ref)
-            self.imports.append(
-                Import(
-                    # TODO: Improve import statements
-                    from_=model_module_name_var.get(),
-                    import_=data_type.type_hint,
-                )
-            )
-            return data_type
-        elif schema.is_array:
-            # TODO: Improve handling array
-            items = schema.items if isinstance(schema.items, list) else [schema.items]
-            return self.openapi_model_parser.data_type(
-                data_types=[self.get_data_type(i, suffix) for i in items], is_list=True
-            )
-        elif schema.is_object:
-            camelcase_path = stringcase.camelcase(self.path[1:].replace("/", "_"))
-            capitalized_suffix = suffix.capitalize()
-            name: str = f'{camelcase_path}{self.type.capitalize()}{capitalized_suffix}'
-            path = ['paths', self.path, self.type, capitalized_suffix]
-
-            data_type = self.openapi_model_parser.parse_object(name, schema, path)
-
-            self.imports.append(
-                Import(from_=model_module_name_var.get(), import_=data_type.type_hint,)
-            )
-            return data_type
-
-        return self.openapi_model_parser.get_data_type(schema)
-
-    def get_parameter_type(
-        self, parameter: Dict[str, Union[str, Dict[str, Any]]], snake_case: bool
-    ) -> Argument:
-        ref: Optional[str] = parameter.get('$ref')  # type: ignore
-        if ref:
-            parameter = get_ref_body(ref, self.openapi_model_parser, self.components)
-        name: str = parameter["name"]  # type: ignore
-        orig_name = name
-        if snake_case:
-            name = stringcase.snakecase(name)
-        content = parameter.get('content')
-        schema: Optional[JsonSchemaObject] = None
-        if content and isinstance(content, dict):
-            content_schema = [
-                c.get("schema")
-                for c in content.values()
-                if isinstance(c.get("schema"), dict)
-            ]
-            if content_schema:
-                schema = JsonSchemaObject.parse_obj(content_schema[0])
-        if not schema:
-            schema = JsonSchemaObject.parse_obj(parameter["schema"])
-
-        field = DataModelField(
-            name=name,
-            data_type=self.get_data_type(schema, 'parameter'),
-            required=parameter.get("required") or parameter.get("in") == "path",
-        )
-        self.imports.extend(field.imports)
-        if orig_name != name:
-            has_in = parameter.get('in')
-            if has_in and isinstance(has_in, str):
-                param_is = has_in.lower().capitalize()
-                self.imports.append(Import(from_='fastapi', import_=param_is))
-                default: Optional[
-                    str
-                ] = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
-            else:
-                # https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#parameterObject
-                # the spec says 'in' is a str type
-                raise TypeError(
-                    f'Issue processing parameter for "in", expected a str, but got something else: {str(parameter)}'
-                )
-        else:
-            default = repr(schema.default) if schema.has_default else None
-        return Argument(
-            name=field.name,
-            type_hint=field.type_hint,
-            default=default,  # type: ignore
-            default_value=schema.default,
-            required=field.required,
-        )
-
-    @cached_property
-    def response(self) -> str:
-        data_types: List[DataType] = []
-        for response in self.response_objects:
-            # expect 2xx
-            if response.status_code.startswith("2"):
-                for content_type, schema in response.contents.items():
-                    if RE_APPLICATION_JSON_PATTERN.match(content_type):
-                        data_type = self.get_data_type(schema, 'response')
-                        data_types.append(data_type)
-                        self.imports.extend(data_type.imports)
-
-        if not data_types:
-            return "None"
-        if len(data_types) > 1:
-            return self.openapi_model_parser.data_type(data_types=data_types).type_hint
-        return data_types[0].type_hint
-
-
-OPERATION_NAMES: List[str] = [
-    "get",
-    "put",
-    "post",
-    "delete",
-    "patch",
-    "head",
-    "options",
-    "trace",
-]
-
-
-class Operations(BaseModel):
-    class Config:
-        arbitrary_types_allowed = (OpenAPIModelParser,)
-
-    parameters: List[Dict[str, Any]] = []
-    get: Optional[Operation] = None
-    put: Optional[Operation] = None
-    post: Optional[Operation] = None
-    delete: Optional[Operation] = None
-    patch: Optional[Operation] = None
-    head: Optional[Operation] = None
-    options: Optional[Operation] = None
-    trace: Optional[Operation] = None
-    path: UsefulStr
-    security: Optional[List[Dict[str, List[str]]]] = []
-    components: Dict[str, Any] = {}
-    openapi_model_parser: OpenAPIModelParser
-
-    @root_validator(pre=True)
-    def inject_path_and_type_to_operation(cls, values: Dict[str, Any]) -> Any:
-        path: Any = values.get('path')
-        openapi_model_parser: OpenAPIModelParser = values.get('openapi_model_parser')
-        return dict(
-            **{
-                o: dict(
-                    **values[o],
-                    path=path,
-                    type=o,
-                    components=values.get('components', {}),
-                    openapi_model_parser=openapi_model_parser,
-                )
-                for o in OPERATION_NAMES
-                if o in values
-            },
-            path=path,
-            parameters=values.get('parameters', []),
-            security=values.get('security'),
-            components=values.get('components', {}),
-            openapi_model_parser=openapi_model_parser,
-        )
-
-    @root_validator
-    def inject_parameters_and_security_to_operation(cls, values: Dict[str, Any]) -> Any:
-        security = values.get('security')
-        for operation_name in OPERATION_NAMES:
-            operation = values.get(operation_name)
-            if operation:
-                parameters = values.get('parameters')
-                if parameters:
-                    operation.parameters.extend(parameters)
-                if security is not None and operation.security is None:
-                    operation.security = security
-
-        return values
-
-
-class Path(CachedPropertyModel):
-    path: UsefulStr
-    operations: Optional[Operations] = None
-    security: Optional[List[Dict[str, List[str]]]] = []
-    components: Dict[str, Any] = {}
-    openapi_model_parser: OpenAPIModelParser
-
-    @root_validator(pre=True)
-    def validate_root(cls, values: Dict[str, Any]) -> Any:
-        path = values.get('path')
-        if path:
-            if isinstance(path, str):
-                operations = values.get('operations')
-                if operations:
-                    if isinstance(operations, dict):
-                        security = values.get('security', [])
-                        components = values.get('components', {})
-                        openapi_model_parser = values.get('openapi_model_parser')
-                        return {
-                            'path': path,
-                            'operations': dict(
-                                **operations,
-                                path=path,
-                                security=security,
-                                components=components,
-                                openapi_model_parser=openapi_model_parser,
-                            ),
-                            'security': security,
-                            'components': components,
-                            'openapi_model_parser': openapi_model_parser,
-                        }
-        return values
-
-    @cached_property
-    def exists_operations(self) -> List[Operation]:
-        if self.operations:
-            return [
-                getattr(self.operations, operation_name)
-                for operation_name in OPERATION_NAMES
-                if getattr(self.operations, operation_name)
-            ]
-        return []
-
-
-Path.update_forward_refs()
-
-
-class ParsedObject:
-    def __init__(
-        self,
-        parsed_operations: List[Operation],
-        info: Optional[List[Dict[str, Any]]] = None,
-    ):
-        self.operations: List[Operation] = sorted(
-            parsed_operations, key=lambda m: m.path
-        )
-        self.imports: Imports = Imports()
-        self.info = info
-        for operation in self.operations:
-            # create imports
-            operation.arguments
-            operation.snake_case_arguments
-            operation.request
-            operation.response
-            self.imports.append(operation.imports)
-
-
-@snooper_to_methods(max_variable_length=None)
-class OpenAPIParser:
-    def __init__(
-        self,
-        input_name: str,
-        input_text: str,
-        openapi_model_parser: Optional[OpenAPIModelParser] = None,
-        model_module_name: Optional[str] = None,
+    def parse_request_body(
+        self, name: str, request_body: RequestBodyObject, path: List[str],
     ) -> None:
-        self.input_name: str = input_name
-        self.input_text: str = input_text
-        self.openapi_model_parser: OpenAPIModelParser = openapi_model_parser or OpenAPIModelParser(
-            source=''
+        super().parse_request_body(name, request_body, path)
+        arguments: List[Argument] = []
+        for (
+            media_type,
+            media_obj,
+        ) in request_body.content.items():  # type: str, MediaObject
+            if isinstance(
+                media_obj.schema_, (JsonSchemaObject, ReferenceObject)
+            ):  # pragma: no cover
+                # TODO: support other content-types
+                if RE_APPLICATION_JSON_PATTERN.match(media_type):
+                    if isinstance(media_obj.schema_, ReferenceObject):
+                        data_type = self.get_ref_data_type(media_obj.schema_.ref)
+                    else:
+                        data_type = self.parse_schema(
+                            name, media_obj.schema_, [*path, media_type]
+                        )
+                    arguments.append(
+                        # TODO: support multiple body
+                        Argument(
+                            name='body',  # type: ignore
+                            type_hint=data_type.type_hint,
+                            required=request_body.required,
+                        )
+                    )
+                    self.data_types.append(data_type)
+                elif media_type == 'application/x-www-form-urlencoded':
+                    arguments.append(
+                        # TODO: support form with `Form()`
+                        Argument(
+                            name='request',  # type: ignore
+                            type_hint='Request',  # type: ignore
+                            required=True,
+                        )
+                    )
+                    self.imports_for_fastapi.append(
+                        Import.from_full_path('starlette.requests.Request')
+                    )
+        self._temporary_operation['_request'] = arguments[0] if arguments else None
+
+    def parse_responses(
+        self,
+        name: str,
+        responses: Dict[str, Union[ResponseObject, ReferenceObject]],
+        path: List[str],
+    ) -> Dict[str, Dict[str, DataType]]:
+        data_types = super().parse_responses(name, responses, path)
+        status_code_200 = data_types.get('200')
+        if status_code_200:
+            data_type = list(status_code_200.values())[0]
+            if data_type:
+                self.data_types.append(data_type)
+            type_hint = data_type.type_hint  # TODO: change to lazy loading
+        else:
+            type_hint = 'None'
+        self._temporary_operation['response'] = type_hint
+
+        return data_types
+
+    def parse_operation(self, raw_operation: Dict[str, Any], path: List[str],) -> None:
+        self._temporary_operation = {}
+        self._temporary_operation['_parameters'] = []
+        super().parse_operation(raw_operation, path)
+        resolved_path = self.model_resolver.resolve_ref(path)
+        path_name, method = path[-2:]
+
+        self._temporary_operation['arguments'] = self.get_arguments(
+            snake_case=False, path=path
         )
-        if model_module_name:
-            model_module_name_var.set(model_module_name)
+        self._temporary_operation['snake_case_arguments'] = self.get_arguments(
+            snake_case=True, path=path
+        )
 
-    def parse(self) -> ParsedObject:
-        openapi = load_yaml(self.input_text)
-        return self.parse_paths(openapi)
-
-    def parse_security(
-        self, openapi: Dict[str, Any]
-    ) -> Optional[List[Dict[str, List[str]]]]:
-        return openapi.get('security')
-
-    def parse_info(
-        self, openapi: Dict[str, Any]
-    ) -> Optional[List[Dict[str, List[str]]]]:
-        return openapi.get('info')
-
-    def parse_paths(self, openapi: Dict[str, Any]) -> ParsedObject:
-        security = self.parse_security(openapi)
-        info = self.parse_info(openapi)
-        return ParsedObject(
-            [
-                operation
-                for path_name, operations in openapi['paths'].items()
-                for operation in Path(
-                    path=UsefulStr(path_name),
-                    operations=operations,
-                    security=security,
-                    components=openapi.get('components', {}),
-                    openapi_model_parser=self.openapi_model_parser,
-                ).exists_operations
-            ],
-            info,
+        self.operations[resolved_path] = Operation(
+            **raw_operation,
+            **self._temporary_operation,
+            path=f'/{path_name}',  # type: ignore
+            method=method,  # type: ignore
         )
