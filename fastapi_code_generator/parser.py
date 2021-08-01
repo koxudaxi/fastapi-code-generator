@@ -243,7 +243,7 @@ class OpenAPIParser(OpenAPIModelParser):
 
     def get_parameter_type(
         self, parameters: ParameterObject, snake_case: bool, path: List[str],
-    ) -> Argument:
+    ) -> Optional[Argument]:
         orig_name = parameters.name
         if snake_case:
             name = stringcase.snakecase(parameters.name)
@@ -264,6 +264,8 @@ class OpenAPIParser(OpenAPIModelParser):
             if not schema:
                 schema = parameters.schema_
             self.parse_schema(name, schema, [*path, name])
+        if not schema:
+            return None
 
         field = DataModelField(
             name=name,
@@ -303,11 +305,11 @@ class OpenAPIParser(OpenAPIModelParser):
         parameters = self._temporary_operation.get('_parameters')
         if parameters:
             for parameter in parameters:
-                arguments.append(
-                    self.get_parameter_type(
-                        parameter, snake_case, [*path, 'parameters']
-                    )
+                parameter_type = self.get_parameter_type(
+                    parameter, snake_case, [*path, 'parameters']
                 )
+                if parameter_type:
+                    arguments.append(parameter_type)
 
         request = self._temporary_operation.get('_request')
         if request:
