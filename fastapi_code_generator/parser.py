@@ -121,6 +121,8 @@ class Operation(CachedPropertyModel):
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
+    additional_responses: Dict[str, Dict[str, str]] = {}
+    return_type: str = ''
 
     @cached_property
     def type(self) -> UsefulStr:
@@ -380,11 +382,28 @@ class OpenAPIParser(OpenAPIModelParser):
             data_type = list(status_code_200.values())[0]
             if data_type:
                 self.data_types.append(data_type)
-            type_hint = data_type.type_hint  # TODO: change to lazy loading
         else:
-            type_hint = 'None'
+            data_type = DataType(type='None')
+        type_hint = data_type.type_hint  # TODO: change to lazy loading
         self._temporary_operation['response'] = type_hint
-
+        return_types = {type_hint: data_type}
+        for status_code, additional_responses in data_types.items():
+            if status_code != '200' and additional_responses:  # 200 is processed above
+                data_type = list(additional_responses.values())[0]
+                if data_type:
+                    self.data_types.append(data_type)
+                type_hint = data_type.type_hint  # TODO: change to lazy loading
+                self._temporary_operation.setdefault('additional_responses', {})[
+                    status_code
+                ] = {'model': type_hint}
+                return_types[type_hint] = data_type
+        if len(return_types) == 1:
+            return_type = next(iter(return_types.values()))
+        else:
+            return_type = DataType(data_types=list(return_types.values()))
+        if return_type:
+            self.data_types.append(return_type)
+        self._temporary_operation['return_type'] = return_type.type_hint
         return data_types
 
     def parse_operation(self, raw_operation: Dict[str, Any], path: List[str],) -> None:
