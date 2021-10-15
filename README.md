@@ -35,6 +35,7 @@ Options:
   -i, --input FILENAME     [required]
   -o, --output PATH        [required]
   -t, --template-dir PATH
+  -m, --model-file         Specify generated model file path + name, if not default to models.py
   --install-completion     Install completion for the current shell.
   --show-completion        Show completion for the current shell, to copy it
                            or customize the installation.
