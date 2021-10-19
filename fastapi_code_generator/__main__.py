@@ -26,7 +26,7 @@ def main(
     input_name: str = input_file.name
     input_text: str = input_file.read()
     if model_file:
-        model_path = Path(model_file + ".py")
+        model_path = Path(f"{model_file}.py")
     else:
         model_path = Path("models.py")
     return generate_code(input_name, input_text, output_dir, template_dir, model_path)
