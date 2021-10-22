@@ -236,8 +236,12 @@ class OpenAPIParser(OpenAPIModelParser):
         self.imports_for_fastapi: Imports = Imports()
         self.data_types: List[DataType] = []
 
-    def parse_info(self) -> Optional[List[Dict[str, List[str]]]]:
-        return self.raw_obj.get('info')
+    def parse_info(self) -> Optional[Dict[str, Any]]:
+        result = self.raw_obj.get('info', {}).copy()
+        servers = self.raw_obj.get('servers')
+        if servers:
+            result['servers'] = servers
+        return result or None
 
     def parse_parameters(self, parameters: ParameterObject, path: List[str]) -> None:
         super().parse_parameters(parameters, path)

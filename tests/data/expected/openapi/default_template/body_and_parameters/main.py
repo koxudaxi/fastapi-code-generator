@@ -23,6 +23,7 @@ app = FastAPI(
     title='Swagger Petstore',
     license={'name': 'MIT'},
     description='This description is for testing\nmulti-line\ndescription\n',
+    servers=[{'url': 'http://petstore.swagger.io/v1'}],
 )
 
 
