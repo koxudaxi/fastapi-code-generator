@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from fastapi import FastAPI
 
-from .models import Pet
+from .models import Error, Pet
 
 app = FastAPI(
     version='1.0.0',
@@ -18,8 +18,8 @@ app = FastAPI(
 )
 
 
-@app.get('/pets', response_model=List[Pet])
-def list_pets(limit: Optional[int] = 0) -> List[Pet]:
+@app.get('/pets', response_model=List[Pet], responses={'default': {'model': Error}})
+def list_pets(limit: Optional[int] = 0) -> Union[List[Pet], Error]:
     """
     List all pets
     """

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -12,7 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette import status
 
-from .models import Pet, PetForm
+from .models import Error, Pet, PetForm
 
 app = FastAPI()
 
@@ -50,31 +50,45 @@ def show_food_by_id(food_id: str, user: User = Depends(valid_current_user)) -> N
     pass
 
 
-@app.get('/pets', response_model=List[Pet])
+@app.get('/pets', response_model=List[Pet], responses={'default': {'model': Error}})
 def list_pets(
     limit: Optional[int] = 0,
     home_address: Optional[str] = Query('Unknown', alias='HomeAddress'),
     kind: Optional[str] = 'dog',
-) -> List[Pet]:
+) -> Union[List[Pet], Error]:
     pass
 
 
-@app.post('/pets', response_model=None, tags=['pets'])
-def post_pets(body: PetForm, user: User = Depends(valid_current_user)) -> None:
+@app.post(
+    '/pets', response_model=None, tags=['pets'], responses={'default': {'model': Error}}
+)
+def post_pets(
+    body: PetForm, user: User = Depends(valid_current_user)
+) -> Union[None, Error]:
     pass
 
 
-@app.get('/pets/{pet_id}', response_model=Pet, tags=['pets'])
+@app.get(
+    '/pets/{pet_id}',
+    response_model=Pet,
+    tags=['pets'],
+    responses={'default': {'model': Error}},
+)
 def show_pet_by_id(
     pet_id: str = Path(..., alias='petId'), user: User = Depends(valid_current_user)
-) -> Pet:
+) -> Union[Pet, Error]:
     pass
 
 
-@app.put('/pets/{pet_id}', response_model=None, tags=['pets'])
+@app.put(
+    '/pets/{pet_id}',
+    response_model=None,
+    tags=['pets'],
+    responses={'default': {'model': Error}},
+)
 def put_pets_pet_id(
     pet_id: str = Path(..., alias='petId'),
     body: PetForm = None,
     user: User = Depends(valid_current_user),
-) -> None:
+) -> Union[None, Error]:
     pass
