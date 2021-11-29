@@ -18,6 +18,7 @@ BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 
 MODEL_PATH: Path = Path("models.py")
 
+
 @app.command()
 def main(
     input_file: typer.FileText = typer.Option(..., "--input", "-i"),
@@ -43,7 +44,11 @@ def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
 
 
 def generate_code(
-    input_name: str, input_text: str, output_dir: Path, template_dir: Optional[Path], model_path: Optional[Path] = None
+    input_name: str,
+    input_text: str,
+    output_dir: Path,
+    template_dir: Optional[Path],
+    model_path: Optional[Path] = None,
 ) -> None:
     if not model_path:
         model_path = MODEL_PATH
