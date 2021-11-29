@@ -16,6 +16,9 @@ app = typer.Typer()
 
 BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 
+MODEL_PATH: Path = Path("models.py")
+
+
 @app.command()
 def main(
     input_file: typer.FileText = typer.Option(..., "--input", "-i"),
@@ -26,9 +29,7 @@ def main(
     input_name: str = input_file.name
     input_text: str = input_file.read()
     if model_file:
-        model_path = Path(f"{model_file}.py")
-    else:
-        model_path = Path("models.py")
+        model_path = Path(model_file).with_suffix('.py')
     return generate_code(input_name, input_text, output_dir, template_dir, model_path)
 
 
@@ -43,8 +44,14 @@ def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
 
 
 def generate_code(
-    input_name: str, input_text: str, output_dir: Path, template_dir: Optional[Path], model_path: Path
+    input_name: str,
+    input_text: str,
+    output_dir: Path,
+    template_dir: Optional[Path],
+    model_path: Optional[Path] = None,
 ) -> None:
+    if not model_path:
+        model_path = MODEL_PATH
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     if not template_dir:
