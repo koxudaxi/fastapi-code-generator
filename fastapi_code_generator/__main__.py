@@ -30,6 +30,8 @@ def main(
     input_text: str = input_file.read()
     if model_file:
         model_path = Path(model_file).with_suffix('.py')
+    else:
+        model_path = MODEL_PATH
     return generate_code(input_name, input_text, output_dir, template_dir, model_path)
 
 
