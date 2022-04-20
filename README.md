@@ -36,6 +36,7 @@ Options:
   -o, --output PATH        [required]
   -t, --template-dir PATH
   -m, --model-file         Specify generated model file path + name, if not default to models.py
+  -c, --custom-visitors    PATH - A custom visitor that adds variables to the template.
   --install-completion     Install completion for the current shell.
   --show-completion        Show completion for the current shell, to copy it
                            or customize the installation.
@@ -309,6 +310,39 @@ def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operati
     pass
 {% endfor %}
 
+```
+
+## Custom Visitors
+
+Custom visitors allow you to pass custom variables to your custom templates.
+
+E.g.
+
+### custom template
+`custom-template.jinja2`
+```jinja2
+#{ % custom_header %}
+from __future__ import annotations
+
+from fastapi import FastAPI
+
+...
+```
+
+### custom visitor
+`custom-visitor.py`
+```python
+from typing import Dict, Optional
+
+from fastapi_code_generator.parser import OpenAPIParser
+from fastapi_code_generator.visitor import Visitor
+
+
+def custom_visitor(parser: OpenAPIParser, model_path: Path) -> Dict[str, object]:
+    return {'custom_header': 'My header'}
+
+
+visit: Visitor = custom_visitor
 ```
 
 ## PyPi 

@@ -6,10 +6,9 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
-
 from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel
 from starlette import status
 
 from .models import Error, Pet, PetForm

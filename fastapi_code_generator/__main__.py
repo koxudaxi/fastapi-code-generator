@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import typer
 from datamodel_code_generator import LiteralType, PythonVersion, chdir
@@ -10,13 +11,27 @@ from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 
-from fastapi_code_generator.parser import OpenAPIParser, Operation
+from fastapi_code_generator.parser import OpenAPIParser
+from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
 
 BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 
+BUILTIN_VISITOR_DIR = Path(__file__).parent / "visitors"
+
 MODEL_PATH: Path = Path("models.py")
+
+
+def dynamic_load_module(module_path: Path) -> Any:
+    module_name = module_path.stem
+    spec = spec_from_file_location(module_name, str(module_path))
+    if spec:
+        module = module_from_spec(spec)
+        if spec.loader:
+            spec.loader.exec_module(module)
+            return module
+    raise Exception(f"{module_name} can not be loaded")
 
 
 @app.command()
@@ -27,6 +42,9 @@ def main(
     template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),
     enum_field_as_literal: Optional[LiteralType] = typer.Option(
         None, "--enum-field-as-literal"
+    ),
+    custom_visitors: Optional[List[Path]] = typer.Option(
+        None, "--custom-visitor", "-c"
     ),
 ) -> None:
     input_name: str = input_file.name
@@ -44,7 +62,14 @@ def main(
             model_path,
             enum_field_as_literal,
         )
-    return generate_code(input_name, input_text, output_dir, template_dir, model_path)
+    return generate_code(
+        input_name,
+        input_text,
+        output_dir,
+        template_dir,
+        model_path,
+        custom_visitors=custom_visitors,
+    )
 
 
 def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
@@ -64,6 +89,7 @@ def generate_code(
     template_dir: Optional[Path],
     model_path: Optional[Path] = None,
     enum_field_as_literal: Optional[str] = None,
+    custom_visitors: Optional[List[Path]] = [],
 ) -> None:
     if not model_path:
         model_path = MODEL_PATH
@@ -91,27 +117,32 @@ def generate_code(
             encoding="utf8",
         ),
     )
-    imports = Imports()
-    imports.update(parser.imports)
-    for data_type in parser.data_types:
-        reference = _get_most_of_reference(data_type)
-        if reference:
-            imports.append(data_type.all_imports)
-            imports.append(
-                Import.from_full_path(f'.{model_path.stem}.{reference.name}')
-            )
-    for from_, imports_ in parser.imports_for_fastapi.items():
-        imports[from_].update(imports_)
+
     results: Dict[Path, str] = {}
     code_formatter = CodeFormatter(PythonVersion.PY_38, Path().resolve())
-    sorted_operations: List[Operation] = sorted(
-        parser.operations.values(), key=lambda m: m.path
-    )
+
+    template_vars: Dict[str, object] = {"info": parser.parse_info()}
+    visitors: List[Visitor] = []
+
+    # Load visitors
+    builtin_visitors = BUILTIN_VISITOR_DIR.rglob("*.py")
+    visitors_path = [*builtin_visitors, *(custom_visitors if custom_visitors else [])]
+    for visitor_path in visitors_path:
+        module = dynamic_load_module(visitor_path)
+        if hasattr(module, "visit"):
+            visitors.append(module.visit)
+        else:
+            raise Exception(f"{visitor_path.stem} does not have any visit function")
+
+    # Call visitors to build template_vars
+    for visitor in visitors:
+        visitor_result = visitor(parser, model_path)
+        template_vars = {**template_vars, **visitor_result}
+
     for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir)
-        result = environment.get_template(str(relative_path)).render(
-            operations=sorted_operations, imports=imports, info=parser.parse_info(),
-        )
+        template = environment.get_template(str(relative_path))
+        result = template.render(template_vars)
         results[relative_path] = code_formatter.format_code(result)
 
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
