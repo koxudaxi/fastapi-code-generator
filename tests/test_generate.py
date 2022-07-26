@@ -76,7 +76,7 @@ def test_generate_remote_ref(mocker):
             template_dir=None,
         )
         httpx_get_mock.assert_has_calls(
-            [call('https://schema.example', headers=None),]
+            [call('https://schema.example', headers=None, verify=True),]
         )
         expected_dir = EXPECTED_DIR / OPEN_API_REMOTE_REF_DIR_NAME / oas_file.stem
         output_files = sorted(list(output_dir.glob('*')))
