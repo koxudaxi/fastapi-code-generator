@@ -48,7 +48,7 @@ pytest = "^7.1"
 pytest-cov = "*"
 pytest-mock = "*"
 mypy = "*"
-freezegun = "^1.1.0"
+freezegun = "^1.2.2"
 black = "22.10.0"
 isort = "==5.10.1"
 
