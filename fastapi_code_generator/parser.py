@@ -250,7 +250,10 @@ class OpenAPIParser(OpenAPIModelParser):
         self._temporary_operation['_parameters'].append(parameters)
 
     def get_parameter_type(
-        self, parameters: ParameterObject, snake_case: bool, path: List[str],
+        self,
+        parameters: ParameterObject,
+        snake_case: bool,
+        path: List[str],
     ) -> Optional[Argument]:
         orig_name = parameters.name
         if snake_case:
@@ -332,7 +335,10 @@ class OpenAPIParser(OpenAPIModelParser):
         return arguments
 
     def parse_request_body(
-        self, name: str, request_body: RequestBodyObject, path: List[str],
+        self,
+        name: str,
+        request_body: RequestBodyObject,
+        path: List[str],
     ) -> None:
         super().parse_request_body(name, request_body, path)
         arguments: List[Argument] = []
@@ -410,7 +416,11 @@ class OpenAPIParser(OpenAPIModelParser):
         self._temporary_operation['return_type'] = return_type.type_hint
         return data_types
 
-    def parse_operation(self, raw_operation: Dict[str, Any], path: List[str],) -> None:
+    def parse_operation(
+        self,
+        raw_operation: Dict[str, Any],
+        path: List[str],
+    ) -> None:
         self._temporary_operation = {}
         self._temporary_operation['_parameters'] = []
         super().parse_operation(raw_operation, path)
