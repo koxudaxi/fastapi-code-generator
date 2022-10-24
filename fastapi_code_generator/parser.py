@@ -119,8 +119,8 @@ class Operation(CachedPropertyModel):
     tags: Optional[List[str]]
     arguments: str = ''
     snake_case_arguments: str = ''
-    arguments_list: List[Any] = None
-    snake_case_arguments_list: List[Any] = None
+    arguments_list: List[Argument] = None
+    snake_case_arguments_list: List[Argument] = None
     request: Optional[Argument] = None
     response: str = ''
     additional_responses: Dict[str, Dict[str, str]] = {}
