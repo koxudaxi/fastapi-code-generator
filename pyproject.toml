@@ -29,10 +29,10 @@ fastapi-codegen = "fastapi_code_generator.__main__:app"
 
 [tool.poetry.dependencies]
 python = "^3.7.0"
-typer = {extras = ["all"], version = ">=0.2.1,<0.5.0"}
-datamodel-code-generator =  {extras = ["http"], version = "0.13.1"}
+typer = {extras = ["all"], version = ">=0.2.1,<0.7.0"}
+datamodel-code-generator =  {extras = ["http"], version = "0.13.2"}
 stringcase = "^1.2.0"
-PySnooper = ">=0.4.1,<0.6.0"
+PySnooper = ">=0.4.1,<1.2.0"
 jinja2 = ">=2.11.2,<4.0.0"
 pydantic = "^1.5.1"
 typed-ast = [
@@ -44,13 +44,13 @@ typed-ast = [
 #mkdocs-material = {version = "5.2.3", optional = true}
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2"
+pytest = "^7.1"
 pytest-cov = "*"
 pytest-mock = "*"
 mypy = "*"
 freezegun = "^1.1.0"
-black = "19.10b0"
-isort = "==5.6.4"
+black = "22.10.0"
+isort = "==5.10.1"
 
 #[tool.poetry.extras]
 
