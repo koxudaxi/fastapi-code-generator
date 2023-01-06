@@ -49,7 +49,7 @@ pytest-cov = "*"
 pytest-mock = "*"
 mypy = "*"
 freezegun = "^1.2.2"
-black = "22.10.0"
+black = "22.12.0"
 isort = "==5.11.4"
 
 #[tool.poetry.extras]
