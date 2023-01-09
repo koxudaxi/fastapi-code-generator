@@ -19,7 +19,11 @@ app = FastAPI(
 )
 
 
-@app.get('/{supi_or_suci}/security-information-rg', response_model=None)
+@app.get(
+    '/{supi_or_suci}/security-information-rg',
+    response_model=None,
+    tags=['Get Auth Data for FN-RG'],
+)
 def get_rg_auth_data(plmn_id: Optional[Pet] = Query(None, alias='plmn-id')) -> None:
     """
     Get authentication data for the FN-RG
