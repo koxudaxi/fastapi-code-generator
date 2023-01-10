@@ -280,6 +280,7 @@ You can use the following variables in the jinja2 templates
   - `operation.snake_case_arguments` Snake-cased function arguments
   - `operation.security` [Security](https://swagger.io/docs/specification/authentication/)
   - `operation.summary` a summary
+  - `operation.tags` [Tags](https://swagger.io/docs/specification/grouping-operations-with-tags/)
 
 ### default template 
 `main.jinja2`
