@@ -378,6 +378,16 @@ class OpenAPIParser(OpenAPIModelParser):
                     self.imports_for_fastapi.append(
                         Import.from_full_path('starlette.requests.Request')
                     )
+                elif media_type == 'application/octet-stream':
+                    arguments.append(
+                        # TODO: support form with `Form()`
+                        Argument(
+                            name='file',  # type: ignore
+                            type_hint='UploadFile',  # type: ignore
+                            required=True,
+                        )
+                    )
+                    self.imports_for_fastapi.append(Import.from_full_path("fastapi.UploadFile"))
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
     def parse_responses(
