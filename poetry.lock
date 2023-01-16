@@ -141,7 +141,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.15.0"
+version = "0.16.0"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
@@ -856,7 +856,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.0"
-content-hash = "37df47623479392b99e403e0d9b5f188c0ea1222a9116fb4cfc44ea67d140d6f"
+content-hash = "d532be64443046cf30d6da41fc63d047eb18b25a857ee8e409c9cf9c7aae4d6b"
 
 [metadata.files]
 anyio = [
@@ -962,8 +962,8 @@ coverage = [
     {file = "coverage-6.5.0.tar.gz", hash = "sha256:f642e90754ee3e06b0e7e51bce3379590e76b7f76b708e1a71ff043f87025c84"},
 ]
 datamodel-code-generator = [
-    {file = "datamodel_code_generator-0.15.0-py3-none-any.whl", hash = "sha256:67287d53beba247c0b1249c7d3540b8da836510be53679b9dcc84ff07691ea0b"},
-    {file = "datamodel_code_generator-0.15.0.tar.gz", hash = "sha256:fabe3026a7c09bd9c8a0068cc35668d3ca60042644260213206091746f660146"},
+    {file = "datamodel_code_generator-0.16.0-py3-none-any.whl", hash = "sha256:fa579ef6d65dae81d302045ff37faecf8d381520b55b6b401241a11c2bd38de9"},
+    {file = "datamodel_code_generator-0.16.0.tar.gz", hash = "sha256:7507c112cb6a522e90c5ce2c6c70456b4207ea976e5ce58977811cb3f95ffee3"},
 ]
 dnspython = [
     {file = "dnspython-2.2.0-py3-none-any.whl", hash = "sha256:081649da27ced5e75709a1ee542136eaba9842a0fe4c03da4fb0a3d3ed1f3c44"},
