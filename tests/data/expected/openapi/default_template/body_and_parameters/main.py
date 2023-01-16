@@ -28,7 +28,7 @@ app = FastAPI(
 )
 
 
-@app.post('/bar', response_model=None)
+@app.post('/bar', response_model=None, tags=['bar'])
 def post_bar(request: Request) -> None:
     """
     Create a bar
@@ -36,12 +36,14 @@ def post_bar(request: Request) -> None:
     pass
 
 
-@app.get('/foo', response_model=str)
+@app.get('/foo', response_model=str, tags=['foo'])
 def get_foo(foo: Optional[str] = None) -> str:
     pass
 
 
-@app.post('/food', response_model=None, responses={'default': {'model': str}})
+@app.post(
+    '/food', response_model=None, responses={'default': {'model': str}}, tags=['pets']
+)
 def post_food(body: str) -> Union[None, str]:
     """
     Create a food
@@ -49,7 +51,7 @@ def post_food(body: str) -> Union[None, str]:
     pass
 
 
-@app.get('/food/{food_id}', response_model=List[int])
+@app.get('/food/{food_id}', response_model=List[int], tags=['foods'])
 def show_food_by_id(
     food_id: str, message_texts: Optional[List[str]] = None
 ) -> List[int]:
@@ -59,7 +61,12 @@ def show_food_by_id(
     pass
 
 
-@app.get('/pets', response_model=List[Pet], responses={'default': {'model': Error}})
+@app.get(
+    '/pets',
+    response_model=List[Pet],
+    responses={'default': {'model': Error}},
+    tags=['pets'],
+)
 def list_pets(
     limit: Optional[int] = 0,
     home_address: Optional[str] = Query('Unknown', alias='HomeAddress'),
@@ -71,7 +78,9 @@ def list_pets(
     pass
 
 
-@app.post('/pets', response_model=None, responses={'default': {'model': Error}})
+@app.post(
+    '/pets', response_model=None, responses={'default': {'model': Error}}, tags=['pets']
+)
 def post_pets(body: PetForm) -> Union[None, Error]:
     """
     Create a pet
@@ -79,7 +88,12 @@ def post_pets(body: PetForm) -> Union[None, Error]:
     pass
 
 
-@app.get('/pets/{pet_id}', response_model=Pet, responses={'default': {'model': Error}})
+@app.get(
+    '/pets/{pet_id}',
+    response_model=Pet,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
+)
 def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
     """
     Info for a specific pet
@@ -87,7 +101,12 @@ def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
     pass
 
 
-@app.put('/pets/{pet_id}', response_model=None, responses={'default': {'model': Error}})
+@app.put(
+    '/pets/{pet_id}',
+    response_model=None,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
+)
 def put_pets_pet_id(
     pet_id: str = Path(..., alias='petId'), body: PetForm = None
 ) -> Union[None, Error]:
@@ -97,27 +116,29 @@ def put_pets_pet_id(
     pass
 
 
-@app.get('/user', response_model=UserGetResponse)
+@app.get('/user', response_model=UserGetResponse, tags=['user'])
 def get_user() -> UserGetResponse:
     pass
 
 
-@app.post('/user', response_model=None)
+@app.post('/user', response_model=None, tags=['user'])
 def post_user(body: UserPostRequest) -> None:
     pass
 
 
-@app.get('/users', response_model=List[UsersGetResponse])
+@app.get('/users', response_model=List[UsersGetResponse], tags=['user'])
 def get_users() -> List[UsersGetResponse]:
     pass
 
 
-@app.post('/users', response_model=None)
+@app.post('/users', response_model=None, tags=['user'])
 def post_users(body: List[UsersPostRequest]) -> None:
     pass
 
 
-@app.post('/{ue_id}/sdm-subscriptions', response_model=None)
+@app.post(
+    '/{ue_id}/sdm-subscriptions', response_model=None, tags=['Subscription Creation']
+)
 def subscribe(ue_id: str = Path(..., alias='ueId'), body: Pet = ...) -> None:
     """
     subscribe to notifications

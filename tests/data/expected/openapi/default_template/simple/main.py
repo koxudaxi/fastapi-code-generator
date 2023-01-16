@@ -19,7 +19,9 @@ app = FastAPI(
 )
 
 
-@app.get('/pets', response_model=Pets, responses={'default': {'model': Error}})
+@app.get(
+    '/pets', response_model=Pets, responses={'default': {'model': Error}}, tags=['pets']
+)
 def list_pets(limit: Optional[int] = None) -> Union[Pets, Error]:
     """
     List all pets
@@ -27,7 +29,9 @@ def list_pets(limit: Optional[int] = None) -> Union[Pets, Error]:
     pass
 
 
-@app.post('/pets', response_model=None, responses={'default': {'model': Error}})
+@app.post(
+    '/pets', response_model=None, responses={'default': {'model': Error}}, tags=['pets']
+)
 def create_pets() -> Union[None, Error]:
     """
     Create a pet
@@ -35,7 +39,12 @@ def create_pets() -> Union[None, Error]:
     pass
 
 
-@app.get('/pets/{pet_id}', response_model=Pets, responses={'default': {'model': Error}})
+@app.get(
+    '/pets/{pet_id}',
+    response_model=Pets,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
+)
 def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pets, Error]:
     """
     Info for a specific pet
