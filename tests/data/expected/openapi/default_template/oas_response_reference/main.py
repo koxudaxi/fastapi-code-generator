@@ -19,7 +19,12 @@ app = FastAPI(
 )
 
 
-@app.get('/pets', response_model=List[Pet], responses={'default': {'model': Error}})
+@app.get(
+    '/pets',
+    response_model=List[Pet],
+    responses={'default': {'model': Error}},
+    tags=['pets'],
+)
 def list_pets(limit: Optional[int] = 0) -> Union[List[Pet], Error]:
     """
     List all pets

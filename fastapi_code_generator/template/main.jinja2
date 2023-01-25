@@ -26,6 +26,9 @@ app = FastAPI(
                 }{% if not loop.last %},{% endif %}
             {% endfor %}
         }
+    {% endif %}
+    {% if operation.tags %}
+    , tags={{operation.tags}}
     {% endif %})
 def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operation.return_type}}:
     {%- if operation.summary %}
