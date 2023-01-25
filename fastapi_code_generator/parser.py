@@ -387,7 +387,9 @@ class OpenAPIParser(OpenAPIModelParser):
                             required=True,
                         )
                     )
-                    self.imports_for_fastapi.append(Import.from_full_path("fastapi.UploadFile"))
+                    self.imports_for_fastapi.append(
+                        Import.from_full_path("fastapi.UploadFile")
+                    )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
     def parse_responses(
