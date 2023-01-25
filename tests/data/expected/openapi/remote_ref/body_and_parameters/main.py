@@ -100,7 +100,10 @@ def put_pets_pet_id(
 
 
 @app.post(
-    '/pets/{pet_id}/image', response_model=None, responses={'default': {'model': str}}
+    '/pets/{pet_id}/image',
+    response_model=None,
+    responses={'default': {'model': str}},
+    tags=['pets'],
 )
 def upload_pet_image(
     pet_id: str = Path(..., alias='petId'), file: UploadFile = ...
