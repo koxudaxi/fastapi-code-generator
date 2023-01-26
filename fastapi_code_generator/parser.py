@@ -380,7 +380,6 @@ class OpenAPIParser(OpenAPIModelParser):
                     )
                 elif media_type == 'application/octet-stream':
                     arguments.append(
-                        # TODO: support form with `Form()`
                         Argument(
                             name='file',  # type: ignore
                             type_hint='UploadFile',  # type: ignore
