@@ -245,14 +245,14 @@ toml = ["tomli"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.16.1"
+version = "0.17.0"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "datamodel_code_generator-0.16.1-py3-none-any.whl", hash = "sha256:7fe3aa112f6273fb03331c2fd0c6c65838eb5720a80250d634126911d8e4f89f"},
-    {file = "datamodel_code_generator-0.16.1.tar.gz", hash = "sha256:3c71f0e4e6f26c7c4275a7b6a1ea37254007a9edde6f3a7e36fc289fe12f6068"},
+    {file = "datamodel_code_generator-0.17.0-py3-none-any.whl", hash = "sha256:925aa568f744939df172a660095699f772037ef63e0b472e2b851dd888172a29"},
+    {file = "datamodel_code_generator-0.17.0.tar.gz", hash = "sha256:4de57274936e0a56330fd572db9596acc5f00008a976f4f442b36a5a774f84ae"},
 ]
 
 [package.dependencies]
@@ -1395,4 +1395,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "5743002963fe8cae3df2638b39e9a78097a07a92bb85a72b46666ad6ddcb2283"
+content-hash = "fb23ae69ed8ccc21a4a1db24ab7706fd9d78977460a94ad6acc6c2640ff0dc3e"
