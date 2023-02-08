@@ -77,6 +77,34 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /pets/{petId}/image:
+    post:
+      summary: Upload image for a pet
+      operationId: uploadPetImage
+      tags:
+        - pets
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The id of the pet
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: Null response
+        default:
+          description: unexpected error
+          content:
+            application/problem+json:
+              schema:
+                type: string
   /pets/{petId}:
     get:
       summary: Info for a specific pet
