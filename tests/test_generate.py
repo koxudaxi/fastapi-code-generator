@@ -10,6 +10,7 @@ from fastapi_code_generator.__main__ import generate_code
 OPEN_API_DEFAULT_TEMPLATE_DIR_NAME = Path('openapi') / 'default_template'
 OPEN_API_SECURITY_TEMPLATE_DIR_NAME = Path('openapi') / 'custom_template_security'
 OPEN_API_REMOTE_REF_DIR_NAME = Path('openapi') / 'remote_ref'
+OPEN_API_DISABLE_TIMESTAMP_DIR_NAME = Path('openapi') / 'disable_timestamp'
 
 DATA_DIR = Path(__file__).parent / 'data'
 
@@ -81,6 +82,30 @@ def test_generate_remote_ref(mocker):
             ]
         )
         expected_dir = EXPECTED_DIR / OPEN_API_REMOTE_REF_DIR_NAME / oas_file.stem
+        output_files = sorted(list(output_dir.glob('*')))
+        expected_files = sorted(list(expected_dir.glob('*')))
+        assert [f.name for f in output_files] == [f.name for f in expected_files]
+        for output_file, expected_file in zip(output_files, expected_files):
+            assert output_file.read_text() == expected_file.read_text()
+
+
+@pytest.mark.parametrize(
+    "oas_file", (DATA_DIR / OPEN_API_DISABLE_TIMESTAMP_DIR_NAME).glob("*.yaml")
+)
+@freeze_time("2020-06-19")
+def test_disable_timestamp(oas_file):
+    with TemporaryDirectory() as tmp_dir:
+        output_dir = Path(tmp_dir) / oas_file.stem
+        generate_code(
+            input_name=oas_file.name,
+            input_text=oas_file.read_text(),
+            output_dir=output_dir,
+            template_dir=None,
+            disable_timestamp=True,
+        )
+        expected_dir = (
+            EXPECTED_DIR / OPEN_API_DISABLE_TIMESTAMP_DIR_NAME / oas_file.stem
+        )
         output_files = sorted(list(output_dir.glob('*')))
         expected_files = sorted(list(expected_dir.glob('*')))
         assert [f.name for f in output_files] == [f.name for f in expected_files]
