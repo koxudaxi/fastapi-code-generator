@@ -6,7 +6,7 @@ repos:
         files: "^fastapi_code_generator|^tests"
         exclude: "^tests/data"
   - repo: https://github.com/pycqa/isort
-    rev: 5.11.4
+    rev: 5.12.0
     hooks:
       - id: isort
         files: "^fastapi_code_generator|^tests"
