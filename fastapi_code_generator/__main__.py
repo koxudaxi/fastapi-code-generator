@@ -62,6 +62,7 @@ def main(
             template_dir,
             model_path,
             enum_field_as_literal,
+            custom_visitors=custom_visitors,
             disable_timestamp=disable_timestamp,
         )
     return generate_code(
