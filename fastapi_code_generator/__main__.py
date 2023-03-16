@@ -36,7 +36,8 @@ def dynamic_load_module(module_path: Path) -> Any:
 
 @app.command()
 def main(
-    input_file: typer.FileText = typer.Option(..., "--input", "-i"),
+    encoding: str = typer.Option("cp1252", "--encoding", "-e"),
+    input_file: str = typer.Option(..., "--input", "-i"),
     output_dir: Path = typer.Option(..., "--output", "-o"),
     model_file: str = typer.Option(None, "--model-file", "-m"),
     template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),
@@ -48,8 +49,12 @@ def main(
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
 ) -> None:
-    input_name: str = input_file.name
-    input_text: str = input_file.read()
+    input_name: str = input_file
+    input_text: str
+
+    with open(input_file, encoding=encoding) as f:
+        input_text = f.read()
+
     if model_file:
         model_path = Path(model_file).with_suffix('.py')
     else:
@@ -58,6 +63,7 @@ def main(
         return generate_code(
             input_name,
             input_text,
+            encoding,
             output_dir,
             template_dir,
             model_path,
@@ -67,6 +73,7 @@ def main(
     return generate_code(
         input_name,
         input_text,
+        encoding,
         output_dir,
         template_dir,
         model_path,
@@ -88,6 +95,7 @@ def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
 def generate_code(
     input_name: str,
     input_text: str,
+    encoding: str,
     output_dir: Path,
     template_dir: Optional[Path],
     model_path: Optional[Path] = None,
@@ -157,7 +165,7 @@ def generate_code(
         header += f"\n#   timestamp: {timestamp}"
 
     for path, code in results.items():
-        with output_dir.joinpath(path.with_suffix(".py")).open("wt") as file:
+        with output_dir.joinpath(path.with_suffix(".py")).open("wt", encoding=encoding) as file:
             print(header, file=file)
             print("", file=file)
             print(code.rstrip(), file=file)
