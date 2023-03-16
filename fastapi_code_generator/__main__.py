@@ -226,7 +226,9 @@ def generate_code(
         header += f"\n#   timestamp: {timestamp}"
 
     for path, code in results.items():
-        with output_dir.joinpath(path.with_suffix(".py")).open("wt", encoding=encoding) as file:
+        with output_dir.joinpath(path.with_suffix(".py")).open(
+            "wt", encoding=encoding
+        ) as file:
             print(header, file=file)
             print("", file=file)
             print(code.rstrip(), file=file)
