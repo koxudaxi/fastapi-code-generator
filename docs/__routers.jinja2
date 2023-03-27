@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+from fastapi import APIRouter
+from fastapi import FastAPI
+
+{{imports}}
+
+router = APIRouter(
+    tags=['{{tag}}']
+    )
+
+{% for operation in operations %}
+{% if operation.tags[0] == tag %}
+@router.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}}
+    {% if operation.additional_responses %}
+        , responses={
+            {% for status_code, models in operation.additional_responses.items() %}
+                '{{ status_code }}': {
+                {% for key, model in models.items() %}
+                    '{{ key }}': {{ model }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+                }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        }
+    {% endif %}
+    {% if operation.tags%}
+    , tags={{operation.tags}}
+    {% endif %})
+def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operation.return_type}}:
+    {%- if operation.summary %}
+    """
+    {{ operation.summary }}
+    """
+    {%- endif %}
+    pass
+{% endif %}
+{% endfor %}
