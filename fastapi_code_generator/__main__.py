@@ -183,8 +183,8 @@ def generate_code(
         result = template.render(template_vars)
         results[relative_path] = code_formatter.format_code(result)
 
-    results.pop(PosixPath("routers.jinja2"))
     if use_all_tags:
+        results.pop(PosixPath("routers.jinja2"))
         if custom_tags and Path(output_dir.joinpath("main.py")).exists():
             tags = set(str(custom_tags).split(","))
             routers = [re.sub(TITLE_PATTERN, '_', each.strip()).lower() for each in tags]
