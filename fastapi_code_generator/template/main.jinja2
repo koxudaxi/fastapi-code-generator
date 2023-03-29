@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from . import {{ routers | join(", ") }}
+{{imports}}
 
 app = FastAPI(
     {% if info %}
@@ -13,10 +13,28 @@ app = FastAPI(
     {% endif %}
     )
 
-{% for router in routers -%}
-app.include_router({{router}}.router)
-{% endfor -%}
 
-@app.get("/")
-async def root():
-    return {"message": "Gateway of the App"}
+{% for operation in operations %}
+@app.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}}
+    {% if operation.additional_responses %}
+        , responses={
+            {% for status_code, models in operation.additional_responses.items() %}
+                '{{ status_code }}': {
+                {% for key, model in models.items() %}
+                    '{{ key }}': {{ model }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+                }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        }
+    {% endif %}
+    {% if operation.tags %}
+    , tags={{operation.tags}}
+    {% endif %})
+def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operation.return_type}}:
+    {%- if operation.summary %}
+    """
+    {{ operation.summary }}
+    """
+    {%- endif %}
+    pass
+{% endfor %}

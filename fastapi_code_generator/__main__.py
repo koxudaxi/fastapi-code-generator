@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
+from pathlib import Path, PosixPath
 from typing import Any, Dict, List, Optional
 import re
 import typer
@@ -16,23 +16,30 @@ from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
 
+custom_tags = None
+
+use_all_tags = False
+
+all_tags = []
+
+TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| ')
+
+MAIN_TEMPLATE_DIR = Path(__file__).parent / "mytemplate"
+
+ROUTER_TEMPLATE_DIR = Path(__file__).parent / "mytemplate"
+
 BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 
 BUILTIN_VISITOR_DIR = Path(__file__).parent / "visitors"
 
 MODEL_PATH: Path = Path("models.py")
 
-TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| ')
-
 
 def dynamic_load_module(module_path: Path) -> Any:
     module_name = module_path.stem
-    print("module_name:", module_name)
     spec = spec_from_file_location(module_name, str(module_path))
-    print("spec:", spec)
     if spec:
         module = module_from_spec(spec)
-        print("module:", module)
         if spec.loader:
             spec.loader.exec_module(module)
             return module
@@ -48,8 +55,9 @@ def main(
     enum_field_as_literal: Optional[LiteralType] = typer.Option(
         None, "--enum-field-as-literal"
     ),
-    use_router_api: Optional[str] = typer.Option(
-        None, "--use-router-api", "-R"
+    use_router_api: bool = typer.Option(False, "--split-using-tags", "-s"),
+    custom_routers: Optional[str] = typer.Option(
+        None, "--exec-for-given-tags", "-g"
     ),
     custom_visitors: Optional[List[Path]] = typer.Option(
         None, "--custom-visitor", "-c"
@@ -63,27 +71,24 @@ def main(
     else:
         model_path = MODEL_PATH
     if use_router_api:
-        if enum_field_as_literal:
-            return generate_code(
-                input_name,
-                input_text,
-                output_dir,
-                template_dir,
-                model_path,
-                use_router_api,
-                enum_field_as_literal,
-                disable_timestamp=disable_timestamp,
-            )
-        else:
-            return generate_code(
-                input_name,
-                input_text,
-                output_dir,
-                template_dir,
-                model_path,
-                use_router_api,
-                disable_timestamp=disable_timestamp,
-            )
+        global use_all_tags
+        use_all_tags = use_router_api
+        template_dir = MAIN_TEMPLATE_DIR
+        Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
+        if custom_routers:
+            global custom_tags
+            custom_tags = custom_routers
+
+    if enum_field_as_literal:
+        return generate_code(
+            input_name,
+            input_text,
+            output_dir,
+            template_dir,
+            model_path,
+            enum_field_as_literal,
+            disable_timestamp=disable_timestamp,
+        )
     return generate_code(
         input_name,
         input_text,
@@ -111,7 +116,6 @@ def generate_code(
     output_dir: Path,
     template_dir: Optional[Path],
     model_path: Optional[Path] = None,
-    use_router_api: Optional[str] = None,
     enum_field_as_literal: Optional[str] = None,
     custom_visitors: Optional[List[Path]] = [],
     disable_timestamp: bool = False,
@@ -122,13 +126,8 @@ def generate_code(
         output_dir.mkdir(parents=True)
     if not template_dir:
         template_dir = BUILTIN_TEMPLATE_DIR
-    if use_router_api:
-        if enum_field_as_literal:
-            parser = OpenAPIParser(input_text,
-                                   enum_field_as_literal=enum_field_as_literal,
-                                   use_router_api=use_router_api)
-        else:
-            parser = OpenAPIParser(input_text, use_router_api=use_router_api)
+    if enum_field_as_literal:
+        parser = OpenAPIParser(input_text, enum_field_as_literal=enum_field_as_literal)
     else:
         parser = OpenAPIParser(input_text)
     with chdir(output_dir):
@@ -159,8 +158,6 @@ def generate_code(
     visitors_path = [*builtin_visitors, *(custom_visitors if custom_visitors else [])]
     for visitor_path in visitors_path:
         module = dynamic_load_module(visitor_path)
-        print("module_executed:", module)
-        module.__repr__()
         if hasattr(module, "visit"):
             visitors.append(module.visit)
         else:
@@ -170,24 +167,39 @@ def generate_code(
     for visitor in visitors:
         visitor_result = visitor(parser, model_path)
         template_vars = {**template_vars, **visitor_result}
-    # Convert from Tag Names to router_names
-    tags = use_router_api.split(",")
-    routers = [re.sub(TITLE_PATTERN, '_', each.strip()).lower() for each in tags]
-    template_vars = {**template_vars, "routers": routers, "tags": tags}
 
-    for target in template_dir.rglob("routers.*"):
+    if use_all_tags:
+        for operation in template_vars.get("operations"):
+            if hasattr(operation, "tags"):
+                for tag in operation.tags:
+                    all_tags.append(tag)
+    # Convert from Tag Names to router_names
+    routers = [re.sub(TITLE_PATTERN, '_', each.strip()).lower() for each in set(all_tags)]
+    template_vars = {**template_vars, "routers": routers, "tags": set(all_tags)}
+
+    for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir)
-        if relative_path == Path("routers.jinja2"):
+        template = environment.get_template(str(relative_path))
+        result = template.render(template_vars)
+        results[relative_path] = code_formatter.format_code(result)
+
+    results.pop(PosixPath("routers.jinja2"))
+    if use_all_tags:
+        if custom_tags and Path(output_dir.joinpath("main.py")).exists():
+            tags = set(str(custom_tags).split(","))
+            routers = [re.sub(TITLE_PATTERN, '_', each.strip()).lower() for each in tags]
+            template_vars["routers"] = routers
+        else:
+            tags = template_vars.get("tags")
+
+        for target in ROUTER_TEMPLATE_DIR.rglob("routers.*"):
+            relative_path = target.relative_to(template_dir)
             for router, tag in zip(routers, tags):
                 template_vars["tag"] = tag.strip()
                 template = environment.get_template(str(relative_path))
                 result = template.render(template_vars)
-                router_path = Path(router).with_suffix(".jinja2")
+                router_path = Path("routers", router).with_suffix(".jinja2")
                 results[router_path] = code_formatter.format_code(result)
-        else:
-            template = environment.get_template(str(relative_path))
-            result = template.render(template_vars)
-            results[relative_path] = code_formatter.format_code(result)
 
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     header = f"""\

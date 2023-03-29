@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from fastapi import FastAPI
 
-{{imports}}
+from ..dependencies import *
 
 router = APIRouter(
     tags=['{{tag}}']
