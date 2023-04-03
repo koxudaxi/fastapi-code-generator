@@ -1,0 +1,3158 @@
+openapi: 3.0.0
+info:
+  version: 1.0.15
+  title: OnBoarding Portal API
+  description: |
+    Here data owners can define and store configurations for new processes, 
+    modify existing ones and submit final configurations for execution. 
+    [here comes some link]( https://elbitsystems.com).
+paths:
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: Get All Existing Projects For Processing.
+      description: Retrieve list of all projects and its attributes.
+      operationId: getAllProjects
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: is_enabled
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - Projects
+      summary: Create New Processing Project.
+      description: Create new project to use in processing.
+      operationId: createNewProject
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectPartial"
+        description: Project attributes and parameters.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            project_id:
+              description: Id of newly created project.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /projects/{project_id}:
+    get:
+      tags:
+        - Projects
+      summary: Get Existing Project For Processing.
+      description: Retrieve project and all its attributes by providing project id.
+      operationId: getProjectById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: project_id
+          in: path
+          required: true
+          description: The uuid of the processing project.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/Project"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Projects
+      summary: Update Project.
+      description: Updating existing project and its properties in DB.
+      operationId: updateProjectById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdatable"
+        description: Modified project object and attributes to update the DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            project_id:
+              description: Id of updated project.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /haveownfiles:
+    post:
+      tags:
+        - List Files
+      summary: Get Indication if prefix have own direct files.
+      description: Get Indication if prefix have own direct files.
+      operationId: getOwnFilesIndication
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageListingRequest"
+        description: Parameters required for bucket keys retrieval.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: boolean
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /listfiles:
+    post:
+      tags:
+        - List Files
+      summary: Get List Of Files In Landing Zone.
+      description: Retrieve list of files subjected to use in processing.
+      operationId: getFileListByUrl
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageListingRequest"
+        description: Parameters required for bucket keys retrieval.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: Texts/README.txt
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /listcommonprefixes:
+    post:
+      tags:
+        - List Files
+      summary: Get List Of Common Files Prefixes.
+      description: Retrieve list of common files prefixes.
+      operationId: getAllCommonFilePrefixes
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StorageListingRequest"
+        description: List of prefixes.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: landingzone
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /fileinventory:
+    post:
+      tags:
+        - List Files
+      summary: Get Data/Metadata inventory grouped by extensions.
+      description: Get Data/Metadata inventory grouped by extensions.
+      operationId: getFileInventoryByUrl
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileInventoryRequest"
+        description: Parameters required for inventory grouped by extensions retrieval.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: '#/components/schemas/FileinventoryResponse'
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processors:
+    post:
+      tags:
+        - Processors
+      summary: Create Processor.
+      description: Create new processor.
+      operationId: createProcessor
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessorPartial"
+        description: Processor object that needed to be added to the DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            processor_id:
+              description: Id of newly created processor.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Processors
+      summary: Get All Processors.
+      description: Retrieve list of all processors.
+      operationId: getAllProcessors
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: processor_type
+          in: query
+          required: false
+          description: Type of the processor.
+          schema:
+            $ref: "#/components/schemas/ProcessorType"
+        - name: processor_status
+          in: query
+          required: false
+          description: Status of the processor.
+          schema:
+            $ref: "#/components/schemas/ProcessorStatus"
+        - name: processor_visibility
+          in: query
+          required: false
+          description: Visibility of the processor.
+          schema:
+            $ref: "#/components/schemas/ProcessorVisibility"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Processor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /processors/{processor_id}:
+    get:
+      tags:
+        - Processors
+      summary: Get Processor.
+      description: Retrieve processor by providing process id.
+      operationId: getProcessorById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: processor_id
+          in: path
+          required: true
+          description: The uuid of the processor.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/Processor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Processors
+      summary: Update Processor.
+      description: Updating existing processor in DB.
+      operationId: updateProcessorById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: processor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessorUpdatable"
+        description: Modified processor object to update the DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            processor_id:
+              description: Id of updated processor.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/used_processors:
+    post:
+      tags:
+        - Used Processors
+      summary: Create Used Processor.
+      description: Create new used processor.
+      operationId: createUsedProcessor
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsedProcessorPartial"
+        description: Used processor object that needed to be added to the DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            used_processor_id:
+              description: Id of newly created used processor.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Used Processors
+      summary: Get All Used Processors.
+      description: Retrieve list of all used processors.
+      operationId: getAllUsedProcessors
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UsedProcessor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/used_processors/{used_processor_id}:
+    get:
+      tags:
+        - Used Processors
+      summary: Get Used Processor.
+      description: Retrieve used processor by providing used processor id.
+      operationId: getUsedProcessorById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: used_processor_id
+          in: path
+          required: true
+          description: The uuid of used processor.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/UsedProcessor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Used Processors
+      summary: Update Used Processor.
+      description: Updating existing used processor in DB.
+      operationId: updateUsedProcessorById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: used_processor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsedProcessorUpdatable"
+        description: Modified used processor object to update the DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            used_processor_id:
+              description: Id of updated used processor.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /used_processors/{used_processor_id}/instances/{instance_id}/instance_used_processors:
+    post:
+      tags:
+        - Instance Used Processors
+      summary: Create Instance Used Processor.
+      description: Create new instance used processor.
+      operationId: createInstanceUsedProcessor
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: used_processor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstanceUsedProcessorPartial"
+        description: Instance used processor object that needed to be added to the DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            used_processor_instance_id:
+              description: Id of newly created instance used processor.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Instance Used Processors
+      summary: Get All Instance Used Processors.
+      deprecated: true
+      description: Retrieve list of all instance used processors.
+      operationId: getAllInstancesUsedProcessors
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: used_processor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InstanceUsedProcessor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /used_processors/{used_processor_id}/instances/{instance_id}/instance_used_processors/{used_processor_instance_id}:
+    get:
+      tags:
+        - Instance Used Processors
+      summary: Get Instance Used Processor.
+      description: Retrieve instance used processor by providing used processor instance id.
+      operationId: getInstanceUsedProcessorById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: used_processor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: used_processor_instance_id
+          in: path
+          required: true
+          description: The uuid of instance used processor.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/InstanceUsedProcessor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Instance Used Processors
+      summary: Update Instance Used Processor.
+      description: Updating existing instance used processor in DB.
+      operationId: updateInstanceUsedProcessorById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: used_processor_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: used_processor_instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InstanceUsedProcessorPartial"
+        description: Modified instance used processor object to update the DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            used_processor_instance_id:
+              description: Id of updated instance used processor.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes:
+    post:
+      tags:
+        - Process Blueprint
+      summary: Create Process Blueprint.
+      description: Create new process blueprint.
+      operationId: createProcessBlueprint
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessBlueprintPartial"
+        description: Process blueprint object that needed to be added to the DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            process_id:
+              description: Id of newly created process blueprint.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Process Blueprint
+      summary: Get All Process Blueprints.
+      description: Retrieve list of all process blueprints.
+      operationId: getAllProcessBlueprints
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: project_id
+          in: query
+          required: false
+          description: Project id
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessBlueprint"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}:
+    get:
+      tags:
+        - Process Blueprint
+      summary: Get Process Blueprint.
+      description: Retrieve blueprint process by providing process id.
+      operationId: getProcessBlueprintById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          description: The uuid of the process blueprint.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/ProcessBlueprint"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Process Blueprint
+      summary: Update Process Blueprint.
+      description: Updating existing process blueprint in DB.
+      operationId: updateProcessBlueprintById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessBlueprintUpdatable"
+        description: Modified process blueprint object to update the DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            process_id:
+              description: Id of updated process.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "405":
+          description: Method Not Allowed
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/data_groups:
+    post:
+      tags:
+        - Process Data Group
+      summary: Add Data Group To Process Blueprint.
+      description: Creates and adds new data group to existing blueprint of the process by
+        providing process id.
+      operationId: createProcessDataGroups
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessBlueprintDataGroupPartial"
+        description: Data groups of process blueprint that needed to be added to the DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            data_group_id:
+              description: Id of newly created data group.
+              schema:
+                type: string
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Process Data Group
+      summary: Get All Data Groups Of Process Blueprint.
+      description: Retrieve all data groups of existing process blueprint.
+      operationId: getAllProcessDataGroups
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: data_group_type
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DataGroupType"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessBlueprintDataGroup"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/data_groups/{data_group_id}:
+    get:
+      tags:
+        - Process Data Group
+      summary: Get Data Group Of Process Blueprint.
+      description: Retrieve data group of existing process blueprint by providing process
+        id and data group id.
+      operationId: getProcessDataGroupById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: data_group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/ProcessBlueprintDataGroup"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Process Data Group
+      summary: Update Data Group Of Process Blueprint.
+      description: Updating data group of existing process blueprint in DB.
+      operationId: updateDataGroupById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: data_group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessBlueprintDataGroupPartial"
+        description: Modified data group object to update in DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            data_group_id:
+              description: Id of updated process data group.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "405":
+          description: Method Not Allowed
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/instances:
+    post:
+      tags:
+        - Process Instance
+      summary: Create Process Instance.
+      description: Create new process instance.
+      operationId: createProcessInstance
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessInstancePartial"
+        description: Process instance object that needed to be added to DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            instance_id:
+              description: Id of newly created process instance.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Process Instance
+      summary: Get All Process Instances.
+      description: Retrieve list of all process instances.
+      operationId: getAllProcessInstances
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessInstance"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/instances/{instance_id}:
+    get:
+      tags:
+        - Process Instance
+      summary: Get Process Instance.
+      description: Retrieve instance of a process by providing process id and instance id.
+      operationId: getProcessInstanceById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          description: The uuid of the process blueprint.
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          description: The uuid of instance of a process.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/ProcessInstance"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Process Instance
+      summary: Update Process Instance.
+      description: Updating existing process instance in DB.
+      operationId: updateProcessInstanceById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessInstanceUpdatable"
+        description: Modified process instance object and data groups to update the DB.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            instance_id:
+              description: Id of updated instance.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "405":
+          description: Method Not Allowed
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/instances/{instance_id}/instance_used_processors:
+    get:
+      tags:
+        - Instance Used Processors
+      summary: Get All Instance Used Processors
+      description: |
+        Get all instance used processor by providing instance id and process id.
+      operationId: getAllInstanceUsedProcessors
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InstanceUsedProcessor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/instances/{instance_id}/runs:
+    get:
+      tags:
+        - Process Instance
+      summary: Get Runs Of Process Instances.
+      description: |
+        Get runs of process instance ordered by date submitted on 
+        in descending order.
+      operationId: getInstanceRunsSortedBySubmittedOn
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: run_type
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/RunType"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessInstanceRun"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /process_instance_runs:
+    get:
+      tags:
+        - Process Instance
+      summary: Get Runs Of Process Instances By Params.
+      description: |
+        Get runs of process instance created between requested dates.
+      operationId: getInstanceRunsByRequestedParams
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: from_created_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to_created_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: process_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessInstanceRunSelected"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /data_group/{data_group_id}/instances/{instance_id}/instance_data_groups:
+    post:
+      tags:
+        - Instance Data Group
+      summary: Create Instance Data Group Of Process Instance.
+      description: Create new instance data group and add it to existing process instance.
+      operationId: createInstanceDataGroup
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: data_group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessInstanceDataGroupPartial"
+        description: Instance data group object that needed to be added to DB.
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            data_group_instance_id:
+              description: Id of newly created instance data group.
+              schema:
+                type: string
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    get:
+      tags:
+        - Instance Data Group
+      summary: Get All Instance Data Groups Of Process Instance.
+      deprecated: true
+      description: Retrieve instance data group of existing process instance by
+        providing data group id and instance id.
+      operationId: getInstanceDataGroup
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: data_group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessInstanceDataGroup"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /data_group/{data_group_id}/instances/{instance_id}/instance_data_groups/{data_group_instance_id}:
+    get:
+      tags:
+        - Instance Data Group
+      summary: Get Instance Data Group Of Process Instance.
+      description: Retrieve instance data group of existing process instance by providing
+        data group id, instance id and requested instance data group id.
+      operationId: getInstanceDataGroupById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: data_group_id
+          in: path
+          required: true
+          description: The uuid of data group.
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          description: The uuid of process instance.
+          schema:
+            type: string
+            format: uuid
+        - name: data_group_instance_id
+          in: path
+          required: true
+          description: The uuid of instance data group.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/ProcessInstanceDataGroup"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    put:
+      tags:
+        - Instance Data Group
+      summary: Update Instance Data Group Of Process Instance.
+      description: Update instance data group of existing process instance by providing
+        data group id, instance id and instance data group id.
+      operationId: updateInstanceDataGroupById
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: data_group_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: data_group_instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessInstanceDataGroupPartial"
+        description: Modified instance data group of existing process instance.
+        required: true
+      responses:
+        "200":
+          description: Successful response.
+          headers:
+            data_group_instance_id:
+              description: Id of updated instance data group.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "405":
+          description: Method Not Allowed
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/instances/{instance_id}/submit/{run_type}:
+    get:
+      tags:
+        - Process Instance
+      summary: Verify Eligibility Of Instance For Submitting.
+      description: Verify if instance eligible to be submitted for run of specific type.
+      operationId: isProcessInstanceSubmittable
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: run_type
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/RunType"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: boolean
+
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+    post:
+      tags:
+        - Process Instance
+      summary: Submit Execution Request For Finalized Process Instance.
+      description: Submitting predefined process instance along with all associated
+        instance data groups to the server for further execution.
+      operationId: submitProcessInstance
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: run_type
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/RunType"
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            run_id:
+              description: Id of submitted run.
+              schema:
+                type: string
+                format: uuid
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "405":
+          description: Method Not Allowed
+        "409":
+          description: Database Conflict
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processes/{process_id}/instances/{instance_id}/instance_data_groups:
+    get:
+      tags:
+        - Instance Data Group
+      summary: Get All Instance Data Groups Of Process Instance.
+      description: Retrieve all instance data groups of existing process instance by
+        providing data group id, instance id and requested data group type.
+      operationId: getAllInstanceDataGroups
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: process_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: instance_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: data_group_type
+          in: query
+          required: false
+          description: Type of data group.
+          schema:
+            $ref: "#/components/schemas/DataGroupType"
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessInstanceDataGroup"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processing_chain/next_chainable_processors:
+    post:
+      tags:
+        - Process Blueprint Processing Chain
+      summary: Get All Next Chainable Processors.
+      description: Retrieve all next chainable processors by providing process id.
+      operationId: getNextChainableProcessors
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NextChainableProcessorRequest"
+        description: Parameters required for retrieving next chainable processors.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Processor"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processing_chain/next_chainable_datagroup:
+    post:
+      tags:
+        - Process Blueprint Processing Chain
+      summary: Get Next Chainable Data Group.
+      description: Retrieve next chainable data group by providing process id.
+      operationId: getNextChainableDatagroup
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NextChainableDatagroupRequest"
+        description: Parameters required for retrieving next chainable datagroup.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/NextChainableDatagroupResponse"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+  /processing_chain/next_chainable_instance_datagroup:
+    post:
+      tags:
+        - Process Instance Processing Chain
+      summary: Get Next Chainable Data Group.
+      description: Retrieve next chainable data group by providing process id.
+      operationId: getNextChainableInstanceDatagroup
+      parameters:
+        - name: X-User
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: X-User-Groups
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NextChainableInstanceDatagroupRequest"
+        description: Parameters required for retrieving next chainable datagroup.
+      responses:
+        "200":
+          description: Successful response.
+          content:
+            "*/*":
+              schema:
+                $ref: "#/components/schemas/NextChainableInstanceDatagroupResponse"
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "422":
+          description: Validation Error
+        "500":
+          description: Internal Server Error
+servers:
+  - url: /
+  - url: /secure/api/v1/onboardingportalapi
+  - url: http://localhost:8080/
+  - url: http://onboardingportalapi:8080/
+  - url: http://onboardingportalapi.daita.devbit.io:8081/
+
+components:
+  schemas:
+    FileinventoryResponse:
+      type: object
+      properties:
+        common_md:
+          type: boolean
+          description: indication for common.md.json file occurrence in directory
+          example: false
+        partial_md:
+          type: boolean
+          description: indication for partial.md.json file occurrence in directory
+          example: false
+        extensions:
+          type: array
+          description: list of extensions and quantities of files aggregations by extension
+          items:
+            type: object
+            properties:
+              ext:
+                type: string
+                description: extension of data files
+                example: "mpeg"
+              data_count:
+                type: integer
+                description: quantity of data files in directory aggregated by extension
+                example: 39
+              md_count:
+                type: integer
+                description: quantity of metadata files in directory aggregated by extension
+                example: 39
+              common_ext_md:
+                type: boolean
+                description: indication for common_{ext}.md.json file occurrence in directory
+                example: false
+              partial_ext_md:
+                type: boolean
+                description: indication for partial_{ext}.md.json file occurrence in directory
+                example: true
+          required:
+            - ext
+            - data_count
+            - md_count
+            - common_ext_md
+            - partial_ext_md
+        collisions_count:
+          type: integer
+          description: quantity of collisions by filename in destination bucket directory
+          example: 1
+        collisions_samples:
+          type: array
+          description: samples of filenames having collision in destination bucket directory
+          items:
+            type: string
+            description: filename
+            example: "test_flight_001.mpeg"
+          required:
+            - common_md
+            - partial_md
+            - extensions
+            - collisions_count
+            - collisions_samples
+
+    NextChainableDatagroupRequest:
+      type: object
+      properties:
+        processor_id:
+          type: string
+          format: uuid
+          example: dca74c6d-91cc-4c6d-a7f7-a7f7bc234c6d
+        input_datagroup_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+        suppl_datagroup_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+      required:
+        - processor_id
+        - input_datagroup_manifest
+        - suppl_datagroup_manifest
+    NextChainableDatagroupResponse:
+      type: object
+      properties:
+        output_datagroup_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+        reduce_datagroup_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+      required:
+        - output_datagroup_manifest
+        - reduce_datagroup_manifest
+    NextChainableInstanceDatagroupRequest:
+      type: object
+      properties:
+        processor_id:
+          type: string
+          format: uuid
+          example: dca74c6d-91cc-4c6d-a7f7-a7f7bc234c6d
+        input_datagroup:
+          $ref: "#/components/schemas/InstanceDataGroupValues"
+        suppl_datagroup:
+          $ref: "#/components/schemas/InstanceDataGroupValues"
+      required:
+        - processor_id
+        - input_datagroup
+        - suppl_datagroup
+    NextChainableInstanceDatagroupResponse:
+      type: object
+      properties:
+        output_datagroup:
+          $ref: "#/components/schemas/InstanceDataGroupValues"
+        reduce_datagroup:
+          $ref: "#/components/schemas/InstanceDataGroupValues"
+      required:
+        - output_datagroup
+        - reduce_datagroup
+    NextChainableProcessorRequest:
+      type: object
+      properties:
+        input_datagroup_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+        suppl_datagroup_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+      required:
+        - input_datagroup_manifest
+        - suppl_datagroup_manifest
+    RunType:
+      type: string
+      enum:
+        - validation
+        - processing
+        - ingestion
+      example: validation
+    ProcessorType:
+      type: string
+      enum:
+        - validator
+        - extractor
+        - ingestor
+        - processor
+        - reshape
+      example: extractor
+    ProcessorStatus:
+      type: string
+      enum:
+        - draft
+        - testrun
+        - enabled
+        - obsolete
+        - disabled
+      example: enabled
+    ProcessorVisibility:
+      type: string
+      enum:
+        - system
+        - private
+        - project
+        - groups
+        - public
+      example: public
+    DataGroupType:
+      type: string
+      enum:
+        - initial
+        - existing
+        - intermediate
+        - final
+      example: initial
+    FileInventoryRequest:
+      allOf:
+        - $ref: "#/components/schemas/StorageListingRequest"
+        - properties:
+            raw_zone_bucket:
+              type: string
+              pattern: (?!(^xn--|-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+              example: test-raw-zone
+              description: Base URL of the bucket.
+          required:
+            - raw_zone_bucket
+
+    StorageListingRequest:
+      type: object
+      properties:
+        access_key:
+          type: string
+          pattern: ^[A-Z0-9]{20}$
+          example: ABCDEFGHIJKLMNOPQRST
+          description: Secret access key provided by client for authentication
+            purposes.
+        secret_access_key:
+          type: string
+          pattern: ^[a-zA-Z0-9/\+]{40}$
+          example: 6GLuEBb8e35ceyH6GLuEBb8e35ceyH/+6GLuEBb8
+          description: Secret access key provided by client for authentication
+            purposes.
+        region_name:
+          type: string
+          example: eu-west-1
+          description: AWS Region.
+        endpoint_override_url:
+          type: string
+          format: uri
+          example: http://minio:9000
+          description: Overridden storage URL
+        bucket:
+          type: string
+          pattern: (?!(^xn--|-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+          example: test-landing-zone
+          description: Base URL of the bucket.
+        prefix:
+          type: string
+          example: objectstorage
+          description: Prefix of the keys block.
+      required:
+        - access_key
+        - secret_access_key
+        - bucket
+    Processor:
+      allOf:
+        - properties:
+            processor_id:
+              type: string
+              format: uuid
+              example: dca74c6d-91cc-4c6d-a7f7-a7f7bc234c6d
+        - $ref: "#/components/schemas/ProcessorPartial"
+        - $ref: "#/components/schemas/ChangeTrackingBlock"
+      required:
+        - processor_id
+    ProcessorPartial:
+      allOf:
+        - properties:
+            project_id:
+              type: string
+              format: uuid
+              example: dca74c6d-91cc-4c6d-a791-a7f7bc291ccd
+        - $ref: "#/components/schemas/ProcessorUpdatable"
+      required:
+        - project_id
+    ProcessorUpdatable:
+      allOf:
+        - properties:
+            parent_processor_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-a7f7bc2391dd
+            processor_name:
+              type: string
+              example: Extract Header
+            processor_version:
+              type: string
+              example: 2.3.2.1
+            multiplicity:
+              type: string
+              enum:
+                - single
+                - multiple
+              example: multiple
+            description:
+              type: string
+              example: Extracting column names from header of the file.
+            processor_type:
+              $ref: "#/components/schemas/ProcessorType"
+            encapsulation:
+              type: string
+              enum:
+                - docker
+                - wheel
+                - maven
+              example: wheel
+            artifact_ref:
+              type: string
+              example: land/video_metadata:1.3.0.2
+            entrypoint:
+              type: string
+              example: SomeTimesIsNotExitOne
+            processor_status:
+              $ref: "#/components/schemas/ProcessorStatus"
+            processor_visibility:
+              $ref: "#/components/schemas/ProcessorVisibility"
+            processor_manifest:
+              $ref: "#/components/schemas/ProcessorManifest"
+            default_env_parameters:
+              type: object
+              description: Unbound empty object describing default environmental parameters.TBD.FFU.
+            default_program_arguments:
+              type: object
+              description: Unbound empty object describing default program arguments.TBD.FFU.
+
+      required:
+        - processor_name
+        - processor_version
+        - multiplicity
+        - processor_type
+        - encapsulation
+        - artifact_ref
+        - processor_status
+        - processor_visibility
+        - default_env_parameters
+        - default_program_arguments
+
+    UsedProcessor:
+      allOf:
+        - properties:
+            used_processor_id:
+              type: string
+              format: uuid
+              example: d391ddf6-91cc-4c6d-a7f7-91cc91cc91cc
+            process_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-91cc91cc91cc
+        - $ref: "#/components/schemas/UsedProcessorPartial"
+      required:
+        - used_processor_id
+        - process_id
+    UsedProcessorPartial:
+      allOf:
+        - properties:
+            processor_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-91cc91cc91cc
+        - $ref: "#/components/schemas/UsedProcessorUpdatable"
+      required:
+        - processor_id
+    UsedProcessorUpdatable:
+      properties:
+        override_env_parameters:
+          type: object
+          description: Unbound empty object describing overridden environmental
+            parameters.TBD.FFU.
+        override_program_arguments:
+          type: object
+          description: Unbound empty object describing overridden program arguments.TBD.FFU.
+      required:
+        - override_env_parameters
+        - override_program_arguments
+    InstanceUsedProcessor:
+      allOf:
+        - properties:
+            used_processor_instance_id:
+              type: string
+              format: uuid
+              example: d391ddf6-91cc-4c6d-a7f7-91cc9191cccc
+            instance_id:
+              type: string
+              format: uuid
+              example: a7f7b5f6-91cc-b5f6-a7f7-91cc91cc91cc
+            used_processor_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-a7f7bc2391dd
+        - $ref: "#/components/schemas/InstanceUsedProcessorPartial"
+      required:
+        - used_processor_instance_id
+        - used_processor_id
+        - instance_id
+    InstanceUsedProcessorPartial:
+      properties:
+        override_program_arguments:
+          type: object
+          description: Unbound empty object describing overridden program arguments.TBD.FFU.
+        override_env_parameters:
+          type: object
+          description: Unbound empty object describing overridden environmental
+            parameters.TBD.FFU.
+      required:
+        - override_program_arguments
+        - override_env_parameters
+    ProcessBlueprint:
+      allOf:
+        - properties:
+            process_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-2989bc2342bb
+            parent_process_id:
+              type: string
+              format: uuid
+              example: 5adda535-6360-461e-a245-5c74b2eaac11
+        - $ref: "#/components/schemas/ProcessBlueprintPartial"
+        - $ref: "#/components/schemas/ChangeTrackingBlock"
+      required:
+        - process_id
+    ProcessBlueprintPartial:
+      allOf:
+        - properties:
+            project_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-2989bc235c74
+        - $ref: "#/components/schemas/ProcessBlueprintUpdatable"
+      required:
+        - project_id
+    ProcessBlueprintUpdatable:
+      allOf:
+        - properties:
+            process_name:
+              type: string
+              example: CopyFiles
+            process_version:
+              type: string
+              example: 1.0.0.0
+            description:
+              type: string
+              example: Here comes some text to describe the process blueprint.
+            process_status:
+              type: string
+              enum:
+                - draft
+                - testrun
+                - enabled
+                - obsolete
+                - disabled
+              example: enabled
+            process_visibility:
+              type: string
+              enum:
+                - private
+                - project
+                - groups
+                - public
+              example: public
+            data_processor_dag:
+              $ref: "#/components/schemas/DataProcessorDAG"
+
+      required:
+        - process_name
+        - process_version
+        - data_processor_dag
+
+    ProcessInstance:
+      allOf:
+        - properties:
+            instance_id:
+              type: string
+              format: uuid
+              example: 70bdcbc7-3dbb-47da-a425-dfc110410892
+            process_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-2989bc2342bb
+        - $ref: "#/components/schemas/ProcessInstancePartial"
+        - $ref: "#/components/schemas/ChangeTrackingBlock"
+      required:
+        - instance_id
+        - process_id
+    ProcessInstanceUpdatable:
+      allOf:
+        - properties:
+            description:
+              type: string
+              example: Here comes some text to describe the process instance.
+        - $ref: "#/components/schemas/InitialMetadata"
+    ProcessInstancePartial:
+      allOf:
+        - properties:
+            project_storage_spec:
+              type: string
+              format: uuid
+              example: 70bdcbc7-3dbb-47da-a425-dfc110dfc112
+        - $ref: "#/components/schemas/ProcessInstanceUpdatable"
+      required:
+        - project_storage_spec
+    InitialMetadata:
+      properties:
+        initial_metadata:
+          type: object
+          description: Unbound empty object describing initial metadata.TBD.FFU.
+      required:
+        - initial_metadata
+    ChangeTrackingBlock:
+      properties:
+        created_by:
+          type: string
+          example: UserA
+        created_on:
+          type: string
+          format: date-time
+          example: 2022-03-05T14:20:00.245Z
+        last_modified_by:
+          type: string
+          example: UserA
+        last_modified_on:
+          type: string
+          format: date-time
+          example: 2022-03-05T14:20:00.245Z
+      required:
+        - created_by
+        - created_on
+    ProcessBlueprintDataGroup:
+      allOf:
+        - properties:
+            data_group_id:
+              type: string
+              format: uuid
+              example: 85b285e0-8bed-4271-aaef-a4a09aa56fae
+            process_id:
+              type: string
+              format: uuid
+              example: a4a09ae0-8bed-aaef-aaef-a4a0aaefaaef
+        - $ref: "#/components/schemas/ProcessBlueprintDataGroupPartial"
+      required:
+        - data_group_id
+    ProcessBlueprintDataGroupPartial:
+      type: object
+      properties:
+        group_name:
+          type: string
+          example: vis_thermal_8bit_triplets/vis/bmp
+        metadata_extractor:
+          type: string
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa28bba
+        data_group_type:
+          $ref: "#/components/schemas/DataGroupType"
+        data_group_manifest:
+          $ref: "#/components/schemas/ExtractManifest"
+        description:
+          type: string
+          example: Here comes some text to describe the data group.
+      required:
+        - group_name
+        - data_group_type
+        - data_group_manifest
+    ProcessInstanceDataGroup:
+      type: object
+      allOf:
+        - properties:
+            data_group_instance_id:
+              type: string
+              format: uuid
+              example: 7f7285e0-8bed-4271-aaef-a4a09aa28bed
+            data_group_id:
+              type: string
+              format: uuid
+              example: 7f7285e0-8bed-8bed-aaef-a4a09aa2aaef
+            instance_id:
+              type: string
+              format: uuid
+              example: 7f7285e0-8bed-4271-aaef-a4a09aa28bba
+            data_is_ingested:
+              type: boolean
+              example: false
+            metadata_schema_is_valid:
+              type: boolean
+              example: false
+            validated_data_file_count:
+              type: integer
+              example: 1
+            ingested_data_file_count:
+              type: integer
+              example: 2
+        - $ref: "#/components/schemas/ProcessInstanceDataGroupPartial"
+      required:
+        - data_group_instance_id
+        - data_group_id
+        - instance_id
+    ProcessInstanceDataGroupPartial:
+      type: object
+      properties:
+        data_file_count:
+          type: integer
+          example: 3
+        metadata_file_count:
+          type: integer
+          example: 2
+        data_group_values:
+          $ref: "#/components/schemas/InstanceDataGroupValues"
+      required:
+        - data_group_values
+    ProcessInstanceRun:
+      type: object
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa23e1a
+        instance_id:
+          type: string
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa45ead
+        run_type:
+          $ref: "#/components/schemas/RunType"
+        dag_run_id:
+          type: string
+          example: DR-0003
+        submitted_on:
+          type: string
+          format: date-time
+          example: 2022-03-06T09:48:13.236Z
+        submitted_by:
+          type: string
+          example: UserA
+        started_on:
+          type: string
+          format: date-time
+          example: 2022-03-07T09:52:01.187Z
+        failed_on:
+          type: string
+          format: date-time
+          example: 2022-03-07T10:15:00.201Z
+        finished_on:
+          type: string
+          format: date-time
+          example: 2022-03-07T10:15:00.201Z
+      required:
+        - run_id
+        - instance_id
+        - submitted_by
+        - submitted_on
+        - run_type
+    ProcessInstanceRunSelected:
+      type: object
+      properties:
+        process_id:
+          type: string
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa23e1a
+        instance_id:
+          type: string
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa45ead
+        project_id:
+          type: string
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa45abc
+        process_name:
+          type: string
+          example: Convert files
+        process_version:
+          type: string
+          example: 1.4.1.7
+        created_on:
+          type: string
+          format: date-time
+          example: 2022-03-06T09:48:13.236Z
+        created_by:
+          type: string
+          example: UserA
+        validation_last_run_id:
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa45abc
+        validation_last_run_status:
+          type: string
+          example: Finished
+        ingestion_last_run_id:
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa45abc
+        ingestion_last_run_status:
+          type: string
+          example: Failed
+        processing_last_run_id:
+          format: uuid
+          example: 7f7285e0-8bed-4271-aaef-a4a09aa45abc
+        processing_last_run_status:
+          type: string
+          example: Finished
+        is_processing_dag:
+          type: boolean
+          example: true
+        is_initial_datagroups:
+          type: boolean
+          example: false
+        total_data_file_count:
+          type: integer
+          example: 3
+        total_validated_data_file_count:
+          type: integer
+          example: 2
+        total_ingested_data_file_count:
+          type: integer
+          example: 1
+
+      required:
+        - process_id
+        - instance_id
+        - process_name
+        - process_version
+        - created_on
+        - created_by
+        - is_processing_dag
+        - is_initial_datagroups
+
+    Project:
+      allOf:
+        - properties:
+            project_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-2989bc2332ea
+            project_storage_spec_id:
+              type: string
+              format: uuid
+              example: dca7b5f6-91cc-4c6d-a7f7-2989bc1745de
+            valid_from:
+              type: string
+              format: date-time
+              example: 2022-05-07T12:13:00.201Z
+            valid_until:
+              type: string
+              format: date-time
+              example: 2022-05-13T17:19:00.201Z
+        - $ref: "#/components/schemas/ProjectPartial"
+        - $ref: "#/components/schemas/ChangeTrackingBlock"
+      required:
+        - project_id
+        - valid_from
+        - valid_until
+    ProjectPartial:
+      allOf:
+        - properties:
+            project_ref_id:
+              type: string
+              example: n312
+        - $ref: "#/components/schemas/ProjectUpdatable"
+      required:
+        - project_ref_id
+    ProjectUpdatable:
+      allOf:
+        - properties:
+            project_name:
+              type: string
+              example: Moving Vehicles
+            description:
+              type: string
+              example: Description of the project.
+            is_enabled:
+              type: boolean
+              example: true
+            ldap_groups:
+              type: array
+              items:
+                type: string
+                example: administrators
+            landing_zone_bucket:
+              type: string
+              pattern: (?!(^xn--|-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+              example: no2227764-landing-zone
+            raw_zone_bucket:
+              type: string
+              pattern: (?!(^xn--|-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+              example: no2227764-raw-zone
+            processed_zone_bucket:
+              type: string
+              pattern: (?!(^xn--|-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+              example: no2227764-processed-zone
+            archive_zone_bucket:
+              type: string
+              pattern: (?!(^xn--|-s3alias$))^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$
+              example: no2227764-archive-zone
+            endpoint_override_url:
+              type: string
+              format: uri
+              example: http://minio:9000
+            region_name:
+              type: string
+              example: us-east-1
+            account_id:
+              type: string
+              example: "123456789"
+            account_user:
+              type: string
+              example: minioadmin
+            account_password:
+              type: string
+              example: minioadmin
+            storage_type:
+              $ref: "#/components/schemas/StorageType"
+          required:
+            - project_name
+            - is_enabled
+            - landing_zone_bucket
+            - raw_zone_bucket
+            - processed_zone_bucket
+            - archive_zone_bucket
+            - account_user
+            - account_password
+    ProcessorManifest:
+      type: object
+      properties:
+        inputManifest:
+          $ref: "#/components/schemas/ExtractManifest"
+        supplManifest:
+          $ref: "#/components/schemas/ExtractManifest"
+        outputManifest:
+          $ref: "#/components/schemas/ReplaceManifest"
+        reduceManifest:
+          $ref: "#/components/schemas/ReplaceManifest"
+        inputMetadata:
+          $ref: "#/components/schemas/FlagManifest"
+        inputUpdateMetadata:
+          $ref: "#/components/schemas/FlagManifest"
+        supplMetadata:
+          $ref: "#/components/schemas/FlagManifest"
+        outputMetadata:
+          $ref: "#/components/schemas/FlagManifest"
+        reduceMetadata:
+          $ref: "#/components/schemas/FlagManifest"
+        inputLineage:
+          $ref: "#/components/schemas/FlagManifest"
+        supplLineage:
+          $ref: "#/components/schemas/FlagManifest"
+        outputLineage:
+          $ref: "#/components/schemas/FlagManifest"
+        reduceLineage:
+          $ref: "#/components/schemas/FlagManifest"
+      additionalProperties: false
+      required:
+        - inputManifest
+        - supplManifest
+        - outputManifest
+        - reduceManifest
+        - inputMetadata
+        - inputUpdateMetadata
+        - supplMetadata
+        - outputMetadata
+        - reduceMetadata
+        - inputLineage
+        - supplLineage
+        - outputLineage
+        - reduceLineage
+    ExtractManifest:
+      type: array
+      items:
+        type: string
+        example: camera/(.*).mp4
+      description: Regular expression with capturing groups to match extract filename elements
+    ReplaceManifest:
+      type: array
+      items:
+        type: string
+        example: camera/#1$1.mp3
+      description: |
+        Expression with tuple index and capturing group to replace 
+        filename with extracted elements
+    FlagManifest:
+      type: array
+      items:
+        type: boolean
+        example: true
+    DataProcessorDAG:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/InputLink"
+          - $ref: "#/components/schemas/OutputLink"
+          - $ref: "#/components/schemas/ControlLink"
+    InputLink:
+      type: object
+      properties:
+        inputDataGroups:
+          type: array
+          items:
+            type: string
+            format: uuid
+        supplDataGroups:
+          type: array
+          items:
+            type: string
+            format: uuid
+        usedProcessor:
+          type: string
+          format: uuid
+      additionalProperties: false
+      required:
+        - inputDataGroups
+        - supplDataGroups
+        - usedProcessor
+    OutputLink:
+      type: object
+      properties:
+        usedProcessor:
+          type: string
+          format: uuid
+        outputDataGroups:
+          type: array
+          items:
+            type: string
+            format: uuid
+        reduceDataGroups:
+          type: array
+          items:
+            type: string
+            format: uuid
+      additionalProperties: false
+      required:
+        - usedProcessor
+        - outputDataGroups
+        - reduceDataGroups
+    ControlLink:
+      type: object
+      properties:
+        fromUsedProcessor:
+          type: string
+          format: uuid
+        toUsedProcessor:
+          type: string
+          format: uuid
+      additionalProperties: false
+      required:
+        - fromUsedProcessor
+        - toUsedProcessor
+    StorageType:
+      type: string
+      enum:
+        - netapp
+        - minio
+        - aws
+      example: minio
+    InstanceDataGroupValues:
+      type: array
+      items:
+        type: array
+        items:
+          type: string
+          example: camera/*image*.MP4
