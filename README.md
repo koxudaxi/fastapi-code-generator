@@ -353,3 +353,4 @@ visit: Visitor = custom_visitor
 ## License
 
 fastapi-code-generator is released under the MIT License. http://www.opensource.org/licenses/mit-license
+
