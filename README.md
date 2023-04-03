@@ -353,8 +353,3 @@ visit: Visitor = custom_visitor
 ## License
 
 fastapi-code-generator is released under the MIT License. http://www.opensource.org/licenses/mit-license
-
-
-
-
---input swagger.yaml --output app  --split-using-tags --exec-for-given-tags "Instance Data Group, List Files"
