@@ -427,8 +427,8 @@ visit: Visitor = custom_visitor
 │   ├── models.py            # "models" of the application
 │   ├── dependencies.py      # "dependencies" module, e.g. import app.dependencies
 │   └── routers              # "routers" is a "app subpackage"
-│   │   ├── fat_cats.py      # "cats" submodule, e.g. import app.routers.fat_cats
-│   │   └── slim_dogs.py     # "dogs" submodule, e.g. import app.routers.slim_dogs
+│       ├── fat_cats.py      # "fat_cats" submodule, e.g. import app.routers.fat_cats
+│       └── slim_dogs.py     # "slim_dogs" submodule, e.g. import app.routers.slim_dogs
 ```
 **_Generate main aside with all of its routers_**:
 ```bash
