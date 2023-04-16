@@ -64,9 +64,9 @@ def main(
         model_path = Path(model_file).with_suffix('.py')
     else:
         model_path = MODEL_PATH
-    if generate_routers:
-        template_dir = BUILTIN_MODULAR_TEMPLATE_DIR
-        Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
+    # if generate_routers:
+    #     template_dir = BUILTIN_MODULAR_TEMPLATE_DIR
+    #     Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
 
     if enum_field_as_literal:
         return generate_code(
@@ -119,6 +119,9 @@ def generate_code(
         model_path = MODEL_PATH
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
+    if generate_routers:
+        template_dir = BUILTIN_MODULAR_TEMPLATE_DIR
+        Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
     if not template_dir:
         template_dir = BUILTIN_TEMPLATE_DIR
     if enum_field_as_literal:
@@ -169,9 +172,9 @@ def generate_code(
                 for tag in operation.tags:
                     all_tags.append(tag)
     # Convert from Tag Names to router_names
-    set_of_tags = set(all_tags)
-    routers = [re.sub(TITLE_PATTERN, '_', each.strip()).lower() for each in set_of_tags]
-    template_vars = {**template_vars, "routers": routers, "tags": set_of_tags}
+    sorted_tags = sorted(set(all_tags))
+    routers = sorted([re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags])
+    template_vars = {**template_vars, "routers": routers, "tags": sorted_tags}
 
     for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir)
@@ -180,16 +183,14 @@ def generate_code(
         results[relative_path] = code_formatter.format_code(result)
 
     if generate_routers:
-        tags = set_of_tags
+        tags = sorted_tags
         results.pop(PosixPath("routers.jinja2"))
         if generate_routers_for_tags_filter:
-            if not Path(output_dir.joinpath("main.py")).exists():
-                tags = set(tag.strip() for tag in str(generate_routers_for_tags_filter).split(","))
-            else:
+            if Path(output_dir.joinpath("main.py")).exists():
                 with open(Path(output_dir.joinpath("main.py")), 'r') as file:
                     content = file.read()
                     if "app.include_router" in content:
-                        tags = set(tag.strip() for tag in str(generate_routers_for_tags_filter).split(","))
+                        tags = sorted(set(tag.strip() for tag in str(generate_routers_for_tags_filter).split(",")))
 
         for target in BUILTIN_MODULAR_TEMPLATE_DIR.rglob("routers.*"):
             relative_path = target.relative_to(template_dir)
