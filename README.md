@@ -314,7 +314,7 @@ def {{operation.function_name}}({{operation.snake_case_arguments}}) -> {{operati
 
 ```
 
-### modular_template
+### modular template
 `modular_template/main.jinja2`:
 ```jinja
 from __future__ import annotations
@@ -429,7 +429,8 @@ visit: Visitor = custom_visitor
 │   ├── dependencies.py      # "dependencies" module, e.g. import app.dependencies
 │   └── routers              # "routers" is a "app subpackage"
 │       ├── fat_cats.py      # "fat_cats" submodule, e.g. import app.routers.fat_cats
-│       └── slim_dogs.py     # "slim_dogs" submodule, e.g. import app.routers.slim_dogs
+│       ├── slim_dogs.py     # "slim_dogs" submodule, e.g. import app.routers.slim_dogs
+│       └── wild_boars.py    # "wild_boars" submodule, e.g. import app.routers.wild_boars
 ```
 
 See [documentation](https://fastapi.tiangolo.com/tutorial/bigger-applications/) of APIRouter OpenAPI for more details.
