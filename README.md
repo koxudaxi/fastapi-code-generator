@@ -421,6 +421,7 @@ visit: Visitor = custom_visitor
 ```
 
 ### Multiple Files using APIRouter (For Bigger Applications)
+
 ```
 ├── app                      # "app" is a Root directory      
 │   ├── main.py              # "main" module
@@ -430,6 +431,9 @@ visit: Visitor = custom_visitor
 │       ├── fat_cats.py      # "fat_cats" submodule, e.g. import app.routers.fat_cats
 │       └── slim_dogs.py     # "slim_dogs" submodule, e.g. import app.routers.slim_dogs
 ```
+
+See [documentation](https://fastapi.tiangolo.com/tutorial/bigger-applications/) of APIRouter OpenAPI for more details.
+
 **_Generate main aside with all of its routers_**:
 ```bash
 $ fastapi-codegen --input swagger.yaml --output app --generate-routers
@@ -437,7 +441,7 @@ $ fastapi-codegen --input swagger.yaml --output app --generate-routers
 
 **_Regenerate specific routers_**:
 ```bash
-$ fastapi-codegen --input swagger.yaml --output app --generate-routers --specify-tags "Slim Dogs, Fat Cats"
+$ fastapi-codegen --input swagger.yaml --output app --generate-routers --specify-tags "Wild Boars, Fat Cats"
 ```
 
 
@@ -445,6 +449,7 @@ $ fastapi-codegen --input swagger.yaml --output app --generate-routers --specify
 <summary>swagger.yaml</summary>
 <pre>
 <code>
+
 openapi: "3.0.0"
 info:
   version: 1.0.0
@@ -452,8 +457,58 @@ info:
   license:
     name: MIT
 servers:
+  - url: /
   - url: http://petstore.swagger.io/v1
+  - url: http://localhost:8080/
 paths:
+  /boars:
+    get:
+      summary: List All Wild Boars
+      operationId: listWildBoars
+      tags:
+        - Wild Boars
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: An array of wild boars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WildBoars"
+    post:
+      summary: Create a Wild Boar
+      operationId: createWildBoars
+      tags:
+        - Wild Boars
+      responses:
+        '201':
+          description: Null response
+  /boars/{boarId}:
+    get:
+      summary: Info For a Specific Boar
+      operationId: showBoarById
+      tags:
+        - Wild Boars
+      parameters:
+        - name: boarId
+          in: path
+          required: true
+          description: The id of the boar to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
   /cats:
     get:
       summary: List All Fat Cats
@@ -501,7 +556,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FatCats"
+                $ref: "#/components/schemas/Pet"
   /dogs:
     get:
       summary: List All Slim Dogs
@@ -549,7 +604,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SlimDogs"
+                $ref: "#/components/schemas/Pet"
 components:
   schemas:
     Pet:
@@ -573,6 +628,11 @@ components:
       description: list of slim dogs
       items:
         $ref: "#/components/schemas/Pet"
+    WildBoars:
+      type: array
+      description: list of wild boars
+      items:
+        $ref: "#/components/schemas/Pet"
 </code>
 </pre>
 </details>
@@ -588,17 +648,22 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from .routers import fat_cats, slim_dogs
+from .routers import fat_cats, slim_dogs, wild_boars
 
 app = FastAPI(
     version='1.0.0',
     title='Swagger Petstore',
     license={'name': 'MIT'},
-    servers=[{'url': 'http://petstore.swagger.io/v1'}],
+    servers=[
+        {'url': '/'},
+        {'url': 'http://petstore.swagger.io/v1'},
+        {'url': 'http://localhost:8080/'},
+    ],
 )
 
 app.include_router(fat_cats.router)
 app.include_router(slim_dogs.router)
+app.include_router(wild_boars.router)
 
 
 @app.get("/")
@@ -632,6 +697,10 @@ class FatCats(BaseModel):
 
 class SlimDogs(BaseModel):
     __root__: List[Pet] = Field(..., description='list of slim dogs')
+
+
+class WildBoars(BaseModel):
+    __root__: List[Pet] = Field(..., description='list of wild boars')
 ```
 
 `app/routers/fat_cats.py`:
@@ -643,7 +712,7 @@ class SlimDogs(BaseModel):
 
 from __future__ import annotations
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter
 
 from ..dependencies import *
 
@@ -666,8 +735,8 @@ def create_fat_cats() -> None:
     pass
 
 
-@router.get('/cats/{cat_id}', response_model=FatCats, tags=['Fat Cats'])
-def show_cat_by_id(cat_id: str = Path(..., alias='catId')) -> FatCats:
+@router.get('/cats/{cat_id}', response_model=Pet, tags=['Fat Cats'])
+def show_cat_by_id(cat_id: str = Path(..., alias='catId')) -> Pet:
     """
     Info For a Specific Cat
     """
@@ -683,7 +752,7 @@ def show_cat_by_id(cat_id: str = Path(..., alias='catId')) -> FatCats:
 
 from __future__ import annotations
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter
 
 from ..dependencies import *
 
@@ -706,10 +775,50 @@ def create_slim_dogs() -> None:
     pass
 
 
-@router.get('/dogs/{dog_id}', response_model=SlimDogs, tags=['Slim Dogs'])
-def show_dog_by_id(dog_id: str = Path(..., alias='dogId')) -> SlimDogs:
+@router.get('/dogs/{dog_id}', response_model=Pet, tags=['Slim Dogs'])
+def show_dog_by_id(dog_id: str = Path(..., alias='dogId')) -> Pet:
     """
     Info For a Specific Dog
+    """
+    pass
+```
+
+`app/routers/wild_boars.py`:
+
+```python
+# generated by fastapi-codegen:
+#   filename:  swagger.yaml
+#   timestamp: 2023-04-04T12:06:16+00:00
+
+from __future__ import annotations
+
+from fastapi import APIRouter
+
+from ..dependencies import *
+
+router = APIRouter(tags=['Wild Boars'])
+
+
+@router.get('/boars', response_model=WildBoars, tags=['Wild Boars'])
+def list_wild_boars(limit: Optional[int] = None) -> WildBoars:
+    """
+    List All Wild Boars
+    """
+    pass
+
+
+@router.post('/boars', response_model=None, tags=['Wild Boars'])
+def create_wild_boars() -> None:
+    """
+    Create a Wild Boar
+    """
+    pass
+
+
+@router.get('/boars/{boar_id}', response_model=Pet, tags=['Wild Boars'])
+def show_boar_by_id(boar_id: str = Path(..., alias='boarId')) -> Pet:
+    """
+    Info For a Specific Boar
     """
     pass
 ```
@@ -727,7 +836,7 @@ from typing import Optional
 
 from fastapi import Path
 
-from .models import FatCats, SlimDogs
+from .models import FatCats, Pet, SlimDogs, WildBoars
 ```
 ## PyPi 
 

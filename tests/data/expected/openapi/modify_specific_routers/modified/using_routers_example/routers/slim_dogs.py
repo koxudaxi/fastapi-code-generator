@@ -16,7 +16,7 @@ def list_slim_dogs(limit: Optional[int] = None) -> SlimDogs:
     """
     List All Slim Dogs
     """
-    pass
+    return SlimDogs.parse_obj([{"id": "9", "name": "Pluto"}])
 
 
 @router.post('/dogs', response_model=None, tags=['Slim Dogs'])
@@ -24,7 +24,7 @@ def create_slim_dogs() -> None:
     """
     Create a Slim Dog
     """
-    pass
+    return None
 
 
 @router.get('/dogs/{dog_id}', response_model=Pet, tags=['Slim Dogs'])
@@ -32,4 +32,4 @@ def show_dog_by_id(dog_id: str = Path(..., alias='dogId')) -> Pet:
     """
     Info For a Specific Dog
     """
-    pass
+    return Pet.parse_obj({"id": dog_id, "name": "Pluto"})

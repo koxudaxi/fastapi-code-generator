@@ -6,8 +6,58 @@ info:
   license:
     name: MIT
 servers:
+  - url: /
   - url: http://petstore.swagger.io/v1
+  - url: http://localhost:8080/
 paths:
+  /boars:
+    get:
+      summary: List All Wild Boars
+      operationId: listWildBoars
+      tags:
+        - Wild Boars
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: An array of wild boars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WildBoars"
+    post:
+      summary: Create a Wild Boar
+      operationId: createWildBoars
+      tags:
+        - Wild Boars
+      responses:
+        '201':
+          description: Null response
+  /boars/{boarId}:
+    get:
+      summary: Info For a Specific Boar
+      operationId: showBoarById
+      tags:
+        - Wild Boars
+      parameters:
+        - name: boarId
+          in: path
+          required: true
+          description: The id of the boar to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
   /cats:
     get:
       summary: List All Fat Cats
@@ -55,7 +105,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/FatCats"
+                $ref: "#/components/schemas/Pet"
   /dogs:
     get:
       summary: List All Slim Dogs
@@ -103,7 +153,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SlimDogs"
+                $ref: "#/components/schemas/Pet"
 components:
   schemas:
     Pet:
@@ -125,5 +175,10 @@ components:
     SlimDogs:
       type: array
       description: list of slim dogs
+      items:
+        $ref: "#/components/schemas/Pet"
+    WildBoars:
+      type: array
+      description: list of wild boars
       items:
         $ref: "#/components/schemas/Pet"

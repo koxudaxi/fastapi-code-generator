@@ -50,8 +50,8 @@ def main(
         None, "--enum-field-as-literal"
     ),
     generate_routers: bool = typer.Option(False, "--generate-routers", "-r"),
-    generate_routers_for_tags_filter: Optional[str] = typer.Option(
-        None, "--generate-routers-for-tags-filter"
+    specify_tags: Optional[str] = typer.Option(
+        None, "--specify-tags"
     ),
     custom_visitors: Optional[List[Path]] = typer.Option(
         None, "--custom-visitor", "-c"
@@ -78,7 +78,7 @@ def main(
             enum_field_as_literal,
             disable_timestamp=disable_timestamp,
             generate_routers=generate_routers,
-            generate_routers_for_tags_filter=generate_routers_for_tags_filter,
+            specify_tags=specify_tags,
         )
     return generate_code(
         input_name,
@@ -89,7 +89,7 @@ def main(
         custom_visitors=custom_visitors,
         disable_timestamp=disable_timestamp,
         generate_routers=generate_routers,
-        generate_routers_for_tags_filter=generate_routers_for_tags_filter,
+        specify_tags=specify_tags,
     )
 
 
@@ -113,7 +113,7 @@ def generate_code(
     custom_visitors: Optional[List[Path]] = [],
     disable_timestamp: bool = False,
     generate_routers: Optional[bool] = None,
-    generate_routers_for_tags_filter: Optional[str] = None
+    specify_tags: Optional[str] = None
 ) -> None:
     if not model_path:
         model_path = MODEL_PATH
@@ -185,12 +185,12 @@ def generate_code(
     if generate_routers:
         tags = sorted_tags
         results.pop(PosixPath("routers.jinja2"))
-        if generate_routers_for_tags_filter:
+        if specify_tags:
             if Path(output_dir.joinpath("main.py")).exists():
                 with open(Path(output_dir.joinpath("main.py")), 'r') as file:
                     content = file.read()
                     if "app.include_router" in content:
-                        tags = sorted(set(tag.strip() for tag in str(generate_routers_for_tags_filter).split(",")))
+                        tags = sorted(set(tag.strip() for tag in str(specify_tags).split(",")))
 
         for target in BUILTIN_MODULAR_TEMPLATE_DIR.rglob("routers.*"):
             relative_path = target.relative_to(template_dir)
