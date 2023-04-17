@@ -449,7 +449,6 @@ $ fastapi-codegen --input swagger.yaml --output app --generate-routers --specify
 <summary>swagger.yaml</summary>
 <pre>
 <code>
-
 openapi: "3.0.0"
 info:
   version: 1.0.0
