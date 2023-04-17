@@ -245,18 +245,18 @@ toml = ["tomli"]
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.16.1"
+version = "0.18.0"
 description = "Datamodel Code Generator"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "datamodel_code_generator-0.16.1-py3-none-any.whl", hash = "sha256:7fe3aa112f6273fb03331c2fd0c6c65838eb5720a80250d634126911d8e4f89f"},
-    {file = "datamodel_code_generator-0.16.1.tar.gz", hash = "sha256:3c71f0e4e6f26c7c4275a7b6a1ea37254007a9edde6f3a7e36fc289fe12f6068"},
+    {file = "datamodel_code_generator-0.18.0-py3-none-any.whl", hash = "sha256:d8a1a2c1fb115e26ac3880d3b373d14c178849f0c842d6b4738a57ee43beeff0"},
+    {file = "datamodel_code_generator-0.18.0.tar.gz", hash = "sha256:5acf69bcf3c440e90a7d0c7b99ca100c8f6ce0348aa4b3da8ee4f9b0242d164c"},
 ]
 
 [package.dependencies]
-argcomplete = ">=1.10,<3.0"
+argcomplete = ">=1.10,<4.0"
 black = ">=19.10b0"
 genson = ">=1.2.1,<2.0"
 httpx = {version = "*", optional = true, markers = "extra == \"http\""}
@@ -267,16 +267,12 @@ openapi-spec-validator = ">=0.2.8,<=0.5.1"
 packaging = "*"
 prance = ">=0.18.2,<1.0"
 pydantic = [
-    {version = ">=1.10.0,<2.0", extras = ["email"], markers = "python_version >= \"3.11\""},
-    {version = ">=1.5.1,<2.0", extras = ["email"], markers = "python_version < \"3.10\""},
-    {version = ">=1.9.0,<2.0", extras = ["email"], markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
+    {version = ">=1.10.0,<2.0.0", extras = ["email"], markers = "python_version >= \"3.11\" and python_version < \"4.0\""},
+    {version = ">=1.5.1,<2.0.0", extras = ["email"], markers = "python_version < \"3.10\""},
+    {version = ">=1.9.0,<2.0.0", extras = ["email"], markers = "python_version >= \"3.10\" and python_version < \"3.11\""},
 ]
 PySnooper = ">=0.4.1,<2.0.0"
 toml = ">=0.10.0,<1.0.0"
-typed-ast = [
-    {version = ">=1.5.0", markers = "python_full_version >= \"3.9.8\""},
-    {version = ">=1.4.2", markers = "python_full_version < \"3.9.8\""},
-]
 
 [package.extras]
 http = ["httpx"]
@@ -1395,4 +1391,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=6)", "pytest-black (>=
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.0"
-content-hash = "5743002963fe8cae3df2638b39e9a78097a07a92bb85a72b46666ad6ddcb2283"
+content-hash = "be3cacd5ebbeb1ab865b8f16078f52d63c279adc33ea4f517bcca7b78a760dca"
