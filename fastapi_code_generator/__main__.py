@@ -167,7 +167,7 @@ def generate_code(
         template_vars = {**template_vars, **visitor_result}
 
     if generate_routers:
-        for operation in template_vars.get("operations"):
+        for operation in template_vars.get("operations", []):
             if hasattr(operation, "tags"):
                 for tag in operation.tags:
                     all_tags.append(tag)
@@ -194,7 +194,7 @@ def generate_code(
 
         for target in BUILTIN_MODULAR_TEMPLATE_DIR.rglob("routers.*"):
             relative_path = target.relative_to(template_dir)
-            for router, tag in zip(routers, template_vars["tags"]):
+            for router, tag in zip(routers, sorted_tags):
                 if not Path(output_dir.joinpath("routers", router)).with_suffix(".py").exists() or tag in tags:
                     template_vars["tag"] = tag.strip()
                     template = environment.get_template(str(relative_path))
