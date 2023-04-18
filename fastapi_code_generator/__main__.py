@@ -167,7 +167,8 @@ def generate_code(
         template_vars = {**template_vars, **visitor_result}
 
     if generate_routers:
-        for operation in template_vars.get("operations", []):
+        operations: Any = template_vars.get("operations", [])
+        for operation in operations:
             if hasattr(operation, "tags"):
                 for tag in operation.tags:
                     all_tags.append(tag)
