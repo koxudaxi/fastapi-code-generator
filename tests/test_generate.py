@@ -161,9 +161,11 @@ def test_generate_modify_specific_routers(oas_file):
         output_dir=output_dir,
         template_dir=BUILTIN_MODULAR_TEMPLATE_DIR,
         generate_routers=True,
-        specify_tags=SPECIFIC_TAGS
+        specify_tags=SPECIFIC_TAGS,
     )
-    expected_dir = EXPECTED_DIR / 'openapi/modify_specific_routers/expected' / oas_file.stem
+    expected_dir = (
+        EXPECTED_DIR / 'openapi/modify_specific_routers/expected' / oas_file.stem
+    )
     output_files = sorted(list(output_dir.glob('*')))
     expected_files = sorted(list(expected_dir.glob('*')))
     assert [f.name for f in output_files] == [f.name for f in expected_files]

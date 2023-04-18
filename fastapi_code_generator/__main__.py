@@ -1,8 +1,9 @@
+import re
 from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path, PosixPath
 from typing import Any, Dict, List, Optional
-import re
+
 import typer
 from datamodel_code_generator import LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
@@ -50,9 +51,7 @@ def main(
         None, "--enum-field-as-literal"
     ),
     generate_routers: bool = typer.Option(False, "--generate-routers", "-r"),
-    specify_tags: Optional[str] = typer.Option(
-        None, "--specify-tags"
-    ),
+    specify_tags: Optional[str] = typer.Option(None, "--specify-tags"),
     custom_visitors: Optional[List[Path]] = typer.Option(
         None, "--custom-visitor", "-c"
     ),
@@ -113,7 +112,7 @@ def generate_code(
     custom_visitors: Optional[List[Path]] = [],
     disable_timestamp: bool = False,
     generate_routers: Optional[bool] = None,
-    specify_tags: Optional[str] = None
+    specify_tags: Optional[str] = None,
 ) -> None:
     if not model_path:
         model_path = MODEL_PATH
@@ -174,7 +173,9 @@ def generate_code(
                     all_tags.append(tag)
     # Convert from Tag Names to router_names
     sorted_tags = sorted(set(all_tags))
-    routers = sorted([re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags])
+    routers = sorted(
+        [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
+    )
     template_vars = {**template_vars, "routers": routers, "tags": sorted_tags}
 
     for target in template_dir.rglob("*"):
@@ -191,12 +192,19 @@ def generate_code(
                 with open(Path(output_dir.joinpath("main.py")), 'r') as file:
                     content = file.read()
                     if "app.include_router" in content:
-                        tags = sorted(set(tag.strip() for tag in str(specify_tags).split(",")))
+                        tags = sorted(
+                            set(tag.strip() for tag in str(specify_tags).split(","))
+                        )
 
         for target in BUILTIN_MODULAR_TEMPLATE_DIR.rglob("routers.*"):
             relative_path = target.relative_to(template_dir)
             for router, tag in zip(routers, sorted_tags):
-                if not Path(output_dir.joinpath("routers", router)).with_suffix(".py").exists() or tag in tags:
+                if (
+                    not Path(output_dir.joinpath("routers", router))
+                    .with_suffix(".py")
+                    .exists()
+                    or tag in tags
+                ):
                     template_vars["tag"] = tag.strip()
                     template = environment.get_template(str(relative_path))
                     result = template.render(template_vars)
