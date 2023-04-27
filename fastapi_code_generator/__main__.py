@@ -63,9 +63,6 @@ def main(
         model_path = Path(model_file).with_suffix('.py')
     else:
         model_path = MODEL_PATH
-    # if generate_routers:
-    #     template_dir = BUILTIN_MODULAR_TEMPLATE_DIR
-    #     Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
 
     if enum_field_as_literal:
         return generate_code(
