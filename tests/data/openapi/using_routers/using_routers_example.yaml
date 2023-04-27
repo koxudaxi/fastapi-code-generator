@@ -1,0 +1,184 @@
+
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+servers:
+  - url: /
+  - url: http://petstore.swagger.io/v1
+  - url: http://localhost:8080/
+paths:
+  /boars:
+    get:
+      summary: List All Wild Boars
+      operationId: listWildBoars
+      tags:
+        - Wild Boars
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: An array of wild boars
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WildBoars"
+    post:
+      summary: Create a Wild Boar
+      operationId: createWildBoars
+      tags:
+        - Wild Boars
+      responses:
+        '201':
+          description: Null response
+  /boars/{boarId}:
+    get:
+      summary: Info For a Specific Boar
+      operationId: showBoarById
+      tags:
+        - Wild Boars
+      parameters:
+        - name: boarId
+          in: path
+          required: true
+          description: The id of the boar to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+  /cats:
+    get:
+      summary: List All Fat Cats
+      operationId: listFatCats
+      tags:
+        - Fat Cats
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: An array of fat cats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FatCats"
+    post:
+      summary: Create a Fat Cat
+      operationId: createFatCats
+      tags:
+        - Fat Cats
+      responses:
+        '201':
+          description: Null response
+  /cats/{catId}:
+    get:
+      summary: Info For a Specific Cat
+      operationId: showCatById
+      tags:
+        - Fat Cats
+      parameters:
+        - name: catId
+          in: path
+          required: true
+          description: The id of the cat to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+  /dogs:
+    get:
+      summary: List All Slim Dogs
+      operationId: listSlimDogs
+      tags:
+        - Slim Dogs
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: An array of slim dogs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SlimDogs"
+    post:
+      summary: Create a Slim Dog
+      operationId: createSlimDogs
+      tags:
+        - Slim Dogs
+      responses:
+        '201':
+          description: Null response
+  /dogs/{dogId}:
+    get:
+      summary: Info For a Specific Dog
+      operationId: showDogById
+      tags:
+        - Slim Dogs
+      parameters:
+        - name: dogId
+          in: path
+          required: true
+          description: The id of the dog to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Expected response to a valid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+components:
+  schemas:
+    Pet:
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tag:
+          type: string
+    FatCats:
+      type: array
+      description: list of fat cats
+      items:
+        $ref: "#/components/schemas/Pet"
+    SlimDogs:
+      type: array
+      description: list of slim dogs
+      items:
+        $ref: "#/components/schemas/Pet"
+    WildBoars:
+      type: array
+      description: list of wild boars
+      items:
+        $ref: "#/components/schemas/Pet"
