@@ -72,6 +72,7 @@ def main(
             template_dir,
             model_path,
             enum_field_as_literal,
+            custom_visitors=custom_visitors,
             disable_timestamp=disable_timestamp,
             generate_routers=generate_routers,
             specify_tags=specify_tags,
