@@ -1,0 +1,22 @@
+from __future__ import annotations
+
+from fastapi import FastAPI
+
+from .routers import {{ routers | join(", ") }}
+
+app = FastAPI(
+    {% if info %}
+    {% for key,value in info.items() %}
+    {% set info_value= value.__repr__() %}
+    {{ key }} = {{info_value}},
+    {% endfor %}
+    {% endif %}
+    )
+
+{% for router in routers -%}
+app.include_router({{router}}.router)
+{% endfor -%}
+
+@app.get("/")
+async def root():
+    return {"message": "Gateway of the App"}
