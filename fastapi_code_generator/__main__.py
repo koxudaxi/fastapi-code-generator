@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path, PosixPath
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import typer
@@ -186,7 +186,7 @@ def generate_code(
 
     if generate_routers:
         tags = sorted_tags
-        results.pop(PosixPath("routers.jinja2"))
+        results.pop(Path("routers.jinja2"))
         if specify_tags:
             if Path(output_dir.joinpath("main.py")).exists():
                 with open(Path(output_dir.joinpath("main.py")), 'r') as file:
