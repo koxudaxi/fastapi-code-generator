@@ -381,6 +381,17 @@ class OpenAPIParser(OpenAPIModelParser):
                 elif media_type == 'application/octet-stream':
                     arguments.append(
                         Argument(
+                            name='request',  # type: ignore
+                            type_hint='Request',  # type: ignore
+                            required=True,
+                        )
+                    )
+                    self.imports_for_fastapi.append(
+                        Import.from_full_path("fastapi.Request")
+                    )
+                elif media_type == 'multipart/form-data':
+                    arguments.append(
+                        Argument(
                             name='file',  # type: ignore
                             type_hint='UploadFile',  # type: ignore
                             required=True,

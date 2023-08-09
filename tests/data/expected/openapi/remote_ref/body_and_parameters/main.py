@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from fastapi import FastAPI, Path, Query, UploadFile
+from fastapi import FastAPI, Path, Query, Request
 
 from .models import Error, Pet, PetForm
 
@@ -106,7 +106,7 @@ def put_pets_pet_id(
     tags=['pets'],
 )
 def upload_pet_image(
-    pet_id: str = Path(..., alias='petId'), file: UploadFile = ...
+    pet_id: str = Path(..., alias='petId'), request: Request = ...
 ) -> Union[None, str]:
     """
     Upload image for a pet
