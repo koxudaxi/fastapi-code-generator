@@ -1,5 +1,5 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import call
 
@@ -156,7 +156,10 @@ def test_generate_modify_specific_routers(oas_file):
     with TemporaryDirectory() as tmp_dir:
         output_dir = Path(tmp_dir) / (oas_file.stem + '_modify_specific_routers')
         # modified contains generated source files. Some of them will be regenerated in this test.
-        modified_dir = EXPECTED_DIR / 'openapi/modify_specific_routers/modified/using_routers_example'
+        modified_dir = (
+            EXPECTED_DIR
+            / 'openapi/modify_specific_routers/modified/using_routers_example'
+        )
         shutil.copytree(modified_dir, output_dir)
 
         Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
@@ -168,7 +171,9 @@ def test_generate_modify_specific_routers(oas_file):
             generate_routers=True,
             specify_tags=SPECIFIC_TAGS,
         )
-        expected_dir = (EXPECTED_DIR / 'openapi/modify_specific_routers/expected' / oas_file.stem)
+        expected_dir = (
+            EXPECTED_DIR / 'openapi/modify_specific_routers/expected' / oas_file.stem
+        )
         output_files = sorted(list(output_dir.glob('*')))
         expected_files = sorted(list(expected_dir.glob('*')))
         assert [f.name for f in output_files] == [f.name for f in expected_files]
