@@ -1,0 +1,79 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+  description: API definiton for testing file upload
+
+servers:
+  - url: http://petstore.swagger.io/v1
+paths:
+  /pets/{id}/image/octet-stream:
+    post:
+      summary: Upload image with octet-stream for a pet
+      operationId: uploadPetImageWithOctetStream
+      tags:
+        - pets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pet
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: empty response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /pets/{id}/image/form-data:
+    post:
+      summary: Upload image with Form-Data for a pet
+      operationId: uploadPetImageWithFormData
+      tags:
+        - pets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pet
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: empty response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
