@@ -330,7 +330,7 @@ class OpenAPIParser(OpenAPIModelParser):
         for argument in arguments:
             if positional_argument and argument.required and argument.default is None:
                 argument.default = UsefulStr('...')
-            positional_argument = argument.required
+            positional_argument = argument.required or argument.default is not None
 
         return arguments
 
@@ -379,6 +379,17 @@ class OpenAPIParser(OpenAPIModelParser):
                         Import.from_full_path('starlette.requests.Request')
                     )
                 elif media_type == 'application/octet-stream':
+                    arguments.append(
+                        Argument(
+                            name='request',  # type: ignore
+                            type_hint='Request',  # type: ignore
+                            required=True,
+                        )
+                    )
+                    self.imports_for_fastapi.append(
+                        Import.from_full_path("fastapi.Request")
+                    )
+                elif media_type == 'multipart/form-data':
                     arguments.append(
                         Argument(
                             name='file',  # type: ignore

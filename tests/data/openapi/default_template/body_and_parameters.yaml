@@ -337,6 +337,29 @@ paths:
             schema:
               $ref: '#/components/schemas/Pet'
         required: true
+  /convert:
+    post:
+      operationId: convert
+      parameters:
+        - in: query
+          name: format
+          schema:
+            type: string
+            default: pdf
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
 components:
   parameters:
     MyParam:
