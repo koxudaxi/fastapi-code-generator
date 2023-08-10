@@ -330,7 +330,7 @@ class OpenAPIParser(OpenAPIModelParser):
         for argument in arguments:
             if positional_argument and argument.required and argument.default is None:
                 argument.default = UsefulStr('...')
-            positional_argument = argument.required
+            positional_argument = argument.required or argument.default is not None
 
         return arguments
 
