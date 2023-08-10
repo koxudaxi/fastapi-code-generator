@@ -22,6 +22,7 @@ BUILTIN_MODULAR_TEMPLATE_DIR = DATA_DIR / 'modular_template'
 
 SPECIFIC_TAGS = 'Wild Boars, Fat Cats'
 
+ENCODING = 'utf-8'
 
 @pytest.mark.parametrize(
     "oas_file", (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml")
@@ -33,6 +34,7 @@ def test_generate_default_template(oas_file):
         generate_code(
             input_name=oas_file.name,
             input_text=oas_file.read_text(),
+            encoding=ENCODING,
             output_dir=output_dir,
             template_dir=None,
         )
@@ -54,6 +56,7 @@ def test_generate_custom_security_template(oas_file):
         generate_code(
             input_name=oas_file.name,
             input_text=oas_file.read_text(),
+            encoding=ENCODING,
             output_dir=output_dir,
             template_dir=DATA_DIR / 'custom_template' / 'security',
         )
@@ -79,6 +82,7 @@ def test_generate_remote_ref(mocker):
         generate_code(
             input_name=oas_file.name,
             input_text=oas_file.read_text(),
+            encoding=ENCODING,
             output_dir=output_dir,
             template_dir=None,
         )
@@ -105,6 +109,7 @@ def test_disable_timestamp(oas_file):
         generate_code(
             input_name=oas_file.name,
             input_text=oas_file.read_text(),
+            encoding=ENCODING,
             output_dir=output_dir,
             template_dir=None,
             disable_timestamp=True,
@@ -130,6 +135,7 @@ def test_generate_using_routers(oas_file):
         generate_code(
             input_name=oas_file.name,
             input_text=oas_file.read_text(),
+            encoding=ENCODING,
             output_dir=output_dir,
             template_dir=BUILTIN_MODULAR_TEMPLATE_DIR,
             generate_routers=True,
@@ -166,6 +172,7 @@ def test_generate_modify_specific_routers(oas_file):
         generate_code(
             input_name=oas_file.name,
             input_text=oas_file.read_text(),
+            encoding=ENCODING,
             output_dir=output_dir,
             template_dir=BUILTIN_MODULAR_TEMPLATE_DIR,
             generate_routers=True,
