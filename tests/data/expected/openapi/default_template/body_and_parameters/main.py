@@ -94,7 +94,7 @@ def post_pets(body: PetForm) -> Union[None, Error]:
 
 
 @app.get(
-    '/pets/{pet_id}',
+    '/pets/{petId}',
     response_model=Pet,
     responses={'default': {'model': Error}},
     tags=['pets'],
@@ -107,7 +107,7 @@ def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
 
 
 @app.put(
-    '/pets/{pet_id}',
+    '/pets/{petId}',
     response_model=None,
     responses={'default': {'model': Error}},
     tags=['pets'],
