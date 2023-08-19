@@ -63,7 +63,7 @@ def list_pets(
 )
 def post_pets(
     body: PetForm, user: User = Depends(valid_current_user)
-) -> Union[None, Error]:
+) -> Optional[Error]:
     pass
 
 
@@ -89,5 +89,5 @@ def put_pets_pet_id(
     pet_id: str = Path(..., alias='petId'),
     body: PetForm = None,
     user: User = Depends(valid_current_user),
-) -> Union[None, Error]:
+) -> Optional[Error]:
     pass

@@ -27,7 +27,7 @@ def get_foo(foo: Optional[str] = None) -> str:
 @app.post(
     '/food', response_model=None, responses={'default': {'model': str}}, tags=['pets']
 )
-def post_food(body: str) -> Union[None, str]:
+def post_food(body: str) -> Optional[str]:
     """
     Create a food
     """
@@ -64,7 +64,7 @@ def list_pets(
 @app.post(
     '/pets', response_model=None, responses={'default': {'model': Error}}, tags=['pets']
 )
-def post_pets(body: PetForm) -> Union[None, Error]:
+def post_pets(body: PetForm) -> Optional[Error]:
     """
     Create a pet
     """
@@ -92,7 +92,7 @@ def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
 )
 def put_pets_pet_id(
     pet_id: str = Path(..., alias='petId'), body: PetForm = None
-) -> Union[None, Error]:
+) -> Optional[Error]:
     """
     update a pet
     """
@@ -107,7 +107,7 @@ def put_pets_pet_id(
 )
 def upload_pet_image(
     pet_id: str = Path(..., alias='petId'), request: Request = ...
-) -> Union[None, str]:
+) -> Optional[str]:
     """
     Upload image for a pet
     """
