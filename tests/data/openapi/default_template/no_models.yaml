@@ -1,0 +1,22 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  license:
+    name: MIT
+  description: 
+
+servers:
+  - url: http://petstore.swagger.io/v1
+paths:
+  /hello:
+    get:
+      summary: get hello message
+      operationId: hello
+      responses:
+        '200':
+          description: message string
+          content:
+            text/plain:
+              schema:
+                type: string

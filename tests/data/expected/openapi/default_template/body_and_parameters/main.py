@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import List, Optional, Union
 
-from fastapi import FastAPI, Path, Query, UploadFile
+from fastapi import FastAPI, Path, Query, Request
 from starlette.requests import Request
 
 from .models import (
@@ -37,7 +37,7 @@ def post_bar(request: Request) -> None:
 
 
 @app.post('/convert', response_model=bytes)
-def convert(format: Optional[str] = 'pdf', file: UploadFile = ...) -> bytes:
+def convert(format: Optional[str] = 'pdf', request: Request = ...) -> bytes:
     pass
 
 

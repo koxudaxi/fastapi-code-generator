@@ -127,10 +127,11 @@ def generate_code(
         parser = OpenAPIParser(input_text)
     with chdir(output_dir):
         models = parser.parse()
+    output = output_dir / model_path
     if not models:
-        return
+        # if no models (schemas), just generate an empty model file.
+        modules = {output: ("", input_name)}
     elif isinstance(models, str):
-        output = output_dir / model_path
         modules = {output: (models, input_name)}
     else:
         raise Exception('Modular references are not supported in this version')
