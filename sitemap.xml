@@ -2,12 +2,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://koxudaxi.github.io/fastapi-code-generator/</loc>
-         <lastmod>2023-08-10</lastmod>
+         <lastmod>2023-08-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://koxudaxi.github.io/fastapi-code-generator/development-contributing/</loc>
-         <lastmod>2023-08-10</lastmod>
+         <lastmod>2023-08-19</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
