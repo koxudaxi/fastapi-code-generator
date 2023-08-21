@@ -142,7 +142,7 @@ def post_users(body: List[UsersPostRequest]) -> None:
 
 
 @app.post(
-    '/{ue_id}/sdm-subscriptions', response_model=None, tags=['Subscription Creation']
+    '/{ueId}/sdm-subscriptions', response_model=None, tags=['Subscription Creation']
 )
 def subscribe(ue_id: str = Path(..., alias='ueId'), body: Pet = ...) -> None:
     """
