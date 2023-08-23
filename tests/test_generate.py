@@ -24,6 +24,7 @@ SPECIFIC_TAGS = 'Wild Boars, Fat Cats'
 
 ENCODING = 'utf-8'
 
+
 @pytest.mark.parametrize(
     "oas_file", (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml")
 )
