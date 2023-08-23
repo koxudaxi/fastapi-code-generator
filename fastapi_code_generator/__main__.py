@@ -43,7 +43,7 @@ def dynamic_load_module(module_path: Path) -> Any:
 
 @app.command()
 def main(
-    encoding: str = typer.Option("cp1252", "--encoding", "-e"),
+    encoding: str = typer.Option("utf-8", "--encoding", "-e"),
     input_file: str = typer.Option(..., "--input", "-i"),
     output_dir: Path = typer.Option(..., "--output", "-o"),
     model_file: str = typer.Option(None, "--model-file", "-m"),
