@@ -117,10 +117,11 @@ def generate_code(
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     if generate_routers:
-        template_dir = BUILTIN_MODULAR_TEMPLATE_DIR
         Path(output_dir / "routers").mkdir(parents=True, exist_ok=True)
     if not template_dir:
-        template_dir = BUILTIN_TEMPLATE_DIR
+        template_dir = (
+            BUILTIN_MODULAR_TEMPLATE_DIR if generate_routers else BUILTIN_TEMPLATE_DIR
+        )
     if enum_field_as_literal:
         parser = OpenAPIParser(input_text, enum_field_as_literal=enum_field_as_literal)
     else:
@@ -195,7 +196,7 @@ def generate_code(
                             set(tag.strip() for tag in str(specify_tags).split(","))
                         )
 
-        for target in BUILTIN_MODULAR_TEMPLATE_DIR.rglob("routers.*"):
+        for target in template_dir.rglob("routers.*"):
             relative_path = target.relative_to(template_dir)
             for router, tag in zip(routers, sorted_tags):
                 if (
