@@ -20,7 +20,7 @@ app = FastAPI(
 
 
 @app.get(
-    '/{supi_or_suci}/security-information-rg',
+    '/{supiOrSuci}/security-information-rg',
     response_model=None,
     tags=['Get Auth Data for FN-RG'],
 )
