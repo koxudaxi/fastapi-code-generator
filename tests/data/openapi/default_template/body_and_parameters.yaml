@@ -339,13 +339,36 @@ paths:
         required: true
   /convert:
     post:
-      operationId: convert
+      description: https://github.com/koxudaxi/fastapi-code-generator/issues/376
+      operationId: convert1
       parameters:
         - in: query
           name: format
           schema:
             type: string
             default: pdf
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+    put:
+      description: https://github.com/koxudaxi/fastapi-code-generator/issues/322
+      operationId: convert2
+      parameters:
+        - in: query
+          name: format
+          schema:
+            type: string
       requestBody:
         required: true
         content:

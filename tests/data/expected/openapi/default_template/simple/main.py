@@ -40,7 +40,7 @@ def create_pets() -> Union[None, Error]:
 
 
 @app.get(
-    '/pets/{pet_id}',
+    '/pets/{petId}',
     response_model=Pets,
     responses={'default': {'model': Error}},
     tags=['pets'],

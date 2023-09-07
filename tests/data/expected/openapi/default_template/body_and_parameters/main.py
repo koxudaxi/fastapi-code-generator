@@ -37,7 +37,12 @@ def post_bar(request: Request) -> None:
 
 
 @app.post('/convert', response_model=bytes)
-def convert(format: Optional[str] = 'pdf', request: Request = ...) -> bytes:
+def convert1(format: Optional[str] = 'pdf', request: Request = ...) -> bytes:
+    pass
+
+
+@app.put('/convert', response_model=bytes)
+def convert2(format: Optional[str] = None, request: Request = ...) -> bytes:
     pass
 
 
@@ -94,7 +99,7 @@ def post_pets(body: PetForm) -> Union[None, Error]:
 
 
 @app.get(
-    '/pets/{pet_id}',
+    '/pets/{petId}',
     response_model=Pet,
     responses={'default': {'model': Error}},
     tags=['pets'],
@@ -107,7 +112,7 @@ def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
 
 
 @app.put(
-    '/pets/{pet_id}',
+    '/pets/{petId}',
     response_model=None,
     responses={'default': {'model': Error}},
     tags=['pets'],
@@ -142,7 +147,7 @@ def post_users(body: List[UsersPostRequest]) -> None:
 
 
 @app.post(
-    '/{ue_id}/sdm-subscriptions', response_model=None, tags=['Subscription Creation']
+    '/{ueId}/sdm-subscriptions', response_model=None, tags=['Subscription Creation']
 )
 def subscribe(ue_id: str = Path(..., alias='ueId'), body: Pet = ...) -> None:
     """
