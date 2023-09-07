@@ -37,7 +37,12 @@ def post_bar(request: Request) -> None:
 
 
 @app.post('/convert', response_model=bytes)
-def convert(format: Optional[str] = 'pdf', request: Request = ...) -> bytes:
+def convert1(format: Optional[str] = 'pdf', request: Request = ...) -> bytes:
+    pass
+
+
+@app.put('/convert', response_model=bytes)
+def convert2(format: Optional[str] = None, request: Request = ...) -> bytes:
     pass
 
 
