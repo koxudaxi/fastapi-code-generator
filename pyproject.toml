@@ -28,13 +28,13 @@ pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)(-?((?P<stage>[a-zA-Z]+)\\.?(?P<revision
 fastapi-codegen = "fastapi_code_generator.__main__:app"
 
 [tool.poetry.dependencies]
-python = "^3.7.0"
+python = "^3.8.0"
 typer = {extras = ["all"], version = ">=0.2.1,<0.10.0"}
-datamodel-code-generator =  {extras = ["http"], version = "0.16.1"}
+datamodel-code-generator =  {extras = ["http"], version = "0.25.4"}
 stringcase = "^1.2.0"
 PySnooper = ">=0.4.1,<1.2.0"
 jinja2 = ">=2.11.2,<4.0.0"
-pydantic = "^1.5.1"
+pydantic = "^2.0.0"
 typed-ast = [
     {version = ">=1.5.0", python = ">=3.9.8"},
     {version = ">=1.4.2", python = "<3.9.8"},
