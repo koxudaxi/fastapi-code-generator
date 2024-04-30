@@ -43,7 +43,7 @@ from datamodel_code_generator.parser.openapi import (
 )
 from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
 from datamodel_code_generator.util import cached_property
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
@@ -72,7 +72,7 @@ class UsefulStr(str):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Any) -> Any:
+    def validate(cls, v: Any, info: ValidationInfo) -> Any:
         return cls(v)
 
     @property
@@ -91,8 +91,8 @@ class UsefulStr(str):
 class Argument(CachedPropertyModel):
     name: UsefulStr
     type_hint: UsefulStr
-    default: Optional[UsefulStr]
-    default_value: Optional[UsefulStr]
+    default: Optional[UsefulStr] = None
+    default_value: Optional[UsefulStr] = None
     required: bool
 
     def __str__(self) -> str:
@@ -109,14 +109,14 @@ class Operation(CachedPropertyModel):
     method: UsefulStr
     path: UsefulStr
     operationId: Optional[UsefulStr]
-    description: Optional[str]
+    description: Optional[str] = None
     summary: Optional[str]
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     deprecated: bool = False
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
-    tags: Optional[List[str]]
+    tags: Optional[List[str]] = []
     arguments: str = ''
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
