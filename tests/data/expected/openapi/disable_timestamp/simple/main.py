@@ -39,7 +39,7 @@ def create_pets() -> Optional[Error]:
 
 
 @app.get(
-    '/pets/{pet_id}',
+    '/pets/{petId}',
     response_model=Pets,
     responses={'default': {'model': Error}},
     tags=['pets'],
