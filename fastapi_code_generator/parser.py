@@ -108,9 +108,9 @@ class Argument(CachedPropertyModel):
 class Operation(CachedPropertyModel):
     method: UsefulStr
     path: UsefulStr
-    operationId: Optional[UsefulStr]
+    operationId: Optional[UsefulStr] = None
     description: Optional[str] = None
-    summary: Optional[str]
+    summary: Optional[str] = None
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     deprecated: bool = False

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -38,13 +38,17 @@ class UserPostRequest(BaseModel):
     age: Optional[str] = None
 
 
-class UsersGetResponse(BaseModel):
+class UsersGetResponseItem(BaseModel):
+    timestamp: datetime
+    name: str
+    age: Optional[str] = None
+
+
+class UsersPostRequestItem(BaseModel):
     timestamp: datetime
     name: str
     age: Optional[str] = None
 
 
 class UsersPostRequest(BaseModel):
-    timestamp: datetime
-    name: str
-    age: Optional[str] = None
+    __root__: List[UsersPostRequestItem]
