@@ -44,7 +44,7 @@ def test_generate_default_template(oas_file):
         expected_files = sorted(list(expected_dir.glob('*')))
         assert [f.name for f in output_files] == [f.name for f in expected_files]
         for output_file, expected_file in zip(output_files, expected_files):
-            assert output_file.read_text() == expected_file.read_text()
+            assert output_file.read_text() == expected_file.read_text(), oas_file
 
 
 @pytest.mark.parametrize(

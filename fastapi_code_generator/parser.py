@@ -493,5 +493,6 @@ class OpenAPIParser(OpenAPIModelParser):
             return data_type
         data_type.remove_reference()
         data_type = source.fields[0].data_type
-        self.results.remove(source)
+        if source in self.results:
+            self.results.remove(source)
         return data_type
