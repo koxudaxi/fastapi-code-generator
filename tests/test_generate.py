@@ -91,9 +91,10 @@ def test_generate_remote_ref(mocker):
             [
                 call(
                     'https://schema.example',
-                    follow_redirects=True,
                     headers=None,
                     verify=True,
+                    follow_redirects=True,
+                    params=None,
                 ),
             ]
         )

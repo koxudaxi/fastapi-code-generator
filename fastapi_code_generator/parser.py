@@ -121,7 +121,7 @@ class Operation(CachedPropertyModel):
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
-    additional_responses: Dict[str, Dict[str, str]] = {}
+    additional_responses: Dict[Union[str, int], Dict[str, str]] = {}
     return_type: str = ''
 
     @cached_property

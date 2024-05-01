@@ -19,8 +19,8 @@ app = FastAPI(
 )
 
 
-@app.get('/foo', response_model=str, tags=['foo'])
-def get_foo(foo: Optional[str] = None) -> str:
+@app.get('/foo', response_model=None, responses={'200': {'model': str}}, tags=['foo'])
+def get_foo(foo: Optional[str] = None) -> Optional[str]:
     pass
 
 
