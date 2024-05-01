@@ -50,7 +50,7 @@ pytest-mock = "*"
 mypy = "*"
 freezegun = "^1.2.2"
 black = "24.4.2"
-isort = "==5.11.4"
+isort = "==5.13.2"
 
 #[tool.poetry.extras]
 
