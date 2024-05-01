@@ -198,4 +198,4 @@ def test_generate_modify_specific_routers(oas_file):
                 for output_inner, expected_inner in zip(output_inners, expected_inners):
                     assert output_inner.read_text() == expected_inner.read_text()
             else:
-                assert output_file.read_text() == expected_file.read_text()
+                assert output_file.read_text() == expected_file.read_text(), oas_file

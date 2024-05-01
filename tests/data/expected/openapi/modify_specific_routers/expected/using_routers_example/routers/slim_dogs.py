@@ -11,12 +11,12 @@ from ..dependencies import *
 router = APIRouter(tags=['Slim Dogs'])
 
 
-@router.get('/dogs', response_model=SlimDogs, tags=['Slim Dogs'])
-def list_slim_dogs(limit: Optional[int] = None) -> SlimDogs:
+@router.get('/dogs', response_model=List[Pet], tags=['Slim Dogs'])
+def list_slim_dogs(limit: Optional[int] = None) -> List[Pet]:
     """
     List All Slim Dogs
     """
-    return SlimDogs.parse_obj([{"id": "9", "name": "Pluto"}])
+    return [Pet.parse_obj({"id": "9", "name": "Pluto"})]
 
 
 @router.post('/dogs', response_model=None, tags=['Slim Dogs'])
