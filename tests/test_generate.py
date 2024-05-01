@@ -127,7 +127,7 @@ def test_disable_timestamp(oas_file):
         expected_files = sorted(list(expected_dir.glob('*')))
         assert [f.name for f in output_files] == [f.name for f in expected_files]
         for output_file, expected_file in zip(output_files, expected_files):
-            assert output_file.read_text() == expected_file.read_text()
+            assert output_file.read_text() == expected_file.read_text(), oas_file
 
 
 @pytest.mark.parametrize(
@@ -157,7 +157,7 @@ def test_generate_using_routers(oas_file):
                 for output_inner, expected_inner in zip(output_inners, expected_inners):
                     assert output_inner.read_text() == expected_inner.read_text()
             else:
-                assert output_file.read_text() == expected_file.read_text()
+                assert output_file.read_text() == expected_file.read_text(), oas_file
 
 
 @pytest.mark.parametrize(
