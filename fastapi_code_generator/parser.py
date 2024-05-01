@@ -108,9 +108,9 @@ class Argument(CachedPropertyModel):
 class Operation(CachedPropertyModel):
     method: UsefulStr
     path: UsefulStr
-    operationId: Optional[UsefulStr]
+    operationId: Optional[UsefulStr] = None
     description: Optional[str] = None
-    summary: Optional[str]
+    summary: Optional[str] = None
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     deprecated: bool = False
@@ -121,7 +121,7 @@ class Operation(CachedPropertyModel):
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
-    additional_responses: Dict[str, Dict[str, str]] = {}
+    additional_responses: Dict[Union[str, int], Dict[str, str]] = {}
     return_type: str = ''
 
     @cached_property
@@ -280,6 +280,8 @@ class OpenAPIParser(OpenAPIModelParser):
         if not data_type:
             if not schema:
                 schema = parameters.schema_
+            if schema is None:
+                raise RuntimeError("schema is None")  # pragma: no cover
             data_type = self.parse_schema(name, schema, [*path, name])
             data_type = self._collapse_root_model(data_type)
         if not schema:
@@ -297,16 +299,18 @@ class OpenAPIParser(OpenAPIModelParser):
                 self.imports_for_fastapi.append(
                     Import(from_='fastapi', import_=param_is)
                 )
-                default: Optional[
-                    str
-                ] = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
+                default: Optional[str] = (
+                    f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
+                )
         else:
             default = repr(schema.default) if schema.has_default else None
         self.imports_for_fastapi.append(field.imports)
         self.data_types.append(field.data_type)
+        if field.name is None:
+            raise RuntimeError("field.name is None")  # pragma: no cover
         return Argument(
-            name=field.name,
-            type_hint=field.type_hint,
+            name=UsefulStr(field.name),
+            type_hint=UsefulStr(field.type_hint),
             default=default,  # type: ignore
             default_value=schema.default,
             required=field.required,
@@ -373,7 +377,7 @@ class OpenAPIParser(OpenAPIModelParser):
                         # TODO: support multiple body
                         Argument(
                             name='body',  # type: ignore
-                            type_hint=data_type.type_hint,
+                            type_hint=UsefulStr(data_type.type_hint),
                             required=request_body.required,
                         )
                     )
@@ -414,13 +418,13 @@ class OpenAPIParser(OpenAPIModelParser):
                     )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
-    def parse_responses(
+    def parse_responses(  # type: ignore[override]
         self,
         name: str,
         responses: Dict[str, Union[ResponseObject, ReferenceObject]],
         path: List[str],
-    ) -> Dict[str, Dict[str, DataType]]:
-        data_types = super().parse_responses(name, responses, path)
+    ) -> Dict[Union[str, int], Dict[str, DataType]]:
+        data_types = super().parse_responses(name, responses, path)  # type: ignore[arg-type]
         status_code_200 = data_types.get('200')
         if status_code_200:
             data_type = list(status_code_200.values())[0]
@@ -493,5 +497,6 @@ class OpenAPIParser(OpenAPIModelParser):
             return data_type
         data_type.remove_reference()
         data_type = source.fields[0].data_type
-        self.results.remove(source)
+        if source in self.results:
+            self.results.remove(source)
         return data_type

@@ -23,3 +23,9 @@ class Error(BaseModel):
 class PetForm(BaseModel):
     name: Optional[str] = None
     age: Optional[int] = None
+
+
+class PlmnId(BaseModel):
+    id: int
+    name: str
+    tag: Optional[str] = None

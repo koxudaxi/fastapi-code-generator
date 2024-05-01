@@ -11,8 +11,8 @@ from ..dependencies import *
 router = APIRouter(tags=['Wild Boars'])
 
 
-@router.get('/boars', response_model=WildBoars, tags=['Wild Boars'])
-def list_wild_boars(limit: Optional[int] = None) -> WildBoars:
+@router.get('/boars', response_model=List[Pet], tags=['Wild Boars'])
+def list_wild_boars(limit: Optional[int] = None) -> List[Pet]:
     """
     List All Wild Boars
     """

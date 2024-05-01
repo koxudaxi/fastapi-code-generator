@@ -15,8 +15,8 @@ from .models import (
     PetForm,
     UserGetResponse,
     UserPostRequest,
-    UsersGetResponse,
-    UsersPostRequest,
+    UsersGetResponseItem,
+    UsersPostRequestItem,
 )
 
 app = FastAPI(
@@ -136,13 +136,13 @@ def post_user(body: UserPostRequest) -> None:
     pass
 
 
-@app.get('/users', response_model=List[UsersGetResponse], tags=['user'])
-def get_users() -> List[UsersGetResponse]:
+@app.get('/users', response_model=List[UsersGetResponseItem], tags=['user'])
+def get_users() -> List[UsersGetResponseItem]:
     pass
 
 
 @app.post('/users', response_model=None, tags=['user'])
-def post_users(body: List[UsersPostRequest]) -> None:
+def post_users(body: List[UsersPostRequestItem]) -> None:
     pass
 
 
