@@ -27,7 +27,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        pip install --upgrade pip --disable-pip-version-check
+        python -m pip install --upgrade pip --disable-pip-version-check
         python -m pip install poetry
         poetry install
     - name: Lint
