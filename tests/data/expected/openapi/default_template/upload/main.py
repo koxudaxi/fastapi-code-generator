@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Optional, Union
 
 from fastapi import FastAPI, Request, UploadFile
 
@@ -25,9 +25,7 @@ app = FastAPI(
     responses={'default': {'model': Error}},
     tags=['pets'],
 )
-def upload_pet_image_with_form_data(
-    id: str, file: UploadFile = ...
-) -> Union[None, Error]:
+def upload_pet_image_with_form_data(id: str, file: UploadFile = ...) -> Optional[Error]:
     """
     Upload image with Form-Data for a pet
     """
@@ -42,7 +40,7 @@ def upload_pet_image_with_form_data(
 )
 def upload_pet_image_with_octet_stream(
     id: str, request: Request = ...
-) -> Union[None, Error]:
+) -> Optional[Error]:
     """
     Upload image with octet-stream for a pet
     """

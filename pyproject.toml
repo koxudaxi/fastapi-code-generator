@@ -28,13 +28,13 @@ pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)(-?((?P<stage>[a-zA-Z]+)\\.?(?P<revision
 fastapi-codegen = "fastapi_code_generator.__main__:app"
 
 [tool.poetry.dependencies]
-python = "^3.7.0"
+python = "^3.8.0"
 typer = {extras = ["all"], version = ">=0.2.1,<0.10.0"}
-datamodel-code-generator =  {extras = ["http"], version = "0.16.1"}
+datamodel-code-generator =  {extras = ["http"], version = "0.25.6"}
 stringcase = "^1.2.0"
 PySnooper = ">=0.4.1,<1.2.0"
 jinja2 = ">=2.11.2,<4.0.0"
-pydantic = "^1.5.1"
+pydantic = "^2.0"
 typed-ast = [
     {version = ">=1.5.0", python = ">=3.9.8"},
     {version = ">=1.4.2", python = "<3.9.8"},
@@ -44,13 +44,13 @@ typed-ast = [
 #mkdocs-material = {version = "5.2.3", optional = true}
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.4"
+pytest = "^8.2"
 pytest-cov = "*"
 pytest-mock = "*"
-mypy = "*"
-freezegun = "^1.2.2"
-black = "23.3.0"
-isort = "==5.11.4"
+mypy = "^1.10"
+freezegun = "^1.5"
+black = "24.4.2"
+isort = "==5.13.2"
 
 #[tool.poetry.extras]
 

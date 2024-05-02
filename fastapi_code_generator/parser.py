@@ -25,13 +25,12 @@ from datamodel_code_generator import (
     LiteralType,
     OpenAPIScope,
     PythonVersion,
-    cached_property,
     snooper_to_methods,
 )
 from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.model import DataModel, DataModelFieldBase
 from datamodel_code_generator.model import pydantic as pydantic_model
-from datamodel_code_generator.model.pydantic import DataModelField
+from datamodel_code_generator.model.pydantic import CustomRootType, DataModelField
 from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
 from datamodel_code_generator.parser.openapi import MediaObject
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
@@ -43,7 +42,8 @@ from datamodel_code_generator.parser.openapi import (
     ResponseObject,
 )
 from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
-from pydantic import BaseModel
+from datamodel_code_generator.util import cached_property
+from pydantic import BaseModel, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
@@ -72,7 +72,7 @@ class UsefulStr(str):
         yield cls.validate
 
     @classmethod
-    def validate(cls, v: Any) -> Any:
+    def validate(cls, v: Any, info: ValidationInfo) -> Any:
         return cls(v)
 
     @property
@@ -91,8 +91,8 @@ class UsefulStr(str):
 class Argument(CachedPropertyModel):
     name: UsefulStr
     type_hint: UsefulStr
-    default: Optional[UsefulStr]
-    default_value: Optional[UsefulStr]
+    default: Optional[UsefulStr] = None
+    default_value: Optional[UsefulStr] = None
     required: bool
 
     def __str__(self) -> str:
@@ -108,20 +108,20 @@ class Argument(CachedPropertyModel):
 class Operation(CachedPropertyModel):
     method: UsefulStr
     path: UsefulStr
-    operationId: Optional[UsefulStr]
-    description: Optional[str]
-    summary: Optional[str]
+    operationId: Optional[UsefulStr] = None
+    description: Optional[str] = None
+    summary: Optional[str] = None
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     deprecated: bool = False
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
-    tags: Optional[List[str]]
+    tags: Optional[List[str]] = []
     arguments: str = ''
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
-    additional_responses: Dict[str, Dict[str, str]] = {}
+    additional_responses: Dict[Union[str, int], Dict[str, str]] = {}
     return_type: str = ''
 
     @cached_property
@@ -245,16 +245,22 @@ class OpenAPIParser(OpenAPIModelParser):
             result['servers'] = servers
         return result or None
 
-    def parse_parameters(self, parameters: ParameterObject, path: List[str]) -> None:
-        super().parse_parameters(parameters, path)
-        self._temporary_operation['_parameters'].append(parameters)
+    def parse_all_parameters(
+        self,
+        name: str,
+        parameters: List[Union[ReferenceObject, ParameterObject]],
+        path: List[str],
+    ) -> None:
+        super().parse_all_parameters(name, parameters, path)
+        self._temporary_operation['_parameters'].extend(parameters)
 
     def get_parameter_type(
         self,
-        parameters: ParameterObject,
+        parameters: Union[ReferenceObject, ParameterObject],
         snake_case: bool,
         path: List[str],
     ) -> Optional[Argument]:
+        parameters = self.resolve_object(parameters, ParameterObject)
         orig_name = parameters.name
         if snake_case:
             name = stringcase.snakecase(parameters.name)
@@ -274,7 +280,10 @@ class OpenAPIParser(OpenAPIModelParser):
         if not data_type:
             if not schema:
                 schema = parameters.schema_
+            if schema is None:
+                raise RuntimeError("schema is None")  # pragma: no cover
             data_type = self.parse_schema(name, schema, [*path, name])
+            data_type = self._collapse_root_model(data_type)
         if not schema:
             return None
 
@@ -297,9 +306,11 @@ class OpenAPIParser(OpenAPIModelParser):
             default = repr(schema.default) if schema.has_default else None
         self.imports_for_fastapi.append(field.imports)
         self.data_types.append(field.data_type)
+        if field.name is None:
+            raise RuntimeError("field.name is None")  # pragma: no cover
         return Argument(
-            name=field.name,
-            type_hint=field.type_hint,
+            name=UsefulStr(field.name),
+            type_hint=UsefulStr(field.type_hint),
             default=default,  # type: ignore
             default_value=schema.default,
             required=field.required,
@@ -361,11 +372,12 @@ class OpenAPIParser(OpenAPIModelParser):
                         data_type = self.parse_schema(
                             name, media_obj.schema_, [*path, media_type]
                         )
+                    data_type = self._collapse_root_model(data_type)
                     arguments.append(
                         # TODO: support multiple body
                         Argument(
                             name='body',  # type: ignore
-                            type_hint=data_type.type_hint,
+                            type_hint=UsefulStr(data_type.type_hint),
                             required=request_body.required,
                         )
                     )
@@ -406,17 +418,18 @@ class OpenAPIParser(OpenAPIModelParser):
                     )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
-    def parse_responses(
+    def parse_responses(  # type: ignore[override]
         self,
         name: str,
         responses: Dict[str, Union[ResponseObject, ReferenceObject]],
         path: List[str],
-    ) -> Dict[str, Dict[str, DataType]]:
-        data_types = super().parse_responses(name, responses, path)
+    ) -> Dict[Union[str, int], Dict[str, DataType]]:
+        data_types = super().parse_responses(name, responses, path)  # type: ignore[arg-type]
         status_code_200 = data_types.get('200')
         if status_code_200:
             data_type = list(status_code_200.values())[0]
             if data_type:
+                data_type = self._collapse_root_model(data_type)
                 self.data_types.append(data_type)
         else:
             data_type = DataType(type='None')
@@ -466,3 +479,24 @@ class OpenAPIParser(OpenAPIModelParser):
             path=f'/{path_name}',  # type: ignore
             method=method,  # type: ignore
         )
+
+    def _collapse_root_model(self, data_type: DataType) -> DataType:
+        reference = data_type.reference
+        import functools
+
+        if not (
+            reference
+            and (
+                len(reference.children) == 1
+                or functools.reduce(lambda a, b: a == b, reference.children)
+            )
+        ):
+            return data_type
+        source = reference.source
+        if not isinstance(source, CustomRootType):
+            return data_type
+        data_type.remove_reference()
+        data_type = source.fields[0].data_type
+        if source in self.results:
+            self.results.remove(source)
+        return data_type

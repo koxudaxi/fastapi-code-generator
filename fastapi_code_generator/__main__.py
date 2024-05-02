@@ -77,7 +77,7 @@ def main(
             output_dir,
             template_dir,
             model_path,
-            enum_field_as_literal,
+            enum_field_as_literal,  # type: ignore[arg-type]
             custom_visitors=custom_visitors,
             disable_timestamp=disable_timestamp,
             generate_routers=generate_routers,
@@ -131,7 +131,7 @@ def generate_code(
             BUILTIN_MODULAR_TEMPLATE_DIR if generate_routers else BUILTIN_TEMPLATE_DIR
         )
     if enum_field_as_literal:
-        parser = OpenAPIParser(input_text, enum_field_as_literal=enum_field_as_literal)
+        parser = OpenAPIParser(input_text, enum_field_as_literal=enum_field_as_literal)  # type: ignore[arg-type]
     else:
         parser = OpenAPIParser(input_text)
     with chdir(output_dir):
