@@ -4,19 +4,15 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class Pet(BaseModel):
     id: int
     name: str
     tag: Optional[str] = None
-
-
-class Pets(BaseModel):
-    __root__: List[Pet] = Field(..., description='list of pet')
 
 
 class Error(BaseModel):

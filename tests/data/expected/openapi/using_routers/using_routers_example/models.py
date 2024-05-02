@@ -4,24 +4,12 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class Pet(BaseModel):
     id: int
     name: str
     tag: Optional[str] = None
-
-
-class FatCats(BaseModel):
-    __root__: List[Pet] = Field(..., description='list of fat cats')
-
-
-class SlimDogs(BaseModel):
-    __root__: List[Pet] = Field(..., description='list of slim dogs')
-
-
-class WildBoars(BaseModel):
-    __root__: List[Pet] = Field(..., description='list of wild boars')
