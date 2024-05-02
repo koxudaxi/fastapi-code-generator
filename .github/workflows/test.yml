@@ -42,7 +42,13 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
         ./scripts/poetry_test.bat
-
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest'
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
   check: # This job does nothing and is only used for the branch protection
     if: github.event.pull_request.draft == false
     
