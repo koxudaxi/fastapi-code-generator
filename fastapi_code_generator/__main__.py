@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import typer
-from datamodel_code_generator import LiteralType, PythonVersion, chdir, DataModelType
-from datamodel_code_generator.model import get_data_model_types
+from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
 from datamodel_code_generator.imports import Import, Imports
+from datamodel_code_generator.model import get_data_model_types
 from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
@@ -59,9 +59,11 @@ def main(
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
     output_model_type: DataModelType = typer.Option(
-        DataModelType.PydanticBaseModel, "--data-model-type", "-d"),
+        DataModelType.PydanticBaseModel, "--data-model-type", "-d"
+    ),
     python_version: PythonVersion = typer.Option(
-        PythonVersion.PY_38, "--python-version", "-p"),
+        PythonVersion.PY_38, "--python-version", "-p"
+    ),
 ) -> None:
     input_name: str = input_file
     input_text: str
@@ -129,14 +131,15 @@ def generate_code(
 
     data_model_types = get_data_model_types(output_model_type, python_version)
 
-    parser = OpenAPIParser(input_text,
+    parser = OpenAPIParser(
+        input_text,
         enum_field_as_literal=enum_field_as_literal,
         data_model_type=data_model_types.data_model,
         data_model_root_type=data_model_types.root_model,
         data_model_field_type=data_model_types.field_model,
         data_type_manager_type=data_model_types.data_type_manager,
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
-        )
+    )
 
     with chdir(output_dir):
         models = parser.parse()
