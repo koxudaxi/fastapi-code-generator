@@ -59,10 +59,10 @@ def main(
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
     output_model_type: DataModelType = typer.Option(
-        DataModelType.PydanticBaseModel, "--output-model-type", "-d"
+        DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
     ),
     python_version: PythonVersion = typer.Option(
-        PythonVersion.PY_38, "--python-version", "-p"
+        PythonVersion.PY_38.value, "--python-version", "-p"
     ),
 ) -> None:
     input_name: str = input_file
