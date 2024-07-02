@@ -110,8 +110,8 @@ def generate_code(
     output_dir: Path,
     template_dir: Optional[Path],
     model_path: Optional[Path] = None,
-    enum_field_as_literal: Optional[str] = None,
-    custom_visitors: Optional[List[Path]] = [],
+    enum_field_as_literal: Optional[LiteralType] = None,
+    custom_visitors: Optional[List[Path]] = None,
     disable_timestamp: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
@@ -128,7 +128,8 @@ def generate_code(
         template_dir = (
             BUILTIN_MODULAR_TEMPLATE_DIR if generate_routers else BUILTIN_TEMPLATE_DIR
         )
-
+    if not custom_visitors:
+        custom_visitors = []
     data_model_types = get_data_model_types(output_model_type, python_version)
 
     parser = OpenAPIParser(
@@ -187,7 +188,7 @@ def generate_code(
                 for tag in operation.tags:
                     all_tags.append(tag)
     # Convert from Tag Names to router_names
-    sorted_tags = sorted(set(all_tags))
+    sorted_tags = sorted(set(all_tags), key=lambda x: x.lower())
     routers = sorted(
         [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
     )
