@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.27">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.28">
     
     
       
@@ -304,6 +304,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pydantic-2-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pydantic 2 support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -520,6 +535,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pydantic-2-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pydantic 2 support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -695,10 +725,17 @@
 <span class="w">  </span><span class="o">-</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="n">generate</span><span class="o">-</span><span class="n">routers</span><span class="w">   </span><span class="n">Generate</span><span class="w"> </span><span class="n">modular</span><span class="w"> </span><span class="n">api</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="n">multiple</span><span class="w"> </span><span class="n">routers</span><span class="w"> </span><span class="k">using</span><span class="w"> </span><span class="n">RouterAPI</span><span class="w"> </span><span class="p">(</span><span class="k">for</span><span class="w"> </span><span class="n">bigger</span><span class="w"> </span><span class="n">applications</span><span class="p">).</span>
 <span class="w">  </span><span class="o">--</span><span class="n">specify</span><span class="o">-</span><span class="n">tags</span><span class="w">           </span><span class="k">Use</span><span class="w"> </span><span class="n">along</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="o">--</span><span class="n">generate</span><span class="o">-</span><span class="n">routers</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">generate</span><span class="w"> </span><span class="k">specific</span><span class="w"> </span><span class="n">routers</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">given</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">tags</span><span class="p">.</span>
 <span class="w">  </span><span class="o">-</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="n">custom</span><span class="o">-</span><span class="n">visitors</span><span class="w">    </span><span class="k">PATH</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">A</span><span class="w"> </span><span class="n">custom</span><span class="w"> </span><span class="n">visitor</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">adds</span><span class="w"> </span><span class="n">variables</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">template</span><span class="p">.</span>
+<span class="w">  </span><span class="o">-</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="k">output</span><span class="o">-</span><span class="n">model</span><span class="o">-</span><span class="n">type</span><span class="w">  </span><span class="n">Specify</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">Pydantic</span><span class="w"> </span><span class="n">base</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="k">use</span><span class="w"> </span><span class="p">(</span><span class="n">see</span><span class="w"> </span><span class="o">[</span><span class="n">datamodel-code-generator</span><span class="o">]</span><span class="p">(</span><span class="nl">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="p">.</span><span class="n">com</span><span class="o">/</span><span class="n">koxudaxi</span><span class="o">/</span><span class="n">datamodel</span><span class="o">-</span><span class="n">code</span><span class="o">-</span><span class="n">generator</span><span class="p">);</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="err">`</span><span class="n">pydantic</span><span class="p">.</span><span class="n">BaseModel</span><span class="err">`</span><span class="p">).</span>
+<span class="w">  </span><span class="o">-</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="o">--</span><span class="n">python</span><span class="o">-</span><span class="n">version</span><span class="w">     </span><span class="n">Specify</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">Python</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="p">(</span><span class="k">default</span><span class="w"> </span><span class="k">is</span><span class="w"> </span><span class="err">`</span><span class="mf">3.8</span><span class="err">`</span><span class="p">).</span>
 <span class="w">  </span><span class="o">--</span><span class="n">install</span><span class="o">-</span><span class="k">completion</span><span class="w">     </span><span class="n">Install</span><span class="w"> </span><span class="k">completion</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">current</span><span class="w"> </span><span class="n">shell</span><span class="p">.</span>
 <span class="w">  </span><span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="k">completion</span><span class="w">        </span><span class="n">Show</span><span class="w"> </span><span class="k">completion</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="k">current</span><span class="w"> </span><span class="n">shell</span><span class="p">,</span><span class="w"> </span><span class="k">to</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="n">it</span>
 <span class="w">                           </span><span class="ow">or</span><span class="w"> </span><span class="n">customize</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">installation</span><span class="p">.</span>
 <span class="w">  </span><span class="c1">--help                   Show this message and exit.</span>
+</code></pre></div>
+
+<h3 id="pydantic-2-support">Pydantic 2 support<a class="headerlink" href="#pydantic-2-support" title="Permanent link">🔗</a></h3>
+<p>Specify the Pydantic 2 <code>BaseModel</code> version in the command line, for example:</p>
+<div class="codehilite"><pre><span></span><code>$<span class="w"> </span>fastapi-codegen<span class="w"> </span>--input<span class="w"> </span>api.yaml<span class="w"> </span>--output<span class="w"> </span>app<span class="w"> </span>--output-model-type<span class="w"> </span>pydantic_v2.BaseModel
 </code></pre></div>
 
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">🔗</a></h2>
@@ -1511,7 +1548,7 @@ components:
     <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.ad660dcc.min.js"></script>
+      <script src="assets/javascripts/bundle.fe8b6f2b.min.js"></script>
       
     
   </body>
