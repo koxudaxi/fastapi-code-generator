@@ -39,10 +39,20 @@ Options:
   -r, --generate-routers   Generate modular api with multiple routers using RouterAPI (for bigger applications).
   --specify-tags           Use along with --generate-routers to generate specific routers from given list of tags.
   -c, --custom-visitors    PATH - A custom visitor that adds variables to the template.
+  -d, --output-model-type  Specify a Pydantic base model to use (see [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator); default is `pydantic.BaseModel`).
+  -p, --python-version     Specify a Python version to target (default is `3.8`).
   --install-completion     Install completion for the current shell.
   --show-completion        Show completion for the current shell, to copy it
                            or customize the installation.
   --help                   Show this message and exit.
+```
+
+### Pydantic 2 support
+
+Specify the Pydantic 2 `BaseModel` version in the command line, for example:
+
+```sh
+$ fastapi-codegen --input api.yaml --output app --output-model-type pydantic_v2.BaseModel
 ```
 
 ## Example
