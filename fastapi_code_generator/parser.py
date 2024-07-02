@@ -123,6 +123,7 @@ class Operation(CachedPropertyModel):
     response: str = ''
     additional_responses: Dict[Union[str, int], Dict[str, str]] = {}
     return_type: str = ''
+    callbacks: Dict[UsefulStr, List["Operation"]] = {}
 
     @cached_property
     def type(self) -> UsefulStr:
@@ -472,10 +473,53 @@ class OpenAPIParser(OpenAPIModelParser):
         self._temporary_operation['snake_case_arguments'] = self.get_arguments(
             snake_case=True, path=path
         )
+        main_operation = self._temporary_operation
+
+        # Handle callbacks. This iterates over callbacks, shifting each one
+        # into the `_temporary_operation` and parsing it. Parsing could be
+        # refactored into a recursive operation to simplify this routine.
+        cb_ctr = 0
+        callbacks: Dict[UsefulStr, list[Operation]] = {}
+        if 'callbacks' in raw_operation:
+            raw_callbacks = raw_operation.pop('callbacks')
+            for key, routes in raw_callbacks.items():
+                if key not in callbacks:
+                    callbacks[key] = []
+                for route, methods in routes.items():
+                    for method, cb_op in methods.items():
+                        # Since the path is often generated dynamically from
+                        # the contents of the original request (such as by
+                        # passing a `callbackUrl`), it won't work to generate
+                        # a function name from the path. Instead, inject a
+                        # placeholder `operationId` in order to get a unique
+                        # and reasonable function name for the operation.
+                        if 'operationId' not in cb_op:
+                            cb_op['operationId'] = f"{method}_{key}_{cb_ctr}"
+                            cb_ctr += 1
+
+                        self._temporary_operation = {'_parameters': []}
+                        cb_path = path + ['callbacks', key, route, method]
+                        super().parse_operation(cb_op, cb_path)
+                        self._temporary_operation['arguments'] = self.get_arguments(
+                            snake_case=False, path=cb_path
+                        )
+                        self._temporary_operation['snake_case_arguments'] = (
+                            self.get_arguments(snake_case=True, path=cb_path)
+                        )
+
+                        callbacks[key].append(
+                            Operation(
+                                **cb_op,
+                                **self._temporary_operation,
+                                path=route,
+                                method=method,  # type: ignore
+                            )
+                        )
 
         self.operations[resolved_path] = Operation(
             **raw_operation,
-            **self._temporary_operation,
+            **main_operation,
+            callbacks=callbacks,
             path=f'/{path_name}',  # type: ignore
             method=method,  # type: ignore
         )
