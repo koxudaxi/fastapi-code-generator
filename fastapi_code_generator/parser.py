@@ -512,7 +512,7 @@ class OpenAPIParser(OpenAPIModelParser):
                                 **cb_op,
                                 **self._temporary_operation,
                                 path=route,
-                                method=method,
+                                method=method,  # type: ignore
                             )
                         )
 
