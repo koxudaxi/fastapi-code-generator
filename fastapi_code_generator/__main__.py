@@ -188,7 +188,7 @@ def generate_code(
                 for tag in operation.tags:
                     all_tags.append(tag)
     # Convert from Tag Names to router_names
-    sorted_tags = sorted(set(all_tags))
+    sorted_tags = sorted(set(all_tags), key=lambda x: x.lower())
     routers = sorted(
         [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
     )
