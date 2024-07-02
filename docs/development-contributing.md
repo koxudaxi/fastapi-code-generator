@@ -18,7 +18,7 @@ $ git clone git@github.com:<your username>/fastapi-code-generator.git
 $ cd fastapi-code-generator
 
 ## 2. Install [poetry](https://github.com/python-poetry/poetry)
-$ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python 
+$ curl -sSL curl -sSL https://install.python-poetry.org | python3 -
 
 ## 3. Install dependencies
 $ poetry install
