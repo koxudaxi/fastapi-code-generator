@@ -49,7 +49,7 @@ typed-ast = [
 pytest = "^8.2"
 pytest-cov = "*"
 pytest-mock = "*"
-mypy = "^1.10"
+mypy = "^1.11"
 freezegun = "^1.5"
 black = "24.4.2"
 isort = "==5.13.2"
