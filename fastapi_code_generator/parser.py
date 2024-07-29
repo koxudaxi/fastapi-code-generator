@@ -262,11 +262,12 @@ class OpenAPIParser(OpenAPIModelParser):
         path: List[str],
     ) -> Optional[Argument]:
         parameters = self.resolve_object(parameters, ParameterObject)
+        if parameters.name is None:
+            raise RuntimeError("parameters.name is None")  # pragma: no cover
         orig_name = parameters.name
+        name = self.model_resolver.get_valid_field_name(parameters.name)
         if snake_case:
-            name = stringcase.snakecase(parameters.name)
-        else:
-            name = parameters.name
+            name = stringcase.snakecase(name)
 
         schema: Optional[JsonSchemaObject] = None
         data_type: Optional[DataType] = None
@@ -307,8 +308,6 @@ class OpenAPIParser(OpenAPIModelParser):
             default = repr(schema.default) if schema.has_default else None
         self.imports_for_fastapi.append(field.imports)
         self.data_types.append(field.data_type)
-        if field.name is None:
-            raise RuntimeError("field.name is None")  # pragma: no cover
         return Argument(
             name=UsefulStr(field.name),
             type_hint=UsefulStr(field.type_hint),
