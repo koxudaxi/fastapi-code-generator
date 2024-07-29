@@ -140,6 +140,7 @@ def generate_code(
         data_model_field_type=data_model_types.field_model,
         data_type_manager_type=data_model_types.data_type_manager,
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
+        target_python_version=python_version,
     )
 
     with chdir(output_dir):
