@@ -273,6 +273,7 @@ class OpenAPIParser(OpenAPIModelParser):
         custom_class_name_generator: Optional[Callable[[str], str]] = None,
         field_extra_keys: Optional[Set[str]] = None,
         field_include_all_keys: bool = False,
+        use_annotated: bool = False,
     ):
         super().__init__(
             source=source,
@@ -286,7 +287,7 @@ class OpenAPIParser(OpenAPIModelParser):
             target_python_version=target_python_version,
             dump_resolve_reference_action=dump_resolve_reference_action,
             validation=validation,
-            field_constraints=field_constraints,
+            field_constraints=field_constraints or use_annotated,
             snake_case_field=snake_case_field,
             strip_default_none=strip_default_none,
             aliases=aliases,
@@ -312,6 +313,7 @@ class OpenAPIParser(OpenAPIModelParser):
             field_extra_keys=field_extra_keys,
             field_include_all_keys=field_include_all_keys,
             openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
+            use_annotated=use_annotated,
         )
         self.operations: Dict[str, Operation] = {}
         self._temporary_operation: Dict[str, Any] = {}
