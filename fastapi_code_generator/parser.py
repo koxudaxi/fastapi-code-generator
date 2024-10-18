@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import reduce
 import pathlib
 import re
 from typing import (
@@ -118,6 +119,7 @@ class Operation(CachedPropertyModel):
     security: Optional[List[Dict[str, List[str]]]] = None
     tags: Optional[List[str]] = []
     arguments: str = ''
+    plain_arguments: str = ''
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
@@ -473,6 +475,9 @@ class OpenAPIParser(OpenAPIModelParser):
         self._temporary_operation['snake_case_arguments'] = self.get_arguments(
             snake_case=True, path=path
         )
+        self._temporary_operation['plain_arguments'] = ",".join(map(lambda a: a.name, self.get_argument_list(
+            snake_case=True, path=path
+        )))
         main_operation = self._temporary_operation
 
         # Handle callbacks. This iterates over callbacks, shifting each one
