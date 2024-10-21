@@ -340,12 +340,10 @@ class OpenAPIParser(OpenAPIModelParser):
             Argument(
                 name='request',  # type: ignore
                 type_hint='Request',  # type: ignore
-                required=False
+                required=False,
             )
         )
-        self.imports_for_fastapi.append(
-            Import.from_full_path("fastapi.Request")
-        )
+        self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
 
         positional_argument: bool = False
         for argument in arguments:
@@ -423,9 +421,7 @@ class OpenAPIParser(OpenAPIModelParser):
                     required=True,
                 )
             )
-            self.imports_for_fastapi.append(
-                Import.from_full_path("fastapi.Request")
-            )
+            self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
     def parse_responses(  # type: ignore[override]
