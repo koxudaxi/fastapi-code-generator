@@ -336,9 +336,16 @@ class OpenAPIParser(OpenAPIModelParser):
                 if parameter_type:
                     arguments.append(parameter_type)
 
-        request = self._temporary_operation.get('_request')
-        if request:
-            arguments.append(request)
+        arguments.append(
+            Argument(
+                name='request',  # type: ignore
+                type_hint='Request',  # type: ignore
+                required=False
+            )
+        )
+        self.imports_for_fastapi.append(
+            Import.from_full_path("fastapi.Request")
+        )
 
         positional_argument: bool = False
         for argument in arguments:
@@ -397,17 +404,6 @@ class OpenAPIParser(OpenAPIModelParser):
                     self.imports_for_fastapi.append(
                         Import.from_full_path('starlette.requests.Request')
                     )
-                elif media_type == 'application/octet-stream':
-                    arguments.append(
-                        Argument(
-                            name='request',  # type: ignore
-                            type_hint='Request',  # type: ignore
-                            required=True,
-                        )
-                    )
-                    self.imports_for_fastapi.append(
-                        Import.from_full_path("fastapi.Request")
-                    )
                 elif media_type == 'multipart/form-data':
                     arguments.append(
                         Argument(
@@ -419,6 +415,17 @@ class OpenAPIParser(OpenAPIModelParser):
                     self.imports_for_fastapi.append(
                         Import.from_full_path("fastapi.UploadFile")
                     )
+        if len(arguments) == 0:
+            arguments.append(
+                Argument(
+                    name='request',  # type: ignore
+                    type_hint='Request',  # type: ignore
+                    required=True,
+                )
+            )
+            self.imports_for_fastapi.append(
+                Import.from_full_path("fastapi.Request")
+            )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
     def parse_responses(  # type: ignore[override]
