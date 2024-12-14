@@ -49,6 +49,7 @@ def main(
     output_dir: Path = typer.Option(..., "--output", "-o"),
     model_file: str = typer.Option(None, "--model-file", "-m"),
     template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),
+    model_template_dir: Optional[Path] = typer.Option(None, "--model-template-dir"),
     enum_field_as_literal: Optional[LiteralType] = typer.Option(
         None, "--enum-field-as-literal"
     ),
@@ -82,6 +83,7 @@ def main(
         encoding,
         output_dir,
         template_dir,
+        model_template_dir,
         model_path,
         enum_field_as_literal=enum_field_as_literal or None,
         custom_visitors=custom_visitors,
@@ -109,6 +111,7 @@ def generate_code(
     encoding: str,
     output_dir: Path,
     template_dir: Optional[Path],
+    model_template_dir: Optional[Path] = None,
     model_path: Optional[Path] = None,
     enum_field_as_literal: Optional[LiteralType] = None,
     custom_visitors: Optional[List[Path]] = None,
@@ -140,6 +143,7 @@ def generate_code(
         data_model_field_type=data_model_types.field_model,
         data_type_manager_type=data_model_types.data_type_manager,
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
+        custom_template_dir=model_template_dir,
         target_python_version=python_version,
     )
 
