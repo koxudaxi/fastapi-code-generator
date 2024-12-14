@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+from functools import reduce
 from typing import (
     Any,
     Callable,
@@ -118,6 +119,7 @@ class Operation(CachedPropertyModel):
     security: Optional[List[Dict[str, List[str]]]] = None
     tags: Optional[List[str]] = []
     arguments: str = ''
+    plain_arguments: str = ''
     snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
@@ -333,9 +335,14 @@ class OpenAPIParser(OpenAPIModelParser):
                 if parameter_type:
                     arguments.append(parameter_type)
 
-        request = self._temporary_operation.get('_request')
-        if request:
-            arguments.append(request)
+        arguments.append(
+            Argument(
+                name='request',  # type: ignore
+                type_hint='Request',  # type: ignore
+                required=False,
+            )
+        )
+        self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
 
         positional_argument: bool = False
         for argument in arguments:
@@ -394,17 +401,6 @@ class OpenAPIParser(OpenAPIModelParser):
                     self.imports_for_fastapi.append(
                         Import.from_full_path('starlette.requests.Request')
                     )
-                elif media_type == 'application/octet-stream':
-                    arguments.append(
-                        Argument(
-                            name='request',  # type: ignore
-                            type_hint='Request',  # type: ignore
-                            required=True,
-                        )
-                    )
-                    self.imports_for_fastapi.append(
-                        Import.from_full_path("fastapi.Request")
-                    )
                 elif media_type == 'multipart/form-data':
                     arguments.append(
                         Argument(
@@ -416,6 +412,15 @@ class OpenAPIParser(OpenAPIModelParser):
                     self.imports_for_fastapi.append(
                         Import.from_full_path("fastapi.UploadFile")
                     )
+        if len(arguments) == 0:
+            arguments.append(
+                Argument(
+                    name='request',  # type: ignore
+                    type_hint='Request',  # type: ignore
+                    required=True,
+                )
+            )
+            self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
         self._temporary_operation['_request'] = arguments[0] if arguments else None
 
     def parse_responses(  # type: ignore[override]
@@ -471,6 +476,9 @@ class OpenAPIParser(OpenAPIModelParser):
         )
         self._temporary_operation['snake_case_arguments'] = self.get_arguments(
             snake_case=True, path=path
+        )
+        self._temporary_operation['plain_arguments'] = ",".join(
+            map(lambda a: a.name, self.get_argument_list(snake_case=True, path=path))
         )
         main_operation = self._temporary_operation
 
