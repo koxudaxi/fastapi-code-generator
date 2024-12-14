@@ -36,7 +36,7 @@ datamodel-code-generator =  {extras = ["http"], version = "0.25.9"}
 stringcase = "^1.2.0"
 PySnooper = ">=0.4.1,<1.2.0"
 jinja2 = ">=2.11.2,<4.0.0"
-pydantic = "^2.0"
+pydantic = "^2.8"
 typed-ast = [
     {version = ">=1.5.0", python = ">=3.9.8"},
     {version = ">=1.4.2", python = "<3.9.8"},
