@@ -144,6 +144,7 @@ def generate_code(
         data_type_manager_type=data_model_types.data_type_manager,
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
         custom_template_dir=model_template_dir,
+        target_python_version=python_version,
     )
 
     with chdir(output_dir):
