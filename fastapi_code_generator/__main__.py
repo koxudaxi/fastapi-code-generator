@@ -13,7 +13,9 @@ from datamodel_code_generator.model import get_data_model_types
 from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
-from visitor import Visitor
+
+from fastapi_code_generator.parser import OpenAPIParser
+from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
 
