@@ -13,8 +13,8 @@ from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 
-from fastapi_code_generator.parser import OpenAPIParser
-from fastapi_code_generator.visitor import Visitor
+from parser import OpenAPIParser
+from visitor import Visitor
 
 app = typer.Typer()
 
