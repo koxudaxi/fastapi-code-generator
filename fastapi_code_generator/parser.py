@@ -332,17 +332,13 @@ class OpenAPIParser(OpenAPIModelParser):
                 if parameter_type:
                     arguments.append(parameter_type)
 
-        request = self._temporary_operation.get('_request')
-        if request:
-            arguments = arguments + request
-        else:
-            arguments.append(
-                Argument(
-                    name='request',  # type: ignore
-                    type_hint='Request',  # type: ignore
-                    required=True,
-                )
+        arguments.append(
+            Argument(
+                name='request',  # type: ignore
+                type_hint='Request',  # type: ignore
+                required=True,
             )
+        )
 
         self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
 
