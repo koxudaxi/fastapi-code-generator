@@ -331,21 +331,20 @@ class OpenAPIParser(OpenAPIModelParser):
                 )
                 if parameter_type:
                     arguments.append(parameter_type)
-        
 
         request = self._temporary_operation.get('_request')
         if request:
             arguments = arguments + request
         else:
-            arguments.append(Argument(
-                name='request',  # type: ignore
-                type_hint='Request',  # type: ignore
-                required=True
-            ))
+            arguments.append(
+                Argument(
+                    name='request',  # type: ignore
+                    type_hint='Request',  # type: ignore
+                    required=True,
+                )
+            )
 
-        self.imports_for_fastapi.append(
-            Import.from_full_path("fastapi.Request")
-        )
+        self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
 
         positional_argument: bool = False
         for argument in arguments:
@@ -368,7 +367,9 @@ class OpenAPIParser(OpenAPIModelParser):
         super().parse_request_body(name, request_body, path)
         arguments: List[Argument] = []
         for media_obj in request_body.content.values():
-            if isinstance(media_obj.schema_, JsonSchemaObject) and (media_obj.schema_.format == 'binary'):
+            if isinstance(media_obj.schema_, JsonSchemaObject) and (
+                media_obj.schema_.format == 'binary'
+            ):
                 arguments.append(
                     Argument(
                         name='file',  # type: ignore
@@ -439,7 +440,10 @@ class OpenAPIParser(OpenAPIModelParser):
             map(lambda a: a.name, self._temporary_operation['snake_case_arguments'])
         )
         self._temporary_operation['plain_parameters'] = ",".join(
-            map(lambda a: f'{a.name}{": " + a.type_hint if a.type_hint is not None else ""}', self._temporary_operation['snake_case_arguments'])
+            map(
+                lambda a: f'{a.name}{": " + a.type_hint if a.type_hint is not None else ""}',
+                self._temporary_operation['snake_case_arguments'],
+            )
         )
         main_operation = self._temporary_operation
 
