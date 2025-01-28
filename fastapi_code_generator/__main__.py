@@ -1,7 +1,6 @@
 import re
 from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
-from fastapi_code_generator.parser import OpenAPIParser
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -14,6 +13,7 @@ from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 
+from fastapi_code_generator.parser import OpenAPIParser
 from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
