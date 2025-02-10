@@ -32,7 +32,7 @@ fastapi-codegen = "fastapi_code_generator.__main__:app"
 [tool.poetry.dependencies]
 python = "^3.8.0"
 typer = {extras = ["all"], version = ">=0.2.1,<0.13.0"}
-datamodel-code-generator =  {extras = ["http"], version = "0.25.6"}
+datamodel-code-generator =  {extras = ["http"], version = "0.27.2"}
 stringcase = "^1.2.0"
 PySnooper = ">=0.4.1,<1.2.0"
 jinja2 = ">=2.11.2,<4.0.0"
