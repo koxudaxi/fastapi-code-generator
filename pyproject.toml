@@ -46,7 +46,7 @@ typed-ast = [
 #mkdocs-material = {version = "5.2.3", optional = true}
 
 [tool.poetry.dev-dependencies]
-pytest = "^8.2"
+pytest = "^8.3"
 pytest-cov = "*"
 pytest-mock = "*"
 mypy = "^1.10"
