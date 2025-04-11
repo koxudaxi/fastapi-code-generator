@@ -1,0 +1,54 @@
+info:
+  title: discriminator_in_root_with_properties
+  version: 1.0.0
+openapi: 3.0.1
+paths: {}
+servers:
+  - url: https://your-domain.atlassian.net
+tags: []
+components:
+  schemas:
+    CustomContextVariable:
+      additionalProperties: false
+      oneOf:
+        - $ref: '#/components/schemas/UserContextVariable'
+        - $ref: '#/components/schemas/IssueContextVariable'
+      properties:
+        type:
+          description: Type of custom context variable.
+          type: string
+      discriminator:
+        mapping:
+          issue: '#/components/schemas/IssueContextVariable'
+          user: '#/components/schemas/UserContextVariable'
+        propertyName: type
+      required:
+        - type
+      type: object
+    IssueContextVariable:
+      properties:
+        id:
+          description: The issue ID.
+          format: int64
+          type: integer
+        key:
+          description: The issue key.
+          type: string
+        type:
+          description: Type of custom context variable.
+          type: string
+      required:
+        - type
+      type: object
+    UserContextVariable:
+      properties:
+        accountId:
+          description: The account ID of the user.
+          type: string
+        type:
+          description: Type of custom context variable.
+          type: string
+      required:
+        - accountId
+        - type
+      type: object

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import re
+from functools import cached_property
 from typing import (
     Any,
     Callable,
@@ -42,7 +43,6 @@ from datamodel_code_generator.parser.openapi import (
     ResponseObject,
 )
 from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
-from datamodel_code_generator.util import cached_property
 from pydantic import BaseModel, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
@@ -153,7 +153,7 @@ class Operation(CachedPropertyModel):
         return stringcase.snakecase(name)
 
 
-@snooper_to_methods(max_variable_length=None)
+@snooper_to_methods()
 class OpenAPIParser(OpenAPIModelParser):
     def __init__(
         self,
@@ -166,7 +166,7 @@ class OpenAPIParser(OpenAPIModelParser):
         base_class: Optional[str] = None,
         custom_template_dir: Optional[pathlib.Path] = None,
         extra_template_data: Optional[DefaultDict[str, Dict[str, Any]]] = None,
-        target_python_version: PythonVersion = PythonVersion.PY_37,
+        target_python_version: PythonVersion = PythonVersion.PY_39,
         dump_resolve_reference_action: Optional[Callable[[Iterable[str]], str]] = None,
         validation: bool = False,
         field_constraints: bool = False,
