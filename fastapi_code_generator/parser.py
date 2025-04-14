@@ -347,7 +347,22 @@ class OpenAPIParser(OpenAPIModelParser):
                 or argument.type_hint.startswith('Optional[')
             )
 
-        return arguments
+        # Group argument with same name into one argument.name argument.type_hint into Argument(name = argument.name, type_hint = "Union[argument.type_hint, argument.type_hint]")
+        grouped_arguments: DefaultDict[str, List[Argument]] = DefaultDict(list)
+        sorted_arguments = []
+        for argument in arguments:
+            grouped_arguments[argument.name].append(argument)
+        for argument_list in grouped_arguments.values():
+            if len(argument_list) == 1:
+                sorted_arguments.append(argument_list[0])
+            else:
+                argument = argument_list[0]
+                type_hints = [arg.type_hint for arg in argument_list]
+                argument.type_hint = UsefulStr(f"Union[{', '.join(type_hints)}]")
+                self.imports_for_fastapi.append(Import(from_='typing', import_="Union"))
+                sorted_arguments.append(argument)
+
+        return sorted_arguments
 
     def parse_request_body(
         self,
@@ -527,13 +542,16 @@ class OpenAPIParser(OpenAPIModelParser):
         reference = data_type.reference
         import functools
 
-        if not (
-            reference
-            and (
-                len(reference.children) == 1
-                or functools.reduce(lambda a, b: a == b, reference.children)
-            )
-        ):
+        try:
+            if not (
+                reference
+                and (
+                    len(reference.children) == 0
+                    or functools.reduce(lambda a, b: a == b, reference.children)
+                )
+            ):
+                return data_type
+        except RecursionError:
             return data_type
         source = reference.source
         if not isinstance(source, CustomRootType):
