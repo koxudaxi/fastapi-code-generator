@@ -26,7 +26,11 @@ ENCODING = 'utf-8'
 
 
 @pytest.mark.parametrize(
-    "oas_file", (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml")
+    "oas_file",
+    (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml"),
+    ids=[
+        id.stem for id in (DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME).glob("*.yaml")
+    ],
 )
 @freeze_time("2020-06-19")
 def test_generate_default_template(oas_file):
@@ -40,8 +44,8 @@ def test_generate_default_template(oas_file):
             template_dir=None,
         )
         expected_dir = EXPECTED_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / oas_file.stem
-        output_files = sorted(list(output_dir.glob('*')))
-        expected_files = sorted(list(expected_dir.glob('*')))
+        output_files = sorted(list(output_dir.glob('**/*.py')))
+        expected_files = sorted(list(expected_dir.glob('**/*.py')))
         assert [f.name for f in output_files] == [f.name for f in expected_files]
         for output_file, expected_file in zip(output_files, expected_files):
             assert output_file.read_text() == expected_file.read_text(), oas_file

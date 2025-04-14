@@ -176,4 +176,6 @@ fabric.properties
 
 .idea
 
+.vscode/
+
 version.py

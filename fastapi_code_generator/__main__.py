@@ -28,7 +28,7 @@ BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 
 BUILTIN_VISITOR_DIR = Path(__file__).parent / "visitors"
 
-MODEL_PATH: Path = Path("models.py")
+MODEL_PATH: Path = Path("models")
 
 
 def dynamic_load_module(module_path: Path) -> Any:
@@ -63,7 +63,7 @@ def main(
         DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
     ),
     python_version: PythonVersion = typer.Option(
-        PythonVersion.PY_38.value, "--python-version", "-p"
+        PythonVersion.PY_39.value, "--python-version", "-p"
     ),
 ) -> None:
     input_name: str = input_file
@@ -73,7 +73,7 @@ def main(
         input_text = f.read()
 
     if model_file:
-        model_path = Path(model_file).with_suffix('.py')
+        model_path = Path(model_file)
     else:
         model_path = MODEL_PATH
 
@@ -119,7 +119,7 @@ def generate_code(
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticBaseModel,
-    python_version: PythonVersion = PythonVersion.PY_38,
+    python_version: PythonVersion = PythonVersion.PY_39,
 ) -> None:
     if not model_path:
         model_path = MODEL_PATH
@@ -149,14 +149,16 @@ def generate_code(
 
     with chdir(output_dir):
         models = parser.parse()
-    output = output_dir / model_path
     if not models:
         # if no models (schemas), just generate an empty model file.
-        modules = {output: ("", input_name)}
+        modules = {output_dir / model_path.with_suffix('.py'): ("", input_name)}
     elif isinstance(models, str):
-        modules = {output: (models, input_name)}
+        modules = {output_dir / model_path.with_suffix('.py'): (models, input_name)}
     else:
-        raise Exception('Modular references are not supported in this version')
+        modules = {
+            output_dir / model_path / module_name[0]: (model.body, input_name)
+            for module_name, model in models.items()
+        }
 
     environment: Environment = Environment(
         loader=FileSystemLoader(

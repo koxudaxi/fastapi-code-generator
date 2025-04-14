@@ -1,0 +1,96 @@
+openapi: 3.1.0
+info:
+  title: test
+  version: 0.1.0
+servers:
+  - url: http://locahost:8000
+    description: Local development server
+paths:
+  /get-sheet:
+    get:
+      summary: Get Sheet
+      description: Get data from a Google Sheet
+      operationId: get_sheet_get_sheet_get
+      parameters:
+        - name: spreadsheet_id
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Spreadsheet Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                title: Response Get Sheet Get Sheet Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /update-sheet:
+    post:
+      summary: Update Sheet
+      description: Update data in a Google Sheet within the existing spreadsheet
+      operationId: update_sheet_update_sheet_post
+      parameters:
+        - name: spreadsheet_id
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: string
+              - type: 'null'
+            title: Spreadsheet Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: string
+                title: Response Update Sheet Update Sheet Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+components:
+  schemas:
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+              - type: string
+              - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+        - loc
+        - msg
+        - type
+      title: ValidationError
