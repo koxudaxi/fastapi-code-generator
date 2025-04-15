@@ -99,7 +99,7 @@ class Argument(CachedPropertyModel):
     def __str__(self) -> str:
         return self.argument
 
-    @cached_property
+    @property
     def argument(self) -> str:
         if self.field is None:
             type_hint = self.type_hint
@@ -113,9 +113,9 @@ class Argument(CachedPropertyModel):
             )
         if self.default is None and self.required:
             return f'{self.name}: {type_hint}'
-        return f'{self.name}: {self.type_hint} = {self.default}'
+        return f'{self.name}: {type_hint} = {self.default}'
 
-    @cached_property
+    @property
     def snakecase(self) -> str:
         if self.field is None:
             type_hint = self.type_hint
@@ -141,7 +141,6 @@ class Operation(CachedPropertyModel):
     parameters: List[Dict[str, Any]] = []
     responses: Dict[UsefulStr, Any] = {}
     deprecated: bool = False
-    imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
     tags: Optional[List[str]] = []
     request: Optional[Argument] = None
@@ -152,9 +151,7 @@ class Operation(CachedPropertyModel):
     arguments_list: List[Argument] = []
 
     @classmethod
-    def merge_arguments_with_union(
-        cls, arguments: List[Argument], imports: List[Import]
-    ) -> List[Argument]:
+    def merge_arguments_with_union(cls, arguments: List[Argument]) -> List[Argument]:
         grouped_arguments: DefaultDict[str, List[Argument]] = DefaultDict(list)
         for argument in arguments:
             grouped_arguments[argument.name].append(argument)
@@ -187,17 +184,24 @@ class Operation(CachedPropertyModel):
 
     @property
     def arguments(self) -> str:
-        sorted_arguments = Operation.merge_arguments_with_union(
-            self.arguments_list, self.imports
-        )
+        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
         return ", ".join(argument.argument for argument in sorted_arguments)
 
     @property
     def snake_case_arguments(self) -> str:
-        sorted_arguments = Operation.merge_arguments_with_union(
-            self.arguments_list, self.imports
-        )
+        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
         return ", ".join(argument.snakecase for argument in sorted_arguments)
+
+    @property
+    def imports(self) -> Imports:
+        imports = Imports()
+        for argument in self.arguments_list:
+            if isinstance(argument.field, list):
+                for field in argument.field:
+                    imports.append(field.data_type.import_)
+            elif argument.field:
+                imports.append(argument.field.data_type.import_)
+        return imports
 
     @cached_property
     def root_path(self) -> UsefulStr:

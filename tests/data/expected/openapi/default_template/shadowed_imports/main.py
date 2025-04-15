@@ -4,6 +4,9 @@
 
 from __future__ import annotations
 
+from datetime import date as date_aliased
+from typing import Optional
+
 from fastapi import FastAPI
 
 app = FastAPI(
@@ -11,3 +14,8 @@ app = FastAPI(
     version='0.0.1',
     servers=[{'url': 'https://api.something.com/1'}],
 )
+
+
+@app.get('/actions/', response_model=None)
+def get_actions_(due: Optional[date_aliased] = None) -> None:
+    pass

@@ -16,4 +16,18 @@ components:
           type: string
           format: date
           example: '2018-04-26T17:03:25.155Z'
-paths: {}
+paths:
+  /actions/:
+    get:
+      parameters:
+        - name: due
+          in: query
+          description: A due date for the card
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Success
+
