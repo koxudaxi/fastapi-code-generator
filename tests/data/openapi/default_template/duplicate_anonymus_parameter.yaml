@@ -16,9 +16,11 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - type: string
-              - type: 'null'
+            type: string
+            default: none
+            enum:
+              - cards
+              - none
             title: Spreadsheet Id
       responses:
         '200':
@@ -44,9 +46,11 @@ paths:
           in: query
           required: false
           schema:
-            anyOf:
-              - type: string
-              - type: 'null'
+            type: string
+            default: none
+            enum:
+              - cards
+              - none
             title: Spreadsheet Id
       responses:
         '200':

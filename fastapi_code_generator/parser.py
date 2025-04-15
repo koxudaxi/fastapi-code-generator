@@ -93,6 +93,7 @@ class Argument(CachedPropertyModel):
     type_hint: UsefulStr
     default: Optional[UsefulStr] = None
     default_value: Optional[UsefulStr] = None
+    field: Union[DataModelField, list[DataModelField], None] = None
     required: bool
 
     def __str__(self) -> str:
@@ -100,9 +101,35 @@ class Argument(CachedPropertyModel):
 
     @cached_property
     def argument(self) -> str:
+        if self.field is None:
+            type_hint = self.type_hint
+        else:
+            type_hint = (
+                UsefulStr(self.field.type_hint)
+                if not isinstance(self.field, list)
+                else UsefulStr(
+                    f"Union[{', '.join(field.type_hint for field in self.field)}]"
+                )
+            )
         if self.default is None and self.required:
-            return f'{self.name}: {self.type_hint}'
+            return f'{self.name}: {type_hint}'
         return f'{self.name}: {self.type_hint} = {self.default}'
+
+    @cached_property
+    def snakecase(self) -> str:
+        if self.field is None:
+            type_hint = self.type_hint
+        else:
+            type_hint = (
+                UsefulStr(self.field.type_hint)
+                if not isinstance(self.field, list)
+                else UsefulStr(
+                    f"Union[{', '.join(field.type_hint for field in self.field)}]"
+                )
+            )
+        if self.default is None and self.required:
+            return f'{stringcase.snakecase(self.name)}: {type_hint}'
+        return f'{stringcase.snakecase(self.name)}: {type_hint} = {self.default}'
 
 
 class Operation(CachedPropertyModel):
@@ -117,13 +144,39 @@ class Operation(CachedPropertyModel):
     imports: List[Import] = []
     security: Optional[List[Dict[str, List[str]]]] = None
     tags: Optional[List[str]] = []
-    arguments: str = ''
-    snake_case_arguments: str = ''
     request: Optional[Argument] = None
     response: str = ''
     additional_responses: Dict[Union[str, int], Dict[str, str]] = {}
     return_type: str = ''
     callbacks: Dict[UsefulStr, List["Operation"]] = {}
+    arguments_list: List[Argument] = []
+
+    @classmethod
+    def merge_arguments_with_union(
+        cls, arguments: List[Argument], imports: List[Import]
+    ) -> List[Argument]:
+        grouped_arguments: DefaultDict[str, List[Argument]] = DefaultDict(list)
+        for argument in arguments:
+            grouped_arguments[argument.name].append(argument)
+
+        merged_arguments = []
+        for argument_list in grouped_arguments.values():
+            if len(argument_list) == 1:
+                merged_arguments.append(argument_list[0])
+            else:
+                argument = argument_list[0]
+                fields = [
+                    item
+                    for arg in argument_list
+                    if arg.field is not None
+                    for item in (
+                        arg.field if isinstance(arg.field, list) else [arg.field]
+                    )
+                    if item is not None
+                ]
+                argument.field = fields
+                merged_arguments.append(argument)
+        return merged_arguments
 
     @cached_property
     def type(self) -> UsefulStr:
@@ -131,6 +184,20 @@ class Operation(CachedPropertyModel):
         backwards compatibility
         """
         return self.method
+
+    @property
+    def arguments(self) -> str:
+        sorted_arguments = Operation.merge_arguments_with_union(
+            self.arguments_list, self.imports
+        )
+        return ", ".join(argument.argument for argument in sorted_arguments)
+
+    @property
+    def snake_case_arguments(self) -> str:
+        sorted_arguments = Operation.merge_arguments_with_union(
+            self.arguments_list, self.imports
+        )
+        return ", ".join(argument.snakecase for argument in sorted_arguments)
 
     @cached_property
     def root_path(self) -> UsefulStr:
@@ -314,6 +381,7 @@ class OpenAPIParser(OpenAPIModelParser):
             default=default,  # type: ignore
             default_value=schema.default,
             required=field.required,
+            field=field,
         )
 
     def get_arguments(self, snake_case: bool, path: List[str]) -> str:
@@ -347,22 +415,11 @@ class OpenAPIParser(OpenAPIModelParser):
                 or argument.type_hint.startswith('Optional[')
             )
 
-        # Group argument with same name into one argument.name argument.type_hint into Argument(name = argument.name, type_hint = "Union[argument.type_hint, argument.type_hint]")
-        grouped_arguments: DefaultDict[str, List[Argument]] = DefaultDict(list)
-        sorted_arguments = []
-        for argument in arguments:
-            grouped_arguments[argument.name].append(argument)
-        for argument_list in grouped_arguments.values():
-            if len(argument_list) == 1:
-                sorted_arguments.append(argument_list[0])
-            else:
-                argument = argument_list[0]
-                type_hints = [arg.type_hint for arg in argument_list]
-                argument.type_hint = UsefulStr(f"Union[{', '.join(type_hints)}]")
-                self.imports_for_fastapi.append(Import(from_='typing', import_="Union"))
-                sorted_arguments.append(argument)
-
-        return sorted_arguments
+        # check if there are duplicate argument.name
+        argument_names = [argument.name for argument in arguments]
+        if len(argument_names) != len(set(argument_names)):
+            self.imports_for_fastapi.append(Import(from_='typing', import_="Union"))
+        return arguments
 
     def parse_request_body(
         self,
@@ -481,10 +538,7 @@ class OpenAPIParser(OpenAPIModelParser):
         resolved_path = self.model_resolver.resolve_ref(path)
         path_name, method = path[-2:]
 
-        self._temporary_operation['arguments'] = self.get_arguments(
-            snake_case=False, path=path
-        )
-        self._temporary_operation['snake_case_arguments'] = self.get_arguments(
+        self._temporary_operation['arguments_list'] = self.get_argument_list(
             snake_case=True, path=path
         )
         main_operation = self._temporary_operation
@@ -514,11 +568,8 @@ class OpenAPIParser(OpenAPIModelParser):
                         self._temporary_operation = {'_parameters': []}
                         cb_path = path + ['callbacks', key, route, method]
                         super().parse_operation(cb_op, cb_path)
-                        self._temporary_operation['arguments'] = self.get_arguments(
-                            snake_case=False, path=cb_path
-                        )
-                        self._temporary_operation['snake_case_arguments'] = (
-                            self.get_arguments(snake_case=True, path=cb_path)
+                        self._temporary_operation['arguments_list'] = (
+                            self.get_argument_list(snake_case=True, path=cb_path)
                         )
 
                         callbacks[key].append(
