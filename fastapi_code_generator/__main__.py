@@ -72,7 +72,7 @@ def main(
     with open(input_file, encoding=encoding) as f:
         input_text = f.read()
 
-    model_path = Path(model_file) if model_file else MODEL_PATH
+    model_path = Path(model_file) if model_file else MODEL_PATH  # pragma: no cover
 
     return generate_code(
         input_name,
