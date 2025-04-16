@@ -8,7 +8,7 @@ from typing import Optional, Union
 
 from fastapi import FastAPI
 
-from .models import HTTPValidationError
+from .models import HTTPValidationError, SpreadsheetId
 
 app = FastAPI(
     title='test',
@@ -23,7 +23,7 @@ app = FastAPI(
     '/get-sheet', response_model=str, responses={'422': {'model': HTTPValidationError}}
 )
 def get_sheet_get_sheet_get(
-    spreadsheet_id: Optional[str] = None,
+    spreadsheet_id: Optional[SpreadsheetId] = 'none',
 ) -> Union[str, HTTPValidationError]:
     """
     Get Sheet
@@ -37,7 +37,7 @@ def get_sheet_get_sheet_get(
     responses={'422': {'model': HTTPValidationError}},
 )
 def update_sheet_update_sheet_post(
-    spreadsheet_id: Optional[str] = None,
+    spreadsheet_id: Optional[SpreadsheetId] = 'none',
 ) -> Union[str, HTTPValidationError]:
     """
     Update Sheet

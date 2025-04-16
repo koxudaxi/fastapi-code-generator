@@ -32,6 +32,9 @@ def get_imports(parser: OpenAPIParser, model_path: Path) -> Dict[str, object]:
             )
     for from_, imports_ in parser.imports_for_fastapi.items():
         imports[from_].update(imports_)
+    for operation in parser.operations.values():
+        if operation.imports:
+            imports.alias.update(operation.imports.alias)
     return {'imports': imports}
 
 
