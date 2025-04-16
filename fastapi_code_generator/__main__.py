@@ -72,10 +72,7 @@ def main(
     with open(input_file, encoding=encoding) as f:
         input_text = f.read()
 
-    if model_file:
-        model_path = Path(model_file)
-    else:
-        model_path = MODEL_PATH
+    model_path = Path(model_file) if model_file else MODEL_PATH
 
     return generate_code(
         input_name,
