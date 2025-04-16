@@ -13,7 +13,6 @@ classifiers = [
         "Natural Language :: English",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
@@ -30,7 +29,7 @@ pattern = "^(?P<base>\\d+\\.\\d+\\.\\d+)(-?((?P<stage>[a-zA-Z]+)\\.?(?P<revision
 fastapi-codegen = "fastapi_code_generator.__main__:app"
 
 [tool.poetry.dependencies]
-python = "^3.9.0"
+python = ">=3.9,<3.13"
 typer = {extras = ["all"], version = ">=0.2.1,<0.13.0"}
 datamodel-code-generator =  {extras = ["http"], version = "0.28.5"}
 stringcase = "^1.2.0"
@@ -45,7 +44,7 @@ typed-ast = [
 #mkdocs = {version = "1.1.2", optional = true}
 #mkdocs-material = {version = "5.2.3", optional = true}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^8.2"
 pytest-cov = "*"
 pytest-mock = "*"
@@ -61,7 +60,7 @@ isort = "==5.13.2"
 [tool.black]
 line-length = 88
 skip-string-normalization = true
-target-version = ['py38']
+target-version = ['py39']
 exclude = '(tests/data|\.eggs|\.git|\.hg|\.mypy_cache|\.nox|\.tox|\.venv|_build|buck-out|build|dist|.*\/models\.py.*|.*\/models\/.*)'
 
 [tool.isort]

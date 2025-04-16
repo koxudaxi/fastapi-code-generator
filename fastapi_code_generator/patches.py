@@ -1,7 +1,11 @@
+# todo: remove this file when the following PR is merged into datamodels-code-generator:
+#
+# https://github.com/koxudaxi/datamodel-code-generator/pull/2379
+
 import logging
 from itertools import groupby
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional, Union
 
 from datamodel_code_generator.format import CodeFormatter
 from datamodel_code_generator.imports import IMPORT_ANNOTATIONS, Import, Imports
@@ -31,17 +35,17 @@ def patch_parse() -> None:  # noqa: C901
 
     def _parse(  # noqa: PLR0912, PLR0914, PLR0915
         self: base.Parser,
-        with_import: bool | None = True,  # noqa: FBT001, FBT002
-        format_: bool | None = True,  # noqa: FBT001, FBT002
-        settings_path: Path | None = None,
-    ) -> str | dict[tuple[str, ...], base.Result]:
+        with_import: Optional[bool] = True,  # noqa: FBT001, FBT002
+        format_: Optional[bool] = True,  # noqa: FBT001, FBT002
+        settings_path: Optional[Path] = None,
+    ) -> Union[str, dict[tuple[str, ...], base.Result]]:
         self.parse_raw()
 
         if with_import:
             self.imports.append(IMPORT_ANNOTATIONS)
 
         if format_:
-            code_formatter: CodeFormatter | None = CodeFormatter(
+            code_formatter: Optional[CodeFormatter] = CodeFormatter(
                 self.target_python_version,
                 settings_path,
                 self.wrap_string_literal,
