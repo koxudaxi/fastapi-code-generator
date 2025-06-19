@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional
 import typer
 from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
-from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.model import get_data_model_types
 from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
@@ -65,6 +64,11 @@ def main(
     python_version: PythonVersion = typer.Option(
         PythonVersion.PY_39.value, "--python-version", "-p"
     ),
+    strict_nullable: bool = typer.Option(
+        False,
+        "--strict-nullable",
+        help="Strictly follow nullable attribute in OpenAPI spec",
+    ),
 ) -> None:
     input_name: str = input_file
     input_text: str
@@ -89,6 +93,7 @@ def main(
         specify_tags=specify_tags,
         output_model_type=output_model_type,
         python_version=python_version,
+        strict_nullable=strict_nullable,
     )
 
 
@@ -117,6 +122,7 @@ def generate_code(
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticBaseModel,
     python_version: PythonVersion = PythonVersion.PY_39,
+    strict_nullable: bool = False,
 ) -> None:
     if not model_path:
         model_path = MODEL_PATH
@@ -142,6 +148,7 @@ def generate_code(
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
         custom_template_dir=model_template_dir,
         target_python_version=python_version,
+        strict_nullable=strict_nullable,
     )
 
     with chdir(output_dir):

@@ -203,3 +203,25 @@ def test_generate_modify_specific_routers(oas_file):
                     assert output_inner.read_text() == expected_inner.read_text()
             else:
                 assert output_file.read_text() == expected_file.read_text(), oas_file
+
+
+@freeze_time("2020-06-19")
+def test_generate_nullable_strict():
+    oas_file = DATA_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / 'nullable_test.yaml'
+    with TemporaryDirectory() as tmp_dir:
+        output_dir = Path(tmp_dir) / (oas_file.stem + '_strict')
+        generate_code(
+            input_name=oas_file.name,
+            input_text=oas_file.read_text(),
+            encoding=ENCODING,
+            output_dir=output_dir,
+            template_dir=None,
+            strict_nullable=True,
+        )
+        expected_dir = EXPECTED_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "nullable_test_strict"
+        output_files = sorted(list(output_dir.glob("**/*.py")))
+        expected_files = sorted(list(expected_dir.glob("**/*.py")))
+        assert [f.name for f in output_files] == [f.name for f in expected_files]
+        for output_file, expected_file in zip(output_files, expected_files):
+            assert output_file.read_text() == expected_file.read_text()
+
