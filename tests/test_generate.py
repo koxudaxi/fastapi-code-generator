@@ -218,10 +218,11 @@ def test_generate_nullable_strict():
             template_dir=None,
             strict_nullable=True,
         )
-        expected_dir = EXPECTED_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "nullable_test_strict"
+        expected_dir = (
+            EXPECTED_DIR / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "nullable_test_strict"
+        )
         output_files = sorted(list(output_dir.glob("**/*.py")))
         expected_files = sorted(list(expected_dir.glob("**/*.py")))
         assert [f.name for f in output_files] == [f.name for f in expected_files]
         for output_file, expected_file in zip(output_files, expected_files):
             assert output_file.read_text() == expected_file.read_text()
-
