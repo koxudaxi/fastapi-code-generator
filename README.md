@@ -25,6 +25,8 @@ To install `fastapi-code-generator`:
 $ pip install fastapi-code-generator
 ```
 
+> **Note:** Python 3.13 is supported from version 0.5.5 and later. If you're on Python 3.13, ensure you install at least version 0.5.5.
+
 ## Usage
 
 The `fastapi-code-generator` command:
