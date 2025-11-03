@@ -20,7 +20,7 @@ app = typer.Typer()
 
 all_tags = []
 
-TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| ')
+TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| |-')
 
 BUILTIN_MODULAR_TEMPLATE_DIR = Path(__file__).parent / "modular_template"
 
