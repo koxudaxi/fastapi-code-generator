@@ -6,21 +6,15 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field, constr
-
-
-class ID(BaseModel):
-    __root__: constr(regex=r'^[0-9a-fA-F]{24}$') = Field(
-        ..., example='5abbe4b7ddc1b351ef961414'
-    )
+from pydantic import BaseModel, constr
 
 
 class Card(BaseModel):
-    id: Optional[ID] = None
+    id: Optional[constr(regex=r'^[0-9a-fA-F]{24}$')] = None
 
 
 class Board(BaseModel):
-    id: Optional[ID] = None
+    id: Optional[constr(regex=r'^[0-9a-fA-F]{24}$')] = None
 
 
 class Data(BaseModel):

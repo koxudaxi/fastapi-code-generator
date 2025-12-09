@@ -17,6 +17,7 @@ from typing import (
     Set,
     Type,
     Union,
+    cast,
 )
 from urllib.parse import ParseResult
 
@@ -311,8 +312,9 @@ class OpenAPIParser(OpenAPIModelParser):
         self.data_types: List[DataType] = []
 
     def parse_info(self) -> Optional[Dict[str, Any]]:
-        result = self.raw_obj.get('info', {}).copy()
-        servers = self.raw_obj.get('servers')
+        raw_obj = cast(Dict[str, Any], self.raw_obj)
+        result: Dict[str, Any] = dict(raw_obj.get('info', {}))
+        servers = raw_obj.get('servers')
         if servers:
             result['servers'] = servers
         return result or None
@@ -360,7 +362,7 @@ class OpenAPIParser(OpenAPIModelParser):
         if not schema:
             return None
 
-        field = DataModelField(
+        field = DataModelField(  # type: ignore[call-arg]
             name=name,
             data_type=data_type,
             required=parameters.required or parameters.in_ == ParameterLocation.path,
@@ -430,8 +432,8 @@ class OpenAPIParser(OpenAPIModelParser):
         name: str,
         request_body: RequestBodyObject,
         path: List[str],
-    ) -> None:
-        super().parse_request_body(name, request_body, path)
+    ) -> Dict[str, DataType]:
+        result = super().parse_request_body(name, request_body, path)
         arguments: List[Argument] = []
         for (
             media_type,
@@ -493,6 +495,7 @@ class OpenAPIParser(OpenAPIModelParser):
                         Import.from_full_path("fastapi.UploadFile")
                     )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
+        return result
 
     def parse_responses(  # type: ignore[override]
         self,
@@ -595,14 +598,13 @@ class OpenAPIParser(OpenAPIModelParser):
 
     def _collapse_root_model(self, data_type: DataType) -> DataType:
         reference = data_type.reference
-        import functools
 
         try:
             if not (
                 reference
                 and (
                     len(reference.children) == 0
-                    or functools.reduce(lambda a, b: a == b, reference.children)
+                    or all(c == reference.children[0] for c in reference.children)
                 )
             ):
                 return data_type
