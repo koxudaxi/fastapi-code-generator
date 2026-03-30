@@ -42,7 +42,7 @@ from datamodel_code_generator.parser.openapi import (
     RequestBodyObject,
     ResponseObject,
 )
-from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
+from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes, Types
 from pydantic import BaseModel, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
@@ -326,6 +326,35 @@ class OpenAPIParser(OpenAPIModelParser):
         super().parse_all_parameters(name, parameters, path)
         self._temporary_operation['_parameters'].extend(parameters)
 
+    @staticmethod
+    def _is_complex_path_parameter_schema(schema: JsonSchemaObject) -> bool:
+        schema_type = schema.type
+        if isinstance(schema_type, list):
+            return any(
+                item not in {'string', 'integer', 'number', 'boolean'}
+                for item in schema_type
+            )
+        if schema_type in {'object', 'array'}:
+            return True
+        return bool(
+            schema.properties
+            or schema.items
+            or schema.oneOf
+            or schema.anyOf
+            or schema.allOf
+            or schema.additionalProperties
+        )
+
+    @staticmethod
+    def _get_schema_ref(
+        schema: Union[ReferenceObject, JsonSchemaObject, None],
+    ) -> Optional[str]:
+        if isinstance(schema, ReferenceObject):
+            return schema.ref
+        if isinstance(schema, JsonSchemaObject):
+            return schema.ref
+        return None
+
     def get_parameter_type(
         self,
         parameters: Union[ReferenceObject, ParameterObject],
@@ -343,20 +372,62 @@ class OpenAPIParser(OpenAPIModelParser):
         schema: Optional[JsonSchemaObject] = None
         data_type: Optional[DataType] = None
         for content in parameters.content.values():
-            if isinstance(content.schema_, ReferenceObject):
-                data_type = self.get_ref_data_type(content.schema_.ref)
-                ref_model = self.get_ref_model(content.schema_.ref)
-                schema = JsonSchemaObject.parse_obj(ref_model)
+            schema_ref = OpenAPIParser._get_schema_ref(content.schema_)
+            if schema_ref:
+                ref_model = self.get_ref_model(schema_ref)
+                resolved_schema = JsonSchemaObject.parse_obj(ref_model)
+                if parameters.in_ == ParameterLocation.path:
+                    if OpenAPIParser._is_complex_path_parameter_schema(resolved_schema):
+                        schema = resolved_schema
+                        data_type = self.data_type_manager.get_data_type(Types.string)
+                    else:
+                        schema = (
+                            content.schema_
+                            if isinstance(content.schema_, JsonSchemaObject)
+                            else resolved_schema
+                        )
+                else:
+                    schema = resolved_schema
+                    data_type = self.get_ref_data_type(schema_ref)
             else:
                 schema = content.schema_
             break
         if not data_type:
             if not schema:
-                schema = parameters.schema_
+                schema_ref = OpenAPIParser._get_schema_ref(parameters.schema_)
+                if schema_ref:
+                    ref_model = self.get_ref_model(schema_ref)
+                    resolved_schema = JsonSchemaObject.parse_obj(ref_model)
+                    if parameters.in_ == ParameterLocation.path:
+                        if OpenAPIParser._is_complex_path_parameter_schema(
+                            resolved_schema
+                        ):
+                            schema = resolved_schema
+                            data_type = self.data_type_manager.get_data_type(
+                                Types.string
+                            )
+                        else:
+                            schema = (
+                                parameters.schema_
+                                if isinstance(parameters.schema_, JsonSchemaObject)
+                                else resolved_schema
+                            )
+                    else:
+                        schema = resolved_schema
+                        data_type = self.get_ref_data_type(schema_ref)
+                else:
+                    schema = parameters.schema_
             if schema is None:
                 raise RuntimeError("schema is None")  # pragma: no cover
-            data_type = self.parse_schema(name, schema, [*path, name])
-            data_type = self._collapse_root_model(data_type)
+            if not data_type:
+                if (
+                    parameters.in_ == ParameterLocation.path
+                    and OpenAPIParser._is_complex_path_parameter_schema(schema)
+                ):
+                    data_type = self.data_type_manager.get_data_type(Types.string)
+                else:
+                    data_type = self.parse_schema(name, schema, [*path, name])
+                    data_type = self._collapse_root_model(data_type)
         if not schema:
             return None
 

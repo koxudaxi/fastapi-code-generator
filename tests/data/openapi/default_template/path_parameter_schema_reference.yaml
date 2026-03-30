@@ -1,0 +1,26 @@
+openapi: 3.0.0
+info:
+  title: path_parameter_schema_reference
+  version: 1.0.0
+paths:
+  /widgets/{widget}:
+    get:
+      operationId: getWidget
+      parameters:
+        - name: widget
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/WidgetPath'
+      responses:
+        '200':
+          description: Expected response to a valid request
+components:
+  schemas:
+    WidgetPath:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
