@@ -92,6 +92,10 @@ def main(
     )
 
 
+def run() -> None:
+    typer.run(main)
+
+
 def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
     if data_type.reference:
         return data_type.reference
@@ -271,4 +275,4 @@ def generate_code(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    run()
