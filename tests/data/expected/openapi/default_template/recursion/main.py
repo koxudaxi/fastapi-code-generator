@@ -5,8 +5,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
-
-from .models import ID
+from pydantic import constr
 
 app = FastAPI(
     title='REST API',
@@ -16,5 +15,5 @@ app = FastAPI(
 
 
 @app.get('/actions/{id}', response_model=None)
-def get_actions_id(id: ID) -> None:
+def get_actions_id(id: constr(regex=r'^[0-9a-fA-F]{24}$')) -> None:
     pass

@@ -381,11 +381,7 @@ class OpenAPIParser(OpenAPIModelParser):
                         schema = resolved_schema
                         data_type = self.data_type_manager.get_data_type(Types.string)
                     else:
-                        schema = (
-                            content.schema_
-                            if isinstance(content.schema_, JsonSchemaObject)
-                            else resolved_schema
-                        )
+                        schema = resolved_schema
                 else:
                     schema = resolved_schema
                     data_type = self.get_ref_data_type(schema_ref)
@@ -407,11 +403,7 @@ class OpenAPIParser(OpenAPIModelParser):
                                 Types.string
                             )
                         else:
-                            schema = (
-                                parameters.schema_
-                                if isinstance(parameters.schema_, JsonSchemaObject)
-                                else resolved_schema
-                            )
+                            schema = resolved_schema
                     else:
                         schema = resolved_schema
                         data_type = self.get_ref_data_type(schema_ref)
