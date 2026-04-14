@@ -1,0 +1,39 @@
+openapi: 3.0.0
+info:
+  title: REST API
+  version: 0.0.1
+servers:
+  - url: https://api.something.com/1
+components:
+  securitySchemes: {}
+  schemas:
+    ID:
+      type: string
+      pattern: ^[0-9a-fA-F]{24}$
+      example: 5abbe4b7ddc1b351ef961414
+  responses: {}
+paths:
+  /boards/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: ''
+        required: true
+        schema:
+          $ref: '#/components/schemas/ID'
+    delete:
+      tags: []
+      summary: Delete a Board
+      description: Delete a board.
+      operationId: delete-boards-id
+      parameters:
+        - name: id
+          in: path
+          description: The id of the board to delete
+          required: true
+          schema:
+            type: string
+      deprecated: false
+      responses:
+        '200':
+          description: Success
