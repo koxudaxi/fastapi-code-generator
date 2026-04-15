@@ -41,7 +41,7 @@ pydantic = "^2.8"
 #mkdocs-material = {version = "5.2.3", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.2"
+pytest = "^8.4"
 pytest-cov = "*"
 pytest-mock = "*"
 mypy = "^1.10"
