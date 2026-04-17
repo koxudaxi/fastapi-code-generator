@@ -1,10 +1,12 @@
 import re
+import sys
 from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import typer
+from click import ClickException
 from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
 from datamodel_code_generator.imports import Import, Imports
@@ -12,8 +14,10 @@ from datamodel_code_generator.model import get_data_model_types
 from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
+from typer.main import get_command
 
 from fastapi_code_generator.parser import OpenAPIParser
+from fastapi_code_generator.version import __version__
 from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
@@ -39,15 +43,14 @@ def dynamic_load_module(module_path: Path) -> Any:
         if spec.loader:
             spec.loader.exec_module(module)
             return module
-    raise Exception(f"{module_name} can not be loaded")
+    raise RuntimeError(f"{module_name} can not be loaded")  # pragma: no cover
 
 
 def _normalize_pydantic_v2_code(code: str) -> str:
     return code.replace("constr(regex=", "constr(pattern=")
 
 
-@app.command()
-def main(
+def run_cli(
     encoding: str = typer.Option("utf-8", "--encoding", "-e"),
     input_file: str = typer.Option(..., "--input", "-i"),
     output_dir: Path = typer.Option(..., "--output", "-o"),
@@ -70,7 +73,7 @@ def main(
         PythonVersion.PY_310.value, "--python-version", "-p"
     ),
 ) -> None:
-    input_name: str = input_file
+    input_name: str = Path(input_file).name
     input_text: str
 
     with open(input_file, encoding=encoding) as f:
@@ -96,14 +99,65 @@ def main(
     )
 
 
-def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
-    if data_type.reference:
-        return data_type.reference
-    for data_type in data_type.data_types:
-        reference = _get_most_of_reference(data_type)
-        if reference:
-            return reference
-    return None
+@app.command()
+def cli(
+    encoding: str = typer.Option("utf-8", "--encoding", "-e"),
+    input_file: str = typer.Option(..., "--input", "-i"),
+    output_dir: Path = typer.Option(..., "--output", "-o"),
+    model_file: str = typer.Option(None, "--model-file", "-m"),
+    template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),
+    model_template_dir: Optional[Path] = typer.Option(None, "--model-template-dir"),
+    enum_field_as_literal: Optional[LiteralType] = typer.Option(
+        None, "--enum-field-as-literal"
+    ),
+    generate_routers: bool = typer.Option(False, "--generate-routers", "-r"),
+    specify_tags: Optional[str] = typer.Option(None, "--specify-tags"),
+    custom_visitors: Optional[List[Path]] = typer.Option(
+        None, "--custom-visitor", "-c"
+    ),
+    disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
+    output_model_type: DataModelType = typer.Option(
+        DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
+    ),
+    python_version: PythonVersion = typer.Option(
+        PythonVersion.PY_310.value, "--python-version", "-p"
+    ),
+) -> None:
+    run_cli(
+        encoding=encoding,
+        input_file=input_file,
+        output_dir=output_dir,
+        model_file=model_file,
+        template_dir=template_dir,
+        model_template_dir=model_template_dir,
+        enum_field_as_literal=enum_field_as_literal,
+        generate_routers=generate_routers,
+        specify_tags=specify_tags,
+        custom_visitors=custom_visitors,
+        disable_timestamp=disable_timestamp,
+        output_model_type=output_model_type,
+        python_version=python_version,
+    )
+
+
+def main(args: Sequence[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if args is None else args)
+    if len(argv) == 1 and argv[0] in {"--version", "-V"}:
+        print(f"fastapi-codegen {__version__}")
+        return 0
+
+    command = get_command(app)
+    try:
+        result = command.main(
+            args=argv,
+            prog_name="fastapi-codegen",
+            standalone_mode=False,
+        )
+    except ClickException as exc:
+        exc.show()
+        return exc.exit_code
+
+    return int(result) if isinstance(result, int) else 0
 
 
 def generate_code(
@@ -113,7 +167,7 @@ def generate_code(
     output_dir: Path,
     template_dir: Optional[Path],
     model_template_dir: Optional[Path] = None,
-    model_path: Optional[Path] = None,
+    model_path: Path = MODEL_PATH,
     enum_field_as_literal: Optional[LiteralType] = None,
     custom_visitors: Optional[List[Path]] = None,
     disable_timestamp: bool = False,
@@ -123,8 +177,6 @@ def generate_code(
     python_version: PythonVersion = PythonVersion.PY_310,
 ) -> None:
     global all_tags
-    if not model_path:
-        model_path = MODEL_PATH
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     if generate_routers:
@@ -264,21 +316,15 @@ def generate_code(
 
     for path, body_and_filename in modules.items():
         body, filename = body_and_filename
-        if path is None:
-            file = None
-        else:
-            if not path.parent.exists():
-                path.parent.mkdir(parents=True)
-            file = path.open('wt', encoding='utf8')
-
+        if not path.parent.exists():
+            path.parent.mkdir(parents=True)
+        file = path.open('wt', encoding='utf8')
         print(header.format(filename=filename), file=file)
         if body:
             print('', file=file)
             print(_normalize_pydantic_v2_code(body).rstrip(), file=file)
-
-        if file is not None:
-            file.close()
+        file.close()
 
 
-if __name__ == "__main__":
-    typer.run(main)
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())

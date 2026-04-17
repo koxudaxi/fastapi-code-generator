@@ -36,7 +36,7 @@ $ prek install
 ## 6. Create new branch and rewrite code.
 $ git checkout -b new-branch
 
-## 7. Run unittest under Python 3.14 (you should pass all tests and coverage should be 100%)
+## 7. Run the CLI end-to-end test suite under Python 3.14 (you should pass all tests and coverage should be 100%)
 $ tox run -e py314-parallel
 
 ## 8. Format code
@@ -45,8 +45,17 @@ $ tox run -e fix
 ## 9. Check lint and types
 $ tox run -e type
 
-## 10. Build package metadata
+## 10. Check CLI docs are up to date
+$ tox run -e cli-docs -- --check
+
+## 11. Build package metadata
 $ tox run -e pkg_meta
 
-## 11. Commit and Push...
+## 12. Build the documentation site
+$ tox run -e docs
+
+## 13. Combine coverage locally when needed
+$ tox run -e coverage
+
+## 14. Commit and Push...
 ```

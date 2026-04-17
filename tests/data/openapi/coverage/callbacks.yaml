@@ -1,0 +1,71 @@
+openapi: "3.0.0"
+info:
+  title: Callback API
+  version: 1.0.0
+paths:
+  /subscriptions:
+    post:
+      operationId: createSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionRequest"
+      callbacks:
+        onEvent:
+          "{$request.body#/callbackUrl}":
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/EventPayload"
+              responses:
+                "202":
+                  description: Accepted
+                  content:
+                    application/json:
+                      schema:
+                        $ref: "#/components/schemas/Ack"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+components:
+  schemas:
+    SubscriptionRequest:
+      type: object
+      required:
+        - callbackUrl
+      properties:
+        callbackUrl:
+          type: string
+    EventPayload:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+    Ack:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+    Subscription:
+      type: object
+      required:
+        - id
+        - callbackUrl
+      properties:
+        id:
+          type: string
+        callbackUrl:
+          type: string
