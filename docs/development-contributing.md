@@ -4,7 +4,8 @@ Install the package in editable mode:
 
 ```sh
 $ git clone git@github.com:koxudaxi/fastapi-code-generator.git
-$ poetry install fastapi-code-generator
+$ cd fastapi-code-generator
+$ pip install -e .
 ```
 
 # Contribute
@@ -17,23 +18,35 @@ We are waiting for your contributions to `fastapi-code-generator`.
 $ git clone git@github.com:<your username>/fastapi-code-generator.git
 $ cd fastapi-code-generator
 
-## 2. Install [poetry](https://github.com/python-poetry/poetry)
-$ curl -sSL curl -sSL https://install.python-poetry.org | python3 -
+## 2. Install [uv](https://docs.astral.sh/uv/getting-started/installation/)
+$ curl -LsSf https://astral.sh/uv/install.sh | sh
 
-## 3. Install dependencies
-$ poetry install
+## 3. Install tox with uv
+$ uv tool install --python-preference only-managed --python 3.14 tox --with tox-uv
 
-## 4. Create new branch and rewrite code.
+## 4. Create a development environment
+$ tox run -e dev
+
+.tox/dev is a Python environment you can use for development purposes
+
+## 5. Install pre-commit hooks
+$ uv tool install prek
+$ prek install
+
+## 6. Create new branch and rewrite code.
 $ git checkout -b new-branch
 
-## 5. Run unittest (you should pass all test and coverage should be 100%)
-$ ./scripts/test.sh
+## 7. Run unittest under Python 3.14 (you should pass all tests and coverage should be 100%)
+$ tox run -e py314-parallel
 
-## 6. Format code
-$ ./scripts/format.sh
+## 8. Format code
+$ tox run -e fix
 
-## 7. Check lint (mypy)
-$ ./scripts/lint.sh
+## 9. Check lint and types
+$ tox run -e type
 
-## 8. Commit and Push...
+## 10. Build package metadata
+$ tox run -e pkg_meta
+
+## 11. Commit and Push...
 ```

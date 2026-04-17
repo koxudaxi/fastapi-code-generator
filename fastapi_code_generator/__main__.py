@@ -18,7 +18,7 @@ from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
 
-all_tags = []
+all_tags: List[str] = []
 
 TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| ')
 
@@ -42,6 +42,10 @@ def dynamic_load_module(module_path: Path) -> Any:
     raise Exception(f"{module_name} can not be loaded")
 
 
+def _normalize_pydantic_v2_code(code: str) -> str:
+    return code.replace("constr(regex=", "constr(pattern=")
+
+
 @app.command()
 def main(
     encoding: str = typer.Option("utf-8", "--encoding", "-e"),
@@ -63,7 +67,7 @@ def main(
         DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
     ),
     python_version: PythonVersion = typer.Option(
-        PythonVersion.PY_39.value, "--python-version", "-p"
+        PythonVersion.PY_310.value, "--python-version", "-p"
     ),
 ) -> None:
     input_name: str = input_file
@@ -116,8 +120,9 @@ def generate_code(
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticBaseModel,
-    python_version: PythonVersion = PythonVersion.PY_39,
+    python_version: PythonVersion = PythonVersion.PY_310,
 ) -> None:
+    global all_tags
     if not model_path:
         model_path = MODEL_PATH
     if not output_dir.exists():
@@ -169,6 +174,7 @@ def generate_code(
 
     template_vars: Dict[str, object] = {"info": parser.parse_info()}
     visitors: List[Visitor] = []
+    all_tags = []
 
     # Load visitors
     builtin_visitors = BUILTIN_VISITOR_DIR.rglob("*.py")
@@ -202,11 +208,13 @@ def generate_code(
         relative_path = target.relative_to(template_dir)
         template = environment.get_template(str(relative_path))
         result = template.render(template_vars)
-        results[relative_path] = code_formatter.format_code(result)
+        results[relative_path] = _normalize_pydantic_v2_code(
+            code_formatter.format_code(result)
+        )
 
     if generate_routers:
         tags = sorted_tags
-        results.pop(Path("routers.jinja2"))
+        results.pop(Path("routers.jinja2"), None)
         if specify_tags:
             if Path(output_dir.joinpath("main.py")).exists():
                 with open(Path(output_dir.joinpath("main.py")), 'r') as file:
@@ -229,7 +237,9 @@ def generate_code(
                     template = environment.get_template(str(relative_path))
                     result = template.render(template_vars)
                     router_path = Path("routers", router).with_suffix(".jinja2")
-                    results[router_path] = code_formatter.format_code(result)
+                    results[router_path] = _normalize_pydantic_v2_code(
+                        code_formatter.format_code(result)
+                    )
 
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     header = f"""\
@@ -264,7 +274,7 @@ def generate_code(
         print(header.format(filename=filename), file=file)
         if body:
             print('', file=file)
-            print(body.rstrip(), file=file)
+            print(_normalize_pydantic_v2_code(body).rstrip(), file=file)
 
         if file is not None:
             file.close()

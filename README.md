@@ -5,7 +5,7 @@ This code generator creates a FastAPI app from an openapi file.
 [![PyPI version](https://badge.fury.io/py/fastapi-code-generator.svg)](https://pypi.python.org/pypi/fastapi-code-generator)
 [![Downloads](https://pepy.tech/badge/fastapi-code-generator/month)](https://pepy.tech/project/fastapi-code-generator)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fastapi-code-generator)](https://pypi.python.org/pypi/fastapi-code-generator)
-[![codecov](https://codecov.io/gh/koxudaxi/fastapi-code-generator/branch/master/graph/badge.svg)](https://codecov.io/gh/koxudaxi/fastapi-code-generator)
+[![codecov](https://codecov.io/gh/koxudaxi/fastapi-code-generator/branch/main/graph/badge.svg)](https://codecov.io/gh/koxudaxi/fastapi-code-generator)
 ![license](https://img.shields.io/github/license/koxudaxi/fastapi-code-generator.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
@@ -40,7 +40,7 @@ Options:
   --specify-tags           Use along with --generate-routers to generate specific routers from given list of tags.
   -c, --custom-visitors    PATH - A custom visitor that adds variables to the template.
   -d, --output-model-type  Specify a Pydantic base model to use (see [datamodel-code-generator](https://github.com/koxudaxi/datamodel-code-generator); default is `pydantic.BaseModel`).
-  -p, --python-version     Specify a Python version to target (default is `3.9`).
+  -p, --python-version     Specify a Python version to target (default is `3.10`).
   --install-completion     Install completion for the current shell.
   --show-completion        Show completion for the current shell, to copy it
                            or customize the installation.
@@ -855,4 +855,3 @@ from .models import FatCats, Pet, SlimDogs, WildBoars
 ## License
 
 fastapi-code-generator is released under the MIT License. http://www.opensource.org/licenses/mit-license
-

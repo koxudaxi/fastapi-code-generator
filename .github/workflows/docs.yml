@@ -3,33 +3,28 @@ name: Docs
 on:
   push:
     branches:
-    - master
+    - main
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v5
 
     - name: Setup Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.9'
-        architecture: 'x64'
+        python-version: "3.14"
+        allow-prereleases: true
 
-    - uses: actions/cache@v4
+    - uses: astral-sh/setup-uv@v8.0.0
       with:
-        path: |
-          ~/.cache/pypoetry
-          ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        enable-cache: true
     - name: Install dependencies
       run: |
-        python -m pip install mkdocs mkdocs-material
+        uv sync --group docs
     - name: build site
-      run:  ./scripts/build_site.sh
+      run: uv run --group docs ./scripts/build_site.sh
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v2
       env:

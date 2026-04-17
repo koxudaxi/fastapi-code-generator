@@ -4,61 +4,123 @@ on:
   pull_request: {}
 
 jobs:
+  lint-and-type:
+    name: Lint and type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Run fix checks
+        run: tox -e fix
+      - name: Run type checks
+        run: tox -e type
+
   test:
     name: Test on Python ${{ matrix.python-version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.10"
+            tox-env: py310-parallel
+          - os: ubuntu-latest
+            python-version: "3.11"
+            tox-env: py311-parallel
+          - os: ubuntu-latest
+            python-version: "3.12"
+            tox-env: py312-parallel
+          - os: ubuntu-latest
+            python-version: "3.13"
+            tox-env: py313-parallel
+          - os: ubuntu-latest
+            python-version: "3.14"
+            tox-env: py314-parallel
+          - os: windows-latest
+            python-version: "3.10"
+            tox-env: py310-parallel
+          - os: windows-latest
+            python-version: "3.11"
+            tox-env: py311-parallel
+          - os: windows-latest
+            python-version: "3.12"
+            tox-env: py312-parallel
+          - os: windows-latest
+            python-version: "3.13"
+            tox-env: py313-parallel
+          - os: windows-latest
+            python-version: "3.14"
+            tox-env: py314-parallel
+          - os: macos-latest
+            python-version: "3.10"
+            tox-env: py310-parallel
+          - os: macos-latest
+            python-version: "3.11"
+            tox-env: py311-parallel
+          - os: macos-latest
+            python-version: "3.12"
+            tox-env: py312-parallel
+          - os: macos-latest
+            python-version: "3.13"
+            tox-env: py313-parallel
+          - os: macos-latest
+            python-version: "3.14"
+            tox-env: py314-parallel
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip --disable-pip-version-check
-        python -m pip install poetry
-        poetry install
-    - name: Lint
-      if: matrix.os != 'windows-latest'
-      run: |
-        ./scripts/lint.sh
-    - name: Unit Test
-      if: matrix.os != 'windows-latest'
-      run: |
-        poetry run ./scripts/test.sh
-    - name: Unit Test windows
-      if: matrix.os == 'windows-latest'
-      run: |
-        ./scripts/poetry_test.bat
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest'
-      uses: codecov/codecov-action@v4
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-        flags: unittests
-  check: # This job does nothing and is only used for the branch protection
-    if: github.event.pull_request.draft == false
-    
-    needs:
-      - test
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Run tests
+        run: tox -e ${{ matrix.tox-env }}
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v5
+        with:
+          file: .tox/coverage.py312-parallel.xml
+          flags: unittests
 
+  package:
+    name: Package metadata
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Validate package artifacts
+        run: tox -e pkg_meta
 
+  check:
+    if: github.event.pull_request.draft == false
+    needs:
+      - lint-and-type
+      - test
+      - package
+    runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1 # nosemgrep
+        uses: re-actors/alls-green@release/v1
         with:
           jobs: ${{ toJSON(needs) }}
