@@ -17,7 +17,7 @@ app = FastAPI(
 
 
 @app.delete('/boards/{id}', response_model=None)
-def delete_boards_id(id: Union[str, constr(regex=r'^[0-9a-fA-F]{24}$')]) -> None:
+def delete_boards_id(id: Union[str, constr(pattern=r'^[0-9a-fA-F]{24}$')]) -> None:
     """
     Delete a Board
     """

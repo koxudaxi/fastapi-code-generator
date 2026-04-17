@@ -237,7 +237,7 @@ class OpenAPIParser(OpenAPIModelParser):
         base_class: Optional[str] = None,
         custom_template_dir: Optional[pathlib.Path] = None,
         extra_template_data: Optional[DefaultDict[str, Dict[str, Any]]] = None,
-        target_python_version: PythonVersion = PythonVersion.PY_39,
+        target_python_version: PythonVersion = PythonVersion.PY_310,
         dump_resolve_reference_action: Optional[Callable[[Iterable[str]], str]] = None,
         validation: bool = False,
         field_constraints: bool = False,
@@ -311,7 +311,12 @@ class OpenAPIParser(OpenAPIModelParser):
         self.data_types: List[DataType] = []
 
     def parse_info(self) -> Optional[Dict[str, Any]]:
-        result = self.raw_obj.get('info', {}).copy()
+        if not isinstance(self.raw_obj, dict):
+            return None
+        info = self.raw_obj.get('info')
+        if not isinstance(info, dict):
+            return None
+        result = info.copy()
         servers = self.raw_obj.get('servers')
         if servers:
             result['servers'] = servers
@@ -364,7 +369,7 @@ class OpenAPIParser(OpenAPIModelParser):
             name=name,
             data_type=data_type,
             required=parameters.required or parameters.in_ == ParameterLocation.path,
-        )
+        )  # type: ignore[call-arg]
 
         if orig_name != name:
             if parameters.in_:
@@ -430,8 +435,8 @@ class OpenAPIParser(OpenAPIModelParser):
         name: str,
         request_body: RequestBodyObject,
         path: List[str],
-    ) -> None:
-        super().parse_request_body(name, request_body, path)
+    ) -> Dict[str, DataType]:
+        request_body_fields = super().parse_request_body(name, request_body, path)
         arguments: List[Argument] = []
         for (
             media_type,
@@ -493,6 +498,7 @@ class OpenAPIParser(OpenAPIModelParser):
                         Import.from_full_path("fastapi.UploadFile")
                     )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
+        return request_body_fields
 
     def parse_responses(  # type: ignore[override]
         self,
@@ -581,7 +587,7 @@ class OpenAPIParser(OpenAPIModelParser):
                                 **cb_op,
                                 **self._temporary_operation,
                                 path=route,
-                                method=method,  # type: ignore
+                                method=method,
                             )
                         )
 
@@ -595,14 +601,16 @@ class OpenAPIParser(OpenAPIModelParser):
 
     def _collapse_root_model(self, data_type: DataType) -> DataType:
         reference = data_type.reference
-        import functools
 
         try:
             if not (
                 reference
                 and (
                     len(reference.children) == 0
-                    or functools.reduce(lambda a, b: a == b, reference.children)
+                    or all(
+                        child == reference.children[0]
+                        for child in reference.children[1:]
+                    )
                 )
             ):
                 return data_type

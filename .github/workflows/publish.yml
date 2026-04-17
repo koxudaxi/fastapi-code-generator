@@ -3,34 +3,26 @@ name: Publish
 on:
   push:
     tags:
-      - '**'
+      - "**"
 
 jobs:
   build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI
-    if: "success() && startsWith(github.ref, 'refs/tags/')"
+    name: Build and publish Python distributions
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/cache@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
-          path: |
-            ~/.cache/pypoetry
-            ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/poetry.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v1
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
         with:
-          python-version: 3.9
-      - name: Build publish
-        run: |
-          python -m pip install poetry poetry-dynamic-versioning
-          poetry install
-          poetry build
+          enable-cache: true
+      - name: Build distributions
+        run: uv build --sdist --wheel
       - name: Publish package
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
