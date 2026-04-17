@@ -1,0 +1,34 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  description: API definition for duplicate request parameters
+paths:
+  /pets/{id}/image/octet-stream:
+    post:
+      summary: Upload image with octet-stream and request query
+      operationId: uploadPetImageWithDuplicateRequest
+      tags:
+        - pets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pet
+          schema:
+            type: string
+        - name: request
+          in: query
+          required: false
+          description: Optional request selector
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '201':
+          description: empty response

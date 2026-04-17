@@ -44,6 +44,7 @@ Source = "https://github.com/koxudaxi/fastapi-code-generator"
 
 [dependency-groups]
 dev = [
+  { include-group = "coverage" },
   { include-group = "docs" },
   { include-group = "lint" },
   { include-group = "pkg-meta" },
@@ -64,12 +65,17 @@ pkg-meta = [
   "twine>=6.1",
   "uv>=0.9.18",
 ]
+coverage = [
+  "coverage[toml]>=7.10",
+  "diff-cover>=9.7",
+]
 test = [
-  "freezegun>=1.5",
+  "inline-snapshot>=0.31",
   "pytest>=8.3",
   "pytest-cov>=5",
   "pytest-mock>=3.14",
   "pytest-xdist>=3.6",
+  "time-machine>=2.15",
 ]
 type = [
   "mypy>=1.13",
@@ -113,9 +119,25 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 branch = true
+parallel = true
+relative_files = true
 source = [
   "fastapi_code_generator",
   "tests",
+]
+
+[tool.coverage.paths]
+source = [
+  "fastapi_code_generator",
+  "*/fastapi-code-generator/fastapi_code_generator",
+  "*\\fastapi-code-generator\\fastapi_code_generator",
+  ".tox*/*/site-packages/fastapi_code_generator",
+  ".tox*\\*\\site-packages\\fastapi_code_generator",
+]
+tests = [
+  "tests",
+  "*/fastapi-code-generator/tests",
+  "*\\fastapi-code-generator\\tests",
 ]
 
 [tool.coverage.report]

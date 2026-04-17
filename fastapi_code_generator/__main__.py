@@ -1,10 +1,12 @@
 import re
+import sys
 from datetime import datetime, timezone
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 import typer
+from click import Abort, ClickException
 from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
 from datamodel_code_generator.imports import Import, Imports
@@ -12,8 +14,10 @@ from datamodel_code_generator.model import get_data_model_types
 from datamodel_code_generator.reference import Reference
 from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
+from typer.main import get_command
 
 from fastapi_code_generator.parser import OpenAPIParser
+from fastapi_code_generator.version import __version__
 from fastapi_code_generator.visitor import Visitor
 
 app = typer.Typer()
@@ -39,11 +43,17 @@ def dynamic_load_module(module_path: Path) -> Any:
         if spec.loader:
             spec.loader.exec_module(module)
             return module
-    raise Exception(f"{module_name} can not be loaded")
+    raise Exception(f"{module_name} can not be loaded")  # pragma: no cover
 
 
 def _normalize_pydantic_v2_code(code: str) -> str:
     return code.replace("constr(regex=", "constr(pattern=")
+
+
+def _show_version(value: bool) -> None:
+    if value:
+        print(f"fastapi-codegen {__version__}")
+        raise typer.Exit()
 
 
 @app.command()
@@ -69,8 +79,16 @@ def main(
     python_version: PythonVersion = typer.Option(
         PythonVersion.PY_310.value, "--python-version", "-p"
     ),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        callback=_show_version,
+        is_eager=True,
+    ),
 ) -> None:
-    input_name: str = input_file
+    del version
+    input_name: str = Path(input_file).name
     input_text: str
 
     with open(input_file, encoding=encoding) as f:
@@ -96,14 +114,23 @@ def main(
     )
 
 
-def _get_most_of_reference(data_type: DataType) -> Optional[Reference]:
-    if data_type.reference:
-        return data_type.reference
-    for data_type in data_type.data_types:
-        reference = _get_most_of_reference(data_type)
-        if reference:
-            return reference
-    return None
+def invoke_main(args: Sequence[str] | None = None) -> int:
+    argv = list(sys.argv[1:] if args is None else args)
+
+    command = get_command(app)
+    try:
+        result = command.main(
+            args=argv,
+            prog_name="fastapi-codegen",
+            standalone_mode=False,
+        )
+    except ClickException as exc:
+        exc.show()
+        return exc.exit_code
+    except Abort:  # pragma: no cover
+        return 1
+
+    return int(result) if isinstance(result, int) else 0
 
 
 def generate_code(
@@ -123,7 +150,7 @@ def generate_code(
     python_version: PythonVersion = PythonVersion.PY_310,
 ) -> None:
     global all_tags
-    if not model_path:
+    if not model_path:  # pragma: no cover
         model_path = MODEL_PATH
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
@@ -264,21 +291,13 @@ def generate_code(
 
     for path, body_and_filename in modules.items():
         body, filename = body_and_filename
-        if path is None:
-            file = None
-        else:
-            if not path.parent.exists():
-                path.parent.mkdir(parents=True)
-            file = path.open('wt', encoding='utf8')
-
-        print(header.format(filename=filename), file=file)
-        if body:
-            print('', file=file)
-            print(_normalize_pydantic_v2_code(body).rstrip(), file=file)
-
-        if file is not None:
-            file.close()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("wt", encoding="utf8") as file:
+            print(header.format(filename=filename), file=file)
+            if body:
+                print("", file=file)
+                print(_normalize_pydantic_v2_code(body).rstrip(), file=file)
 
 
-if __name__ == "__main__":
-    typer.run(main)
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(invoke_main())

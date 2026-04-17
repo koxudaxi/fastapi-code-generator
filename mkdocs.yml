@@ -20,6 +20,7 @@ site_url: https://koxudaxi.github.io/fastapi-code-generator
 
 nav:
     - Overview: index.md
+    - CLI Reference: cli-reference.md
     - Development-Contributing: development-contributing.md
 
 plugins:

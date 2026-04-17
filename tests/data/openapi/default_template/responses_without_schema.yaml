@@ -1,0 +1,29 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Response Coverage API
+paths:
+  /empty200:
+    get:
+      operationId: getEmpty200
+      tags:
+        - coverage
+      responses:
+        '200':
+          description: Empty success response
+  /string-with-empty-404:
+    get:
+      operationId: getStringWithEmpty404
+      tags:
+        - coverage
+      responses:
+        '200':
+          description: String success response
+          content:
+            application/json:
+              schema:
+                type: string
+        '404':
+          description: Missing response body
+          content:
+            application/json: {}
