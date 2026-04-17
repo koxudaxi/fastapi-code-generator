@@ -120,6 +120,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 parallel = true
+relative_files = true
 source = [
   "fastapi_code_generator",
   "tests",
@@ -128,11 +129,15 @@ source = [
 [tool.coverage.paths]
 source = [
   "fastapi_code_generator",
+  "*/fastapi-code-generator/fastapi_code_generator",
+  "*\\fastapi-code-generator\\fastapi_code_generator",
   ".tox*/*/site-packages/fastapi_code_generator",
   ".tox*\\*\\site-packages\\fastapi_code_generator",
 ]
 tests = [
   "tests",
+  "*/fastapi-code-generator/tests",
+  "*\\fastapi-code-generator\\tests",
 ]
 
 [tool.coverage.report]
