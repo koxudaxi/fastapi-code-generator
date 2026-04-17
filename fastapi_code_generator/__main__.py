@@ -43,7 +43,7 @@ def dynamic_load_module(module_path: Path) -> Any:
         if spec.loader:
             spec.loader.exec_module(module)
             return module
-    raise RuntimeError(f"{module_name} can not be loaded")  # pragma: no cover
+    raise Exception(f"{module_name} can not be loaded")  # pragma: no cover
 
 
 def _normalize_pydantic_v2_code(code: str) -> str:
@@ -56,7 +56,8 @@ def _show_version(value: bool) -> None:
         raise typer.Exit()
 
 
-def run_cli(
+@app.command()
+def main(
     encoding: str = typer.Option("utf-8", "--encoding", "-e"),
     input_file: str = typer.Option(..., "--input", "-i"),
     output_dir: Path = typer.Option(..., "--output", "-o"),
@@ -78,7 +79,15 @@ def run_cli(
     python_version: PythonVersion = typer.Option(
         PythonVersion.PY_310.value, "--python-version", "-p"
     ),
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        callback=_show_version,
+        is_eager=True,
+    ),
 ) -> None:
+    del version
     input_name: str = Path(input_file).name
     input_text: str
 
@@ -105,56 +114,7 @@ def run_cli(
     )
 
 
-@app.command()
-def cli(
-    version: bool = typer.Option(
-        False,
-        "--version",
-        "-V",
-        callback=_show_version,
-        is_eager=True,
-    ),
-    encoding: str = typer.Option("utf-8", "--encoding", "-e"),
-    input_file: str = typer.Option(..., "--input", "-i"),
-    output_dir: Path = typer.Option(..., "--output", "-o"),
-    model_file: str = typer.Option(None, "--model-file", "-m"),
-    template_dir: Optional[Path] = typer.Option(None, "--template-dir", "-t"),
-    model_template_dir: Optional[Path] = typer.Option(None, "--model-template-dir"),
-    enum_field_as_literal: Optional[LiteralType] = typer.Option(
-        None, "--enum-field-as-literal"
-    ),
-    generate_routers: bool = typer.Option(False, "--generate-routers", "-r"),
-    specify_tags: Optional[str] = typer.Option(None, "--specify-tags"),
-    custom_visitors: Optional[List[Path]] = typer.Option(
-        None, "--custom-visitor", "-c"
-    ),
-    disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
-    output_model_type: DataModelType = typer.Option(
-        DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
-    ),
-    python_version: PythonVersion = typer.Option(
-        PythonVersion.PY_310.value, "--python-version", "-p"
-    ),
-) -> None:
-    del version
-    run_cli(
-        encoding=encoding,
-        input_file=input_file,
-        output_dir=output_dir,
-        model_file=model_file,
-        template_dir=template_dir,
-        model_template_dir=model_template_dir,
-        enum_field_as_literal=enum_field_as_literal,
-        generate_routers=generate_routers,
-        specify_tags=specify_tags,
-        custom_visitors=custom_visitors,
-        disable_timestamp=disable_timestamp,
-        output_model_type=output_model_type,
-        python_version=python_version,
-    )
-
-
-def main(args: Sequence[str] | None = None) -> int:
+def invoke_main(args: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if args is None else args)
 
     command = get_command(app)
@@ -180,7 +140,7 @@ def generate_code(
     output_dir: Path,
     template_dir: Optional[Path],
     model_template_dir: Optional[Path] = None,
-    model_path: Path = MODEL_PATH,
+    model_path: Optional[Path] = None,
     enum_field_as_literal: Optional[LiteralType] = None,
     custom_visitors: Optional[List[Path]] = None,
     disable_timestamp: bool = False,
@@ -190,6 +150,8 @@ def generate_code(
     python_version: PythonVersion = PythonVersion.PY_310,
 ) -> None:
     global all_tags
+    if not model_path:  # pragma: no cover
+        model_path = MODEL_PATH
     if not output_dir.exists():
         output_dir.mkdir(parents=True)
     if generate_routers:
@@ -338,4 +300,4 @@ def generate_code(
 
 
 if __name__ == "__main__":  # pragma: no cover
-    sys.exit(main())
+    sys.exit(invoke_main())

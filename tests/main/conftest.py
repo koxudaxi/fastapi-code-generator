@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from fastapi_code_generator.__main__ import main
+from fastapi_code_generator.__main__ import invoke_main
 from tests.conftest import assert_directory_content, validate_generated_code
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ def output_dir(tmp_path: Path) -> Path:
 
 
 def run_main_with_args(args: Sequence[str]) -> int:
-    return main(list(args))
+    return invoke_main(list(args))
 
 
 def run_cli_and_assert(

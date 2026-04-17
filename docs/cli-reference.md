@@ -7,7 +7,6 @@ Run `tox run -e cli-docs` after changing CLI options.
 Usage: fastapi-codegen [OPTIONS]                                                             
                                                                                               
 ╭─ Options ──────────────────────────────────────────────────────────────────────────────────╮
-│    --version                -V                                                             │
 │    --encoding               -e      TEXT                        [default: utf-8]           │
 │ *  --input                  -i      TEXT                        [required]                 │
 │ *  --output                 -o      PATH                        [required]                 │
@@ -25,6 +24,7 @@ Usage: fastapi-codegen [OPTIONS]
 │                                     ct|msgspec.Struct]                                     │
 │    --python-version         -p      [3.9|3.10|3.11|3.12|3.13|3  [default: 3.10]            │
 │                                     .14]                                                   │
+│    --version                -V                                                             │
 │    --install-completion                                         Install completion for the │
 │                                                                 current shell.             │
 │    --show-completion                                            Show completion for the    │

@@ -75,6 +75,18 @@ class UsefulStr(str):
     def validate(cls, v: Any, info: ValidationInfo) -> Any:
         return cls(v)
 
+    @property
+    def snakecase(self) -> str:  # pragma: no cover
+        return stringcase.snakecase(self)
+
+    @property
+    def pascalcase(self) -> str:  # pragma: no cover
+        return stringcase.pascalcase(self)
+
+    @property
+    def camelcase(self) -> str:  # pragma: no cover
+        return stringcase.camelcase(self)
+
 
 class Argument(CachedPropertyModel):
     name: UsefulStr
@@ -83,6 +95,25 @@ class Argument(CachedPropertyModel):
     default_value: Optional[UsefulStr] = None
     field: Union[DataModelField, list[DataModelField], None] = None
     required: bool
+
+    def __str__(self) -> str:  # pragma: no cover
+        return self.argument
+
+    @property
+    def argument(self) -> str:  # pragma: no cover
+        if self.field is None:
+            type_hint = self.type_hint
+        else:
+            type_hint = (
+                UsefulStr(self.field.type_hint)
+                if not isinstance(self.field, list)
+                else UsefulStr(
+                    f"Union[{', '.join(field.type_hint for field in self.field)}]"
+                )
+            )
+        if self.default is None and self.required:
+            return f'{self.name}: {type_hint}'
+        return f'{self.name}: {type_hint} = {self.default}'
 
     @property
     def snakecase(self) -> str:
@@ -160,6 +191,11 @@ class Operation(CachedPropertyModel):
         return self.method
 
     @property
+    def arguments(self) -> str:  # pragma: no cover
+        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
+        return ", ".join(argument.argument for argument in sorted_arguments)
+
+    @property
     def snake_case_arguments(self) -> str:
         sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
         return ", ".join(argument.snakecase for argument in sorted_arguments)
@@ -174,6 +210,11 @@ class Operation(CachedPropertyModel):
             elif argument.field:
                 imports.append(argument.field.data_type.import_)
         return imports
+
+    @cached_property
+    def root_path(self) -> UsefulStr:  # pragma: no cover
+        paths = self.path.split("/")
+        return UsefulStr(paths[1] if len(paths) > 1 else '')
 
     @cached_property
     def snake_case_path(self) -> str:
@@ -301,14 +342,19 @@ class OpenAPIParser(OpenAPIModelParser):
     def get_parameter_type(
         self,
         parameters: Union[ReferenceObject, ParameterObject],
-        path: List[str],
+        snake_case: bool | List[str] = True,
+        path: Optional[List[str]] = None,
     ) -> Argument:
+        if path is None:  # pragma: no cover
+            path = snake_case if isinstance(snake_case, list) else []
+            snake_case = True
         parameters = self.resolve_object(parameters, ParameterObject)
         if parameters.name is None:
             raise RuntimeError("parameters.name is None")  # pragma: no cover
         orig_name = parameters.name
         name = self.model_resolver.get_valid_field_name(parameters.name)
-        name = stringcase.snakecase(name)
+        if snake_case:  # pragma: no branch
+            name = stringcase.snakecase(name)
 
         schema: Optional[JsonSchemaObject] = None
         data_type: Optional[DataType] = None
@@ -316,7 +362,7 @@ class OpenAPIParser(OpenAPIModelParser):
             if isinstance(content.schema_, ReferenceObject):
                 data_type = self.get_ref_data_type(content.schema_.ref)
                 ref_model = self.get_ref_model(content.schema_.ref)
-                schema = JsonSchemaObject.parse_obj(ref_model)
+                schema = JsonSchemaObject.parse_obj(ref_model)  # pragma: no cover
             else:
                 schema = content.schema_
             break
@@ -357,14 +403,28 @@ class OpenAPIParser(OpenAPIModelParser):
             field=field,
         )
 
-    def get_argument_list(self, path: List[str]) -> List[Argument]:
+    def get_arguments(
+        self, snake_case: bool, path: List[str]
+    ) -> str:  # pragma: no cover
+        return ", ".join(
+            argument.argument for argument in self.get_argument_list(snake_case, path)
+        )
+
+    def get_argument_list(
+        self, snake_case: bool | List[str] = True, path: Optional[List[str]] = None
+    ) -> List[Argument]:
+        if path is None:  # pragma: no cover
+            path = snake_case if isinstance(snake_case, list) else []
+            snake_case = True
         arguments: List[Argument] = []
 
         parameters = self._temporary_operation.get('_parameters')
         if parameters:
             for parameter in parameters:
                 arguments.append(
-                    self.get_parameter_type(parameter, [*path, 'parameters'])
+                    self.get_parameter_type(
+                        parameter, bool(snake_case), [*path, 'parameters']
+                    )
                 )
 
         request = self._temporary_operation.get('_request')

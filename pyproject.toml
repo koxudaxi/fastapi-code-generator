@@ -36,7 +36,7 @@ dependencies = [
 ]
 
 [project.scripts]
-fastapi-codegen = "fastapi_code_generator.__main__:main"
+fastapi-codegen = "fastapi_code_generator.__main__:app"
 
 [project.urls]
 Homepage = "https://github.com/koxudaxi/fastapi-code-generator"
