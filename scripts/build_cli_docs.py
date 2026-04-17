@@ -27,11 +27,14 @@ def get_help_text() -> str:
     env["COLUMNS"] = "94"
     env["LINES"] = "24"
     env["NO_COLOR"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
     env["TERM"] = "dumb"
     completed = subprocess.run(
         [sys.executable, "-m", "fastapi_code_generator", "--help"],
         check=True,
         capture_output=True,
+        encoding="utf-8",
         text=True,
         cwd=PROJECT_ROOT,
         env=env,
