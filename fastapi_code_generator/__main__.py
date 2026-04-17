@@ -50,6 +50,12 @@ def _normalize_pydantic_v2_code(code: str) -> str:
     return code.replace("constr(regex=", "constr(pattern=")
 
 
+def _show_version(value: bool) -> None:
+    if value:
+        print(f"fastapi-codegen {__version__}")
+        raise typer.Exit()
+
+
 def run_cli(
     encoding: str = typer.Option("utf-8", "--encoding", "-e"),
     input_file: str = typer.Option(..., "--input", "-i"),
@@ -101,6 +107,13 @@ def run_cli(
 
 @app.command()
 def cli(
+    version: bool = typer.Option(
+        False,
+        "--version",
+        "-V",
+        callback=_show_version,
+        is_eager=True,
+    ),
     encoding: str = typer.Option("utf-8", "--encoding", "-e"),
     input_file: str = typer.Option(..., "--input", "-i"),
     output_dir: Path = typer.Option(..., "--output", "-o"),
@@ -123,6 +136,7 @@ def cli(
         PythonVersion.PY_310.value, "--python-version", "-p"
     ),
 ) -> None:
+    del version
     run_cli(
         encoding=encoding,
         input_file=input_file,
@@ -142,9 +156,6 @@ def cli(
 
 def main(args: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if args is None else args)
-    if len(argv) == 1 and argv[0] in {"--version", "-V"}:
-        print(f"fastapi-codegen {__version__}")
-        return 0
 
     command = get_command(app)
     try:

@@ -7,6 +7,7 @@ Run `tox run -e cli-docs` after changing CLI options.
 Usage: fastapi-codegen [OPTIONS]                                                             
                                                                                               
 ╭─ Options ──────────────────────────────────────────────────────────────────────────────────╮
+│    --version                -V                                                             │
 │    --encoding               -e      TEXT                        [default: utf-8]           │
 │ *  --input                  -i      TEXT                        [required]                 │
 │ *  --output                 -o      PATH                        [required]                 │

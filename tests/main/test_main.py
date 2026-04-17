@@ -6,6 +6,7 @@ from importlib.resources import as_file, files
 from pathlib import Path
 from shutil import copy2, copytree
 from threading import Thread
+from typing import Iterator
 
 import pytest
 
@@ -48,6 +49,22 @@ def test_show_help(capsys: pytest.CaptureFixture[str]) -> None:
 )
 def test_show_version(capsys: pytest.CaptureFixture[str]) -> None:
     assert run_main_with_args(["--version"]) == 0
+    assert capsys.readouterr().out.startswith("fastapi-codegen ")
+
+
+def test_show_version_with_other_options(capsys: pytest.CaptureFixture[str]) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--version",
+                "--input",
+                str(DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "simple.yaml"),
+                "--output",
+                "app",
+            ]
+        )
+        == 0
+    )
     assert capsys.readouterr().out.startswith("fastapi-codegen ")
 
 
@@ -127,12 +144,12 @@ class SchemaRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(self.schema_text.encode("utf-8"))
 
-    def log_message(self, format: str, *args: object) -> None:
+    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
         del format, args
 
 
 @contextmanager
-def serve_schema(schema_text: str) -> str:
+def serve_schema(schema_text: str) -> Iterator[str]:
     handler = type(
         "RemoteSchemaHandler", (SchemaRequestHandler,), {"schema_text": schema_text}
     )
