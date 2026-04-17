@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import typer
-from click import ClickException
+from click import Abort, ClickException
 from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
 from datamodel_code_generator.imports import Import, Imports
@@ -156,6 +156,8 @@ def main(args: Sequence[str] | None = None) -> int:
     except ClickException as exc:
         exc.show()
         return exc.exit_code
+    except Abort:  # pragma: no cover
+        return 1
 
     return int(result) if isinstance(result, int) else 0
 

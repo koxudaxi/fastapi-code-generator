@@ -143,7 +143,9 @@ class Operation(CachedPropertyModel):
                             continue
                         seen_type_hints.add(item.type_hint)
                         fields.append(item)
-                if len(fields) == 1:
+                if not fields:  # pragma: no cover
+                    argument.field = None
+                elif len(fields) == 1:
                     argument.field = fields[0]
                 else:
                     argument.field = fields

@@ -20,8 +20,10 @@ ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 def get_help_text() -> str:
     """Return normalized CLI help output for the current environment."""
     env = os.environ.copy()
-    env.setdefault("COLUMNS", "94")
-    env.setdefault("LINES", "24")
+    env["COLUMNS"] = "94"
+    env["LINES"] = "24"
+    env["NO_COLOR"] = "1"
+    env["TERM"] = "dumb"
     completed = subprocess.run(
         [sys.executable, "-m", "fastapi_code_generator", "--help"],
         check=True,
