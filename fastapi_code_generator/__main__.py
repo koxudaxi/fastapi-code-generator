@@ -329,14 +329,12 @@ def generate_code(
 
     for path, body_and_filename in modules.items():
         body, filename = body_and_filename
-        if not path.parent.exists():
-            path.parent.mkdir(parents=True)
-        file = path.open('wt', encoding='utf8')
-        print(header.format(filename=filename), file=file)
-        if body:
-            print('', file=file)
-            print(_normalize_pydantic_v2_code(body).rstrip(), file=file)
-        file.close()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("wt", encoding="utf8") as file:
+            print(header.format(filename=filename), file=file)
+            if body:
+                print("", file=file)
+                print(_normalize_pydantic_v2_code(body).rstrip(), file=file)
 
 
 if __name__ == "__main__":  # pragma: no cover
