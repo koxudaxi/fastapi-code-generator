@@ -166,7 +166,7 @@ jobs:
           merge-multiple: true
       - name: Combine and report coverage
         id: coverage
-        run: tox -e coverage --skip-pkg-install --skip-uv-sync
+        run: tox -e coverage --skip-pkg-install
         continue-on-error: true
       - name: Upload HTML coverage report
         if: always()
