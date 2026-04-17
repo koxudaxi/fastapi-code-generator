@@ -4,8 +4,8 @@ This page is generated from the current `fastapi-codegen --help` output.
 Run `tox run -e cli-docs` after changing CLI options.
 
 ```text
-Usage: fastapi-codegen [OPTIONS]                                                             
-                                                                                              
+Usage: fastapi-codegen [OPTIONS]
+
 ╭─ Options ──────────────────────────────────────────────────────────────────────────────────╮
 │    --encoding               -e      TEXT                        [default: utf-8]           │
 │ *  --input                  -i      TEXT                        [required]                 │

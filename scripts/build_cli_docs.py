@@ -17,6 +17,10 @@ COLLECTION_PATH = PROJECT_ROOT / "tests" / "cli_doc" / ".cli_doc_collection.json
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
+def _normalize_help_text(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.splitlines()).strip()
+
+
 def get_help_text() -> str:
     """Return normalized CLI help output for the current environment."""
     env = os.environ.copy()
@@ -32,7 +36,7 @@ def get_help_text() -> str:
         cwd=PROJECT_ROOT,
         env=env,
     )
-    return ANSI_ESCAPE_PATTERN.sub("", completed.stdout).strip()
+    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.stdout))
 
 
 def load_cli_doc_collection() -> dict[str, object]:

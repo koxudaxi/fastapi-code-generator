@@ -16,6 +16,7 @@ from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 from typer.main import get_command
 
+from fastapi_code_generator.config import GenerateConfig
 from fastapi_code_generator.parser import OpenAPIParser
 from fastapi_code_generator.version import __version__
 from fastapi_code_generator.visitor import Visitor
@@ -88,27 +89,46 @@ def main(
     ),
 ) -> None:
     del version
-    input_name: str = Path(input_file).name
+    config = GenerateConfig(
+        encoding=encoding,
+        input_file=input_file,
+        output_dir=str(output_dir),
+        model_file=model_file,
+        template_dir=str(template_dir) if template_dir else None,
+        model_template_dir=str(model_template_dir) if model_template_dir else None,
+        enum_field_as_literal=(
+            enum_field_as_literal.value if enum_field_as_literal else None
+        ),
+        generate_routers=generate_routers,
+        specify_tags=specify_tags,
+        custom_visitors=[str(path) for path in custom_visitors or []],
+        disable_timestamp=disable_timestamp,
+        output_model_type=output_model_type.value,
+        python_version=python_version.value,
+    )
+    input_name: str = Path(config.input_file).name
     input_text: str
 
-    with open(input_file, encoding=encoding) as f:
+    with open(config.input_file, encoding=config.encoding) as f:
         input_text = f.read()
 
-    model_path = Path(model_file) if model_file else MODEL_PATH  # pragma: no cover
+    model_path = (
+        Path(config.model_file) if config.model_file else MODEL_PATH
+    )  # pragma: no cover
 
     return generate_code(
         input_name,
         input_text,
-        encoding,
-        output_dir,
-        template_dir,
-        model_template_dir,
+        config.encoding,
+        Path(config.output_dir),
+        Path(config.template_dir) if config.template_dir else None,
+        Path(config.model_template_dir) if config.model_template_dir else None,
         model_path,
         enum_field_as_literal=enum_field_as_literal or None,
         custom_visitors=custom_visitors,
-        disable_timestamp=disable_timestamp,
-        generate_routers=generate_routers,
-        specify_tags=specify_tags,
+        disable_timestamp=config.disable_timestamp,
+        generate_routers=config.generate_routers,
+        specify_tags=config.specify_tags,
         output_model_type=output_model_type,
         python_version=python_version,
     )

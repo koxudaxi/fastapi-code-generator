@@ -1,0 +1,311 @@
+name: Release Notification
+
+on:
+  workflow_run:
+    workflows: ["Publish"]
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      TARGET_OWNER: koxudaxi
+      TARGET_REPO: fastapi-code-generator
+    steps:
+      - name: Post release notifications
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            let tag = context.payload.workflow_run.head_branch;
+
+            if (!tag) {
+              const headSha = context.payload.workflow_run.head_sha;
+
+              try {
+                for await (const response of github.paginate.iterator(
+                  github.rest.repos.listTags,
+                  { owner: context.repo.owner, repo: context.repo.repo, per_page: 100 }
+                )) {
+                  const matchingTag = response.data.find((candidate) => candidate.commit.sha === headSha);
+                  if (matchingTag) {
+                    tag = matchingTag.name;
+                    break;
+                  }
+                }
+              } catch (error) {
+                console.log(`Failed to resolve tag from sha: ${error.message}`);
+              }
+            }
+
+            if (!tag) {
+              console.log('Could not determine tag, skipping notification');
+              return;
+            }
+
+            let release;
+            try {
+              const { data } = await github.rest.repos.getReleaseByTag({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag,
+              });
+              release = data;
+            } catch (error) {
+              console.log(`No release found for tag ${tag}: ${error.message}`);
+              return;
+            }
+
+            const version = release.tag_name;
+            const releaseUrl = release.html_url;
+            const releaseBody = release.body || '';
+            const repoOwner = process.env.TARGET_OWNER;
+            const repoName = process.env.TARGET_REPO;
+
+            if (!repoOwner || !repoName) {
+              throw new Error('TARGET_OWNER and TARGET_REPO are required');
+            }
+
+            if (context.repo.owner !== repoOwner || context.repo.repo !== repoName) {
+              console.log(`Skipping: running in ${context.repo.owner}/${context.repo.repo}, not ${repoOwner}/${repoName}`);
+              return;
+            }
+
+            async function getAllComments(issueNumber) {
+              const comments = [];
+              for await (const response of github.paginate.iterator(
+                github.rest.issues.listComments,
+                { owner: repoOwner, repo: repoName, issue_number: issueNumber, per_page: 100 }
+              )) {
+                comments.push(...response.data);
+              }
+              return comments;
+            }
+
+            const prNumbers = new Set();
+            const prUrlRegex = new RegExp(
+              'https://github\\.com/' + repoOwner + '/' + repoName + '/pull/(\\d+)', 'gi'
+            );
+            const repoRefRegex = new RegExp(
+              '(?:^|[\\s({\\[-])' + repoOwner + '/' + repoName + '#(\\d+)', 'gi'
+            );
+            const standaloneRefRegex = /(?:^|[\s({\[-])#(\d+)(?=[\s,.)\]}\]:;]|$)/g;
+            let match;
+
+            while ((match = prUrlRegex.exec(releaseBody)) !== null) {
+              prNumbers.add(parseInt(match[1], 10));
+            }
+            while ((match = repoRefRegex.exec(releaseBody)) !== null) {
+              prNumbers.add(parseInt(match[1], 10));
+            }
+            while ((match = standaloneRefRegex.exec(releaseBody)) !== null) {
+              prNumbers.add(parseInt(match[1], 10));
+            }
+
+            function extractIssueNumbers(text, keywordPattern) {
+              const issues = new Set();
+              const simplePattern = new RegExp(
+                '(?:^|\\s|[({\\[-])' + keywordPattern + '\\s*[:#]?\\s*#(\\d+)', 'gi'
+              );
+              const crossRepoPattern = new RegExp(
+                '(?:^|\\s|[({\\[-])' + keywordPattern + '\\s*[:#]?\\s*' +
+                repoOwner + '/' + repoName + '#(\\d+)', 'gi'
+              );
+              const urlPattern = new RegExp(
+                '(?:^|\\s|[({\\[-])' + keywordPattern + '\\s*[:#]?\\s*https://github\\.com/' +
+                repoOwner + '/' + repoName + '/issues/(\\d+)', 'gi'
+              );
+              let localMatch;
+
+              while ((localMatch = simplePattern.exec(text)) !== null) {
+                issues.add(parseInt(localMatch[1], 10));
+              }
+              while ((localMatch = crossRepoPattern.exec(text)) !== null) {
+                issues.add(parseInt(localMatch[1], 10));
+              }
+              while ((localMatch = urlPattern.exec(text)) !== null) {
+                issues.add(parseInt(localMatch[1], 10));
+              }
+
+              return issues;
+            }
+
+            const closingKeywordBase = '(?:fix(?:es|ed)?|close[sd]?|resolve[sd]?)';
+            const relatedKeywordBase = '(?:related(?:\\s+to)?|see|ref(?:s|erences)?)';
+            const processedIssues = new Set();
+            const processedPRs = new Set();
+
+            for (const prNumber of prNumbers) {
+              try {
+                let prBody = '';
+                try {
+                  const { data: pr } = await github.rest.pulls.get({
+                    owner: repoOwner,
+                    repo: repoName,
+                    pull_number: prNumber,
+                  });
+                  prBody = pr.body || '';
+                } catch (prError) {
+                  if (prError.status === 404) {
+                    continue;
+                  }
+                  throw prError;
+                }
+
+                if (!processedPRs.has(prNumber)) {
+                  const prComment = `🎉 **Released in [${version}](${releaseUrl})**\n\nThis PR is now available in the latest release. See the [release notes](${releaseUrl}) for details.`;
+                  const prComments = await getAllComments(prNumber);
+                  const hasExistingComment = prComments.some((comment) =>
+                    comment.body && comment.body.includes(`Released in [${version}]`)
+                  );
+
+                  if (!hasExistingComment) {
+                    await github.rest.issues.createComment({
+                      owner: repoOwner,
+                      repo: repoName,
+                      issue_number: prNumber,
+                      body: prComment,
+                    });
+                  }
+                  processedPRs.add(prNumber);
+                }
+
+                const closingIssues = extractIssueNumbers(prBody, closingKeywordBase);
+                const relatedIssues = extractIssueNumbers(prBody, relatedKeywordBase);
+                for (const issueNum of closingIssues) {
+                  relatedIssues.delete(issueNum);
+                }
+
+                const referencedPRs = new Set();
+                const prRefUrlPattern = new RegExp(
+                  'https://github\\.com/' + repoOwner + '/' + repoName + '/pull/(\\d+)', 'gi'
+                );
+                const issueUrlPattern = new RegExp(
+                  'https://github\\.com/' + repoOwner + '/' + repoName + '/issues/(\\d+)', 'gi'
+                );
+                let bodyMatch;
+
+                while ((bodyMatch = prRefUrlPattern.exec(prBody)) !== null) {
+                  const refPrNum = parseInt(bodyMatch[1], 10);
+                  if (refPrNum !== prNumber) {
+                    referencedPRs.add(refPrNum);
+                  }
+                }
+
+                while ((bodyMatch = standaloneRefRegex.exec(prBody)) !== null) {
+                  const refNum = parseInt(bodyMatch[1], 10);
+                  if (!closingIssues.has(refNum) && refNum !== prNumber) {
+                    relatedIssues.add(refNum);
+                  }
+                }
+
+                while ((bodyMatch = issueUrlPattern.exec(prBody)) !== null) {
+                  const issueNum = parseInt(bodyMatch[1], 10);
+                  if (!closingIssues.has(issueNum) && !relatedIssues.has(issueNum)) {
+                    relatedIssues.add(issueNum);
+                  }
+                }
+
+                for (const issueNumber of closingIssues) {
+                  const key = `closing-${issueNumber}`;
+                  if (processedIssues.has(key)) {
+                    continue;
+                  }
+                  processedIssues.add(key);
+
+                  try {
+                    const issueComments = await getAllComments(issueNumber);
+                    const hasExistingComment = issueComments.some((comment) =>
+                      comment.body && comment.body.includes(`Released in [${version}]`)
+                    );
+
+                    if (!hasExistingComment) {
+                      await github.rest.issues.createComment({
+                        owner: repoOwner,
+                        repo: repoName,
+                        issue_number: issueNumber,
+                        body: `🎉 **Released in [${version}](${releaseUrl})**\n\nThe fix/feature from PR #${prNumber} has been included in this release. See the [release notes](${releaseUrl}) for details.\n\nThank you for your contribution!`,
+                      });
+                    }
+                  } catch (error) {
+                    console.log(`Failed to comment on issue #${issueNumber}: ${error.message}`);
+                  }
+                }
+
+                for (const issueNumber of relatedIssues) {
+                  const key = `related-${issueNumber}`;
+                  if (processedIssues.has(key)) {
+                    continue;
+                  }
+                  processedIssues.add(key);
+
+                  try {
+                    try {
+                      await github.rest.pulls.get({
+                        owner: repoOwner,
+                        repo: repoName,
+                        pull_number: issueNumber,
+                      });
+                      referencedPRs.add(issueNumber);
+                      continue;
+                    } catch (checkError) {
+                      if (checkError.status !== 404) {
+                        throw checkError;
+                      }
+                    }
+
+                    const issueComments = await getAllComments(issueNumber);
+                    const hasExistingComment = issueComments.some((comment) =>
+                      comment.body && (
+                        comment.body.includes(`Released in [${version}]`) ||
+                        comment.body.includes('Related PR Released')
+                      )
+                    );
+
+                    if (!hasExistingComment) {
+                      await github.rest.issues.createComment({
+                        owner: repoOwner,
+                        repo: repoName,
+                        issue_number: issueNumber,
+                        body: `📢 **Related PR Released: [${version}](${releaseUrl})**\n\nPR #${prNumber}, which references this issue, has been released. See the [release notes](${releaseUrl}) for details.\n\nNote: This issue was not explicitly closed by the PR.`,
+                      });
+                    }
+                  } catch (error) {
+                    console.log(`Failed to comment on issue #${issueNumber}: ${error.message}`);
+                  }
+                }
+
+                for (const refPrNumber of referencedPRs) {
+                  const key = `refpr-${refPrNumber}`;
+                  if (processedPRs.has(refPrNumber) || processedIssues.has(key)) {
+                    continue;
+                  }
+                  processedIssues.add(key);
+
+                  try {
+                    const refPrComments = await getAllComments(refPrNumber);
+                    const hasExistingComment = refPrComments.some((comment) =>
+                      comment.body && comment.body.includes(`Released in [${version}]`)
+                    );
+
+                    if (!hasExistingComment) {
+                      await github.rest.issues.createComment({
+                        owner: repoOwner,
+                        repo: repoName,
+                        issue_number: refPrNumber,
+                        body: `📢 **Related PR Released: [${version}](${releaseUrl})**\n\nPR #${prNumber}, which references this PR, has been released. See the [release notes](${releaseUrl}) for details.`,
+                      });
+                    }
+                  } catch (error) {
+                    console.log(`Failed to comment on PR #${refPrNumber}: ${error.message}`);
+                  }
+                }
+              } catch (error) {
+                console.log(`Failed to process PR #${prNumber}: ${error.message}`);
+              }
+            }

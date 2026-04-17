@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import as_file, files
@@ -9,6 +10,7 @@ from threading import Thread
 from typing import Iterator
 
 import pytest
+import yaml
 
 from tests.conftest import freeze_time, validate_generated_code
 from tests.main.conftest import (
@@ -181,6 +183,38 @@ def test_generate_remote_ref(tmp_path: Path, output_dir: Path) -> None:
             output_path=output_dir,
             expected_path=EXPECTED_OPENAPI_PATH / "remote_ref" / oas_file.stem,
         )
+
+
+@freeze_time("2020-06-19")
+def test_generate_from_json_input(tmp_path: Path, output_dir: Path) -> None:
+    source = DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "simple.yaml"
+    json_input = tmp_path / "simple.json"
+    json_input.write_text(
+        json.dumps(yaml.safe_load(source.read_text(encoding="utf-8"))),
+        encoding="utf-8",
+    )
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(json_input),
+                "--output",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+    expected_dir = EXPECTED_OPENAPI_PATH / "default_template" / "simple"
+    assert sorted(
+        path.relative_to(output_dir) for path in output_dir.rglob("*") if path.is_file()
+    ) == [Path("main.py"), Path("models.py")]
+    for relative_path in [Path("main.py"), Path("models.py")]:
+        generated = output_dir.joinpath(relative_path).read_text(encoding="utf-8")
+        expected = expected_dir.joinpath(relative_path).read_text(encoding="utf-8")
+        assert generated.replace("simple.json", "simple.yaml").replace(
+            "\r\n", "\n"
+        ) == expected.replace("\r\n", "\n")
+    validate_generated_code(output_dir)
 
 
 @pytest.mark.cli_doc(

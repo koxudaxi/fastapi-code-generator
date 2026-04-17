@@ -1,7 +1,17 @@
 name: Test
 
 on:
-  pull_request: {}
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint-and-type:
@@ -53,6 +63,91 @@ jobs:
           name: coverage-cli-docs-ubuntu-latest
           path: .tox/.coverage.*
           retention-days: 3
+
+  readme:
+    name: README
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check README snapshots
+        run: tox -e readme -- --check
+
+  llms-txt:
+    name: llms.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check llms.txt artifacts
+        run: tox -e llms-txt -- --check
+
+  schema-docs:
+    name: Schema docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check supported formats docs
+        run: tox -e schema-docs -- --check
+
+  config-types:
+    name: Config types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check generated config types
+        run: tox -e config-types -- --check
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Build docs
+        run: tox -e docs
 
   test:
     name: Test on Python ${{ matrix.python-version }} and ${{ matrix.os }}
@@ -143,6 +238,10 @@ jobs:
     needs:
       - test
       - cli-docs
+      - readme
+      - llms-txt
+      - schema-docs
+      - config-types
     steps:
       - uses: actions/checkout@v5
         with:
@@ -205,10 +304,15 @@ jobs:
         run: tox -e pkg_meta
 
   check:
-    if: github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs:
       - lint-and-type
       - cli-docs
+      - readme
+      - llms-txt
+      - schema-docs
+      - config-types
+      - docs
       - test
       - coverage
       - package

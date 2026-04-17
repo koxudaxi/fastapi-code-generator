@@ -1,0 +1,27 @@
+name: Codespell
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: codespell-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  codespell:
+    name: Check for spelling errors
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Codespell
+        uses: codespell-project/actions-codespell@v2
+        with:
+          skip: CODE_OF_CONDUCT.md,./docs/cli-reference.md,./docs/llms.txt,./docs/llms-full.txt

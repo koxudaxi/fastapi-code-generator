@@ -1,0 +1,60 @@
+name: Update CHANGELOG
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          token: ${{ secrets.PAT || github.token }}
+
+      - name: Get release info and update CHANGELOG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          TAG="${{ github.event.release.tag_name }}"
+          DATE=$(gh release view "$TAG" --json publishedAt --jq '.publishedAt | split("T")[0]')
+          BODY=$(gh release view "$TAG" --json body --jq '.body // ""')
+
+          {
+            echo "## [$TAG](https://github.com/${{ github.repository }}/releases/tag/$TAG) - $DATE"
+            echo ""
+            printf '%s\n' "$BODY"
+            echo ""
+            echo "---"
+            echo ""
+          } > new_entry.md
+
+          if [ ! -f CHANGELOG.md ]; then
+            {
+              echo "# Changelog"
+              echo ""
+              echo "All notable changes to this project are documented in this file."
+              echo "This changelog is automatically generated from GitHub Releases."
+              echo ""
+              echo "---"
+              echo ""
+            } > CHANGELOG.md
+          fi
+
+          awk '/^---$/ && !found {found=1; print > "header.md"; next} !found {print > "header.md"} found {print > "old_entries.md"}' CHANGELOG.md
+          touch old_entries.md
+          cat header.md new_entry.md old_entries.md > CHANGELOG.md
+          rm -f header.md new_entry.md old_entries.md
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --cached --quiet || git commit -m "docs: update CHANGELOG.md for ${{ github.event.release.tag_name }}"
+          git push
