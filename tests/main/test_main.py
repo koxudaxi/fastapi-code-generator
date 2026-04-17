@@ -210,7 +210,9 @@ def test_generate_with_encoding(tmp_path: Path, output_dir: Path) -> None:
             else generated_bytes.decode("utf-8")
         )
         expected = expected_dir.joinpath(relative_path).read_text(encoding="utf-8")
-        assert generated.replace("simple-utf16.yaml", "simple.yaml") == expected
+        assert generated.replace("simple-utf16.yaml", "simple.yaml").replace(
+            "\r\n", "\n"
+        ) == expected.replace("\r\n", "\n")
         compile(generated, str(output_dir.joinpath(relative_path)), "exec")
 
 
