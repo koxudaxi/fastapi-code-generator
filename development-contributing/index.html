@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://koxudaxi.github.io/fastapi-code-generator/development-contributing/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../cli-reference/">
       
       
       
@@ -254,6 +254,33 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -357,7 +384,7 @@ $<span class="w"> </span>prek<span class="w"> </span>install
 <span class="c1">## 6. Create new branch and rewrite code.</span>
 $<span class="w"> </span>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>new-branch
 
-<span class="c1">## 7. Run unittest under Python 3.14 (you should pass all tests and coverage should be 100%)</span>
+<span class="c1">## 7. Run the CLI end-to-end test suite under Python 3.14 (you should pass all tests and coverage should be 100%)</span>
 $<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>py314-parallel
 
 <span class="c1">## 8. Format code</span>
@@ -366,10 +393,19 @@ $<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-
 <span class="c1">## 9. Check lint and types</span>
 $<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span><span class="nb">type</span>
 
-<span class="c1">## 10. Build package metadata</span>
+<span class="c1">## 10. Check CLI docs are up to date</span>
+$<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>cli-docs<span class="w"> </span>--<span class="w"> </span>--check
+
+<span class="c1">## 11. Build package metadata</span>
 $<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>pkg_meta
 
-<span class="c1">## 11. Commit and Push...</span>
+<span class="c1">## 12. Build the documentation site</span>
+$<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>docs
+
+<span class="c1">## 13. Combine coverage locally when needed</span>
+$<span class="w"> </span>tox<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span>coverage
+
+<span class="c1">## 14. Commit and Push...</span>
 </code></pre></div>
 
 
