@@ -10,7 +10,7 @@ from click import Abort, ClickException
 from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
 from datamodel_code_generator.format import CodeFormatter
 from datamodel_code_generator.model import get_data_model_types
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 from typer.main import get_command
 
 from fastapi_code_generator.parser import OpenAPIParser
@@ -186,11 +186,14 @@ def generate_code(
             for module_name, model in models.items()
         }
 
-    # codeql[py/jinja2/autoescape-false]: Generates Python source files, not HTML.
     environment: Environment = Environment(
         loader=FileSystemLoader(
             template_dir if template_dir else f"{Path(__file__).parent}/template",
             encoding="utf8",
+        ),
+        autoescape=select_autoescape(
+            enabled_extensions=("html", "htm", "xml"),
+            default_for_string=False,
         ),
     )
 
