@@ -13,6 +13,7 @@ nav = [
 ]
 
 [project.theme]
+custom_dir = "overrides"
 features = [
   "content.code.copy",
   "navigation.instant",
@@ -20,7 +21,8 @@ features = [
   "navigation.sections",
   "search.highlight",
   "search.share",
-  "toc.follow"
+  "toc.follow",
+  "announce.dismiss"
 ]
 
 [[project.theme.palette]]

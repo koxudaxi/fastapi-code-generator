@@ -9,6 +9,8 @@ Generate a FastAPI application from an OpenAPI document.
 ![license](https://img.shields.io/github/license/koxudaxi/fastapi-code-generator.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+> 📣 💼 Maintainer update: Open to opportunities. 🔗 [koxudaxi.dev](https://koxudaxi.dev/?utm_source=github_readme&utm_medium=top&utm_campaign=open_to_work)
+
 ## Documentation
 
 The docs site is the source of truth for user-facing documentation:

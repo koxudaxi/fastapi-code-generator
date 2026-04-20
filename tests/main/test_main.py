@@ -470,13 +470,8 @@ def test_generate_callbacks(oas_file: Path, output_dir: Path) -> None:
 
 
 @pytest.mark.cli_doc(
-    options=[
-        "--model-file",
-        "--model-template-dir",
-        "--output-model-type",
-        "--python-version",
-    ],
-    option_description="Customize generated model paths and datamodel-code-generator output settings.",
+    options=["--model-file"],
+    option_description="Write generated models to a custom module path.",
     cli_args=[
         "--input",
         "openapi/default_template/body_and_parameters.yaml",
@@ -493,6 +488,74 @@ def test_generate_callbacks(oas_file: Path, output_dir: Path) -> None:
     ],
     input_schema="openapi/default_template/body_and_parameters.yaml",
     golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=[
+        "--model-template-dir",
+        "--output-model-type",
+        "--python-version",
+    ],
+)
+@pytest.mark.cli_doc(
+    options=["--model-template-dir"],
+    option_description="Use a custom datamodel-code-generator template directory.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--model-file",
+        "custom_models.py",
+        "--model-template-dir",
+        "model_templates",
+        "--output-model-type",
+        "pydantic_v2.BaseModel",
+        "--python-version",
+        "3.13",
+    ],
+    input_schema="openapi/default_template/body_and_parameters.yaml",
+    golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=["--model-file", "--output-model-type", "--python-version"],
+)
+@pytest.mark.cli_doc(
+    options=["--output-model-type"],
+    option_description="Choose the datamodel-code-generator output backend.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--model-file",
+        "custom_models.py",
+        "--model-template-dir",
+        "model_templates",
+        "--output-model-type",
+        "pydantic_v2.BaseModel",
+        "--python-version",
+        "3.13",
+    ],
+    input_schema="openapi/default_template/body_and_parameters.yaml",
+    golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=["--model-file", "--model-template-dir", "--python-version"],
+)
+@pytest.mark.cli_doc(
+    options=["--python-version"],
+    option_description="Target a specific Python version when formatting generated code.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--model-file",
+        "custom_models.py",
+        "--model-template-dir",
+        "model_templates",
+        "--output-model-type",
+        "pydantic_v2.BaseModel",
+        "--python-version",
+        "3.13",
+    ],
+    input_schema="openapi/default_template/body_and_parameters.yaml",
+    golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=["--model-file", "--model-template-dir", "--output-model-type"],
 )
 @freeze_time("2020-06-19")
 def test_generate_with_model_options(tmp_path: Path, output_dir: Path) -> None:

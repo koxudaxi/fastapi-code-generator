@@ -420,13 +420,45 @@ Render enum fields as Literal annotations.
 
 Input schema: `openapi/default_template/duplicate_anonymus_parameter.yaml`
 
-### --model-file, --model-template-dir, --output-model-type, --python-version
+### --model-file
 
-Customize generated model paths and datamodel-code-generator output settings.
+Write generated models to a custom module path.
 
 `fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
 
 Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-template-dir`, `--output-model-type`, `--python-version`
+
+### --model-template-dir
+
+Use a custom datamodel-code-generator template directory.
+
+`fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
+
+Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-file`, `--output-model-type`, `--python-version`
+
+### --output-model-type
+
+Choose the datamodel-code-generator output backend.
+
+`fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
+
+Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-file`, `--model-template-dir`, `--python-version`
+
+### --python-version
+
+Target a specific Python version when formatting generated code.
+
+`fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
+
+Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-file`, `--model-template-dir`, `--output-model-type`
 
 ### --custom-visitor
 
