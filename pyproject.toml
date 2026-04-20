@@ -52,7 +52,7 @@ dev = [
   { include-group = "type" },
 ]
 docs = [
-  "mkdocs>=1.6",
+  "mkdocs>=1.6.1",
   "mkdocs-material>=9.5",
 ]
 lint = [
