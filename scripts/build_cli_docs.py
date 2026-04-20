@@ -25,6 +25,7 @@ def get_help_text() -> str:
     """Return normalized CLI help output for the current environment."""
     env = os.environ.copy()
     env["COLUMNS"] = "94"
+    env["TERMINAL_WIDTH"] = "94"
     env["LINES"] = "24"
     env["NO_COLOR"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
