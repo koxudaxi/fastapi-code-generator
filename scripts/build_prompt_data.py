@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import pprint
 import sys
 from pathlib import Path
 
@@ -70,8 +71,27 @@ def build_prompt_payload() -> dict[str, object]:
     }
 
 
+def _render_json_payload(payload: dict[str, object]) -> str:
+    return json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+
+
+def _render_python_payload(payload: dict[str, object]) -> str:
+    rendered = pprint.pformat(payload, sort_dicts=False, width=88)
+    return (
+        "from __future__ import annotations\n\n"
+        "from typing import Any\n\n"
+        f"PROMPT_DATA: dict[str, Any] = {rendered}\n"
+    )
+
+
+def _render_output(payload: dict[str, object], *, output_path: Path | None) -> str:
+    if output_path is not None and output_path.suffix == ".py":
+        return _render_python_payload(payload)
+    return _render_json_payload(payload)
+
+
 def update_prompt_data(*, output_path: Path | None, check: bool) -> int:
-    payload = json.dumps(build_prompt_payload(), indent=2, ensure_ascii=False) + "\n"
+    payload = _render_output(build_prompt_payload(), output_path=output_path)
     if output_path is None:
         if check:
             print("--check requires --output", file=sys.stderr)
