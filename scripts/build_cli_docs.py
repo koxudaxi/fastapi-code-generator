@@ -6,9 +6,12 @@ import argparse
 import json
 import os
 import re
-import subprocess
-import sys
 from pathlib import Path
+
+from click.testing import CliRunner
+from typer.main import get_command
+
+from fastapi_code_generator.__main__ import app
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCS_PATH = PROJECT_ROOT / "docs" / "cli-reference.md"
@@ -40,16 +43,16 @@ def get_help_text() -> str:
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
     env["TERM"] = "dumb"
-    completed = subprocess.run(
-        [sys.executable, "-m", "fastapi_code_generator", "--help"],
-        check=True,
-        capture_output=True,
-        encoding="utf-8",
-        text=True,
-        cwd=PROJECT_ROOT,
-        env=env,
+    completed = CliRunner(env=env).invoke(
+        get_command(app),
+        ["--help"],
+        color=False,
+        prog_name="fastapi-codegen",
     )
-    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.stdout))
+    if completed.exit_code != 0:
+        msg = completed.stderr or completed.output or "failed to render CLI help"
+        raise RuntimeError(msg)
+    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.output))
 
 
 def load_cli_doc_collection() -> dict[str, object]:
