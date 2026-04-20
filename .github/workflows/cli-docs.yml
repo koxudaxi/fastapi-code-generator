@@ -57,6 +57,8 @@ jobs:
         run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
       - name: Build prompt data
         run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py
+      - name: Format generated prompt data
+        run: uvx --from black==24.10.0 black --quiet fastapi_code_generator/prompt_data.py
       - name: Commit and push if changed
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
