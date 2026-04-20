@@ -19,41 +19,23 @@ on:
       - "scripts/build_llms_txt.py"
       - "tox.ini"
       - ".github/workflows/llms-txt.yml"
-  pull_request_target:
-    types: [labeled]
-    paths:
-      - "README.md"
-      - "docs/**/*.md"
-      - "zensical.toml"
-      - "scripts/build_llms_txt.py"
-      - "tox.ini"
-      - ".github/workflows/llms-txt.yml"
 
 permissions:
   contents: write
 
 jobs:
   update-llms-txt:
-    if: |
-      github.event_name == 'push' ||
-      !github.event.pull_request.head.repo.fork ||
-      github.actor == 'koxudaxi' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-fix' &&
-       github.event.sender.login == 'koxudaxi')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - uses: actions/checkout@v5
-        if: github.event_name == 'push' || github.event_name == 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           token: ${{ secrets.PAT || github.token }}
       - id: preflight
         run: |
@@ -81,7 +63,7 @@ jobs:
       - name: Commit and push if changed
         if: |
           steps.preflight.outputs.enabled == 'true' &&
-          (github.event_name == 'push' || github.event_name == 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository)
+          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

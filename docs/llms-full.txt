@@ -580,4 +580,3 @@ tox run -e coverage
 - Regenerate `docs/cli-reference.md` after CLI option changes
 - Regenerate `docs/llms.txt` and `docs/llms-full.txt` after docs page or nav changes
 
----

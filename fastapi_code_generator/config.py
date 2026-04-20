@@ -230,7 +230,6 @@ def iter_config_options() -> tuple[ConfigOption, ...]:
 
     validate_generate_config_model()
     options: list[ConfigOption] = []
-    params = get_command_config_params()
     for name, field in GenerateConfig.model_fields.items():
         cli = _get_cli_metadata(field)
         options.append(
@@ -247,7 +246,6 @@ def iter_config_options() -> tuple[ConfigOption, ...]:
                 choices=_literal_choices(field.annotation),
             )
         )
-        del params[name]
     return tuple(options)
 
 

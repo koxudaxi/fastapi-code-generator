@@ -15,10 +15,19 @@ DOCS_PATH = PROJECT_ROOT / "docs" / "cli-reference.md"
 COLLECTION_PATH = PROJECT_ROOT / "tests" / "cli_doc" / ".cli_doc_collection.json"
 
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+BOX_DRAWING_TRANSLATION = str.maketrans(
+    {
+        "┌": "╭",
+        "┐": "╮",
+        "└": "╰",
+        "┘": "╯",
+    }
+)
 
 
 def _normalize_help_text(text: str) -> str:
-    return "\n".join(line.rstrip() for line in text.splitlines()).strip()
+    normalized = text.translate(BOX_DRAWING_TRANSLATION)
+    return "\n".join(line.rstrip() for line in normalized.splitlines()).strip()
 
 
 def get_help_text() -> str:

@@ -20,7 +20,7 @@ ADD EXAMPLE HERE
 
 Used command line:
 ```text
-$ fastapi-codegen ADD YOUR EXACT COMMAND USED HERE
+fastapi-codegen ADD YOUR EXACT COMMAND USED HERE
 ```
 
 **Expected behavior**

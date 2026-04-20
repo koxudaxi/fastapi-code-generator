@@ -5,6 +5,10 @@ on:
     workflows: ["Publish"]
     types: [completed]
 
+concurrency:
+  group: release-notify-${{ github.event.workflow_run.head_branch || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
 jobs:
   notify:
     runs-on: ubuntu-latest
@@ -94,7 +98,7 @@ jobs:
             const repoRefRegex = new RegExp(
               '(?:^|[\\s({\\[-])' + repoOwner + '/' + repoName + '#(\\d+)', 'gi'
             );
-            const standaloneRefRegex = /(?:^|[\s({\[-])#(\d+)(?=[\s,.)\]}\]:;]|$)/g;
+            const standaloneRefRegex = /(?:^|[\s({\[-])#(\d+)(?=[\s,.)\]}:;]|$)/g;
             let match;
 
             while ((match = prUrlRegex.exec(releaseBody)) !== null) {
@@ -103,6 +107,7 @@ jobs:
             while ((match = repoRefRegex.exec(releaseBody)) !== null) {
               prNumbers.add(parseInt(match[1], 10));
             }
+            standaloneRefRegex.lastIndex = 0;
             while ((match = standaloneRefRegex.exec(releaseBody)) !== null) {
               prNumbers.add(parseInt(match[1], 10));
             }
@@ -197,6 +202,7 @@ jobs:
                   }
                 }
 
+                standaloneRefRegex.lastIndex = 0;
                 while ((bodyMatch = standaloneRefRegex.exec(prBody)) !== null) {
                   const refNum = parseInt(bodyMatch[1], 10);
                   if (!closingIssues.has(refNum) && refNum !== prNumber) {

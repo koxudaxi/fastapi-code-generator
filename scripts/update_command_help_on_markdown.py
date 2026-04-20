@@ -3,9 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import os
-import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -15,38 +12,15 @@ CODE_BLOCK_START = "```text"
 CODE_BLOCK_END = "```"
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
+if str(PROJECT_DIR) not in sys.path:
+    sys.path.insert(0, str(PROJECT_DIR))
+
+from scripts.build_cli_docs import get_help_text
+
 TARGET_MARKDOWN_FILES = [
     PROJECT_DIR / "README.md",
     PROJECT_DIR / "docs" / "index.md",
 ]
-
-ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
-
-
-def _normalize_help_text(text: str) -> str:
-    return "\n".join(line.rstrip() for line in text.splitlines()).strip()
-
-
-def get_help_text() -> str:
-    """Return normalized CLI help output for the current environment."""
-    env = os.environ.copy()
-    env["COLUMNS"] = "94"
-    env["TERMINAL_WIDTH"] = "94"
-    env["LINES"] = "24"
-    env["NO_COLOR"] = "1"
-    env["PYTHONIOENCODING"] = "utf-8"
-    env["PYTHONUTF8"] = "1"
-    env["TERM"] = "dumb"
-    completed = subprocess.run(
-        [sys.executable, "-m", "fastapi_code_generator", "--help"],
-        check=True,
-        capture_output=True,
-        encoding="utf-8",
-        text=True,
-        cwd=PROJECT_DIR,
-        env=env,
-    )
-    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.stdout))
 
 
 def inject_help(markdown_text: str, help_text: str) -> str:

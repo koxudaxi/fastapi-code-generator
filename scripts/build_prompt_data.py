@@ -19,7 +19,11 @@ from scripts.build_schema_docs import FIXTURE_SUITES, render_document as render_
 def build_prompt_payload() -> dict[str, object]:
     """Return a machine-readable bundle for downstream prompt tooling."""
 
-    collection = load_cli_doc_collection()
+    try:
+        collection = load_cli_doc_collection()
+    except FileNotFoundError:
+        print("Warning: cli doc collection is missing; prompt examples will be empty.", file=sys.stderr)
+        collection = {"items": []}
     examples: list[dict[str, object]] = []
     seen: set[str] = set()
     for item in collection.get("items", []):

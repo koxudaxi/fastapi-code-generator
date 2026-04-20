@@ -19,8 +19,10 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - id: check
+        env:
+          CODSPEED_TOKEN: ${{ secrets.CODSPEED_TOKEN }}
         run: |
-          if [ -z "${{ secrets.CODSPEED_TOKEN }}" ]; then
+          if [ -z "${CODSPEED_TOKEN:-}" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -28,7 +30,7 @@ jobs:
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          if ! grep -q "benchmark" pyproject.toml; then
+          if ! grep -qE '^\s*benchmark\s*=\s*\[' pyproject.toml; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi

@@ -16,7 +16,6 @@ from datamodel_code_generator.types import DataType
 from jinja2 import Environment, FileSystemLoader
 from typer.main import get_command
 
-from fastapi_code_generator.config import GenerateConfig
 from fastapi_code_generator.parser import OpenAPIParser
 from fastapi_code_generator.version import __version__
 from fastapi_code_generator.visitor import Visitor
@@ -88,6 +87,8 @@ def main(
         is_eager=True,
     ),
 ) -> None:
+    from fastapi_code_generator.config import GenerateConfig
+
     del version
     config = GenerateConfig(
         encoding=encoding,

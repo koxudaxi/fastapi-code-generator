@@ -63,12 +63,12 @@ class NavSection:
 def parse_zensical_toml(path: Path) -> SiteConfig:
     """Parse zensical.toml and extract project configuration."""
     if not path.exists():
-        sys.exit(f"Error: {path} not found")
+        raise FileNotFoundError(path)
     try:
         with path.open("rb") as file:
             project = tomllib.load(file).get("project", {})
     except tomllib.TOMLDecodeError as exc:
-        sys.exit(f"Error parsing {path}: {exc}")
+        raise ValueError(f"Error parsing {path}: {exc}") from exc
     return SiteConfig(
         site_name=project.get("site_name", ""),
         site_description=project.get("site_description", ""),
@@ -149,12 +149,17 @@ def extract_page_info(md_path: Path, url: str, depth: int = 0) -> PageInfo | Non
 
 
 def collect_pages(
-    sections: list[NavSection], site_url: str, depth: int = 0
+    sections: list[NavSection],
+    site_url: str,
+    depth: int = 0,
+    seen: set[str] | None = None,
 ) -> list[PageInfo]:
     """Collect page metadata from the nav structure."""
+    if seen is None:
+        seen = set()
     pages: list[PageInfo] = []
     for section in sections:
-        if section.path:
+        if section.path and section.path not in seen:
             base = section.path.rsplit(".", 1)[0]
             url = (
                 f"{site_url}/"
@@ -163,9 +168,10 @@ def collect_pages(
             )
             page = extract_page_info(DOCS_DIR / section.path, url, depth)
             if page is not None:
+                seen.add(section.path)
                 pages.append(page)
         if section.children:
-            pages.extend(collect_pages(section.children, site_url, depth + 1))
+            pages.extend(collect_pages(section.children, site_url, depth + 1, seen))
     return pages
 
 
@@ -186,6 +192,22 @@ def generate_llms_txt(
             fnmatch(path, pattern) for pattern in OPTIONAL_PATTERNS
         )
 
+    def section_is_optional(section: NavSection) -> bool:
+        if section.path:
+            return is_optional(section.path)
+        return bool(section.children) and all(
+            section_is_optional(child) for child in section.children
+        )
+
+    def iter_section_pages(section: NavSection) -> list[PageInfo]:
+        if section.path:
+            page = page_map.get(section.path)
+            return [page] if page is not None else []
+        pages: list[PageInfo] = []
+        for child in section.children:
+            pages.extend(iter_section_pages(child))
+        return pages
+
     def render(section: NavSection) -> list[str]:
         if section.path:
             page = page_map.get(section.path)
@@ -201,12 +223,7 @@ def generate_llms_txt(
     main_sections: list[NavSection] = []
     optional_sections: list[NavSection] = []
     for section in sections:
-        optional = (
-            section.path and is_optional(section.path)
-        ) or (
-            section.children and all(is_optional(child.path) for child in section.children)
-        )
-        if optional:
+        if section_is_optional(section):
             optional_sections.append(section)
         else:
             main_sections.append(section)
@@ -222,12 +239,8 @@ def generate_llms_txt(
     if optional_sections:
         lines.extend(["## Optional", ""])
         for section in optional_sections:
-            items = [section] if section.path else section.children
-            for item in items:
-                if item.path:
-                    page = page_map.get(item.path)
-                    if page is not None:
-                        lines.append(format_page(page))
+            for page in iter_section_pages(section):
+                lines.append(format_page(page))
         lines.append("")
 
     while lines and not lines[-1]:
@@ -237,26 +250,17 @@ def generate_llms_txt(
 
 def generate_llms_full_txt(pages: list[PageInfo]) -> str:
     """Generate llms-full.txt with the full docs content."""
-    parts: list[str] = []
+    blocks: list[str] = []
     for page in pages:
         content = page.content.strip()
         if content.startswith("# "):
             first_newline = content.find("\n")
             if first_newline != -1:
                 content = content[first_newline + 1 :].strip()
-        parts.extend(
-            [
-                f"# {page.title}",
-                "",
-                f"Source: {page.url}",
-                "",
-                content,
-                "",
-                "---",
-                "",
-            ]
+        blocks.append(
+            f"# {page.title}\n\nSource: {page.url}\n\n{content}\n"
         )
-    return "\n".join(parts)
+    return "\n---\n\n".join(blocks) + "\n"
 
 
 def check_files(expected_files: dict[Path, str]) -> int:
@@ -292,7 +296,11 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    config = parse_zensical_toml(ZENSICAL_TOML)
+    try:
+        config = parse_zensical_toml(ZENSICAL_TOML)
+    except (FileNotFoundError, ValueError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
     sections = flatten_nav(config["nav"])
     pages = collect_pages(sections, config["site_url"])
     expected_files = {

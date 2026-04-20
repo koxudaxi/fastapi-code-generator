@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -11,18 +12,35 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DOCS_DIR = ROOT_DIR / "docs"
 README_FILE = ROOT_DIR / "README.md"
-PATTERN = re.compile(r"(koxudaxi/fastapi-code-generator@)(\d+\.\d+\.\d+)")
+PATTERN = re.compile(r"(koxudaxi/fastapi-code-generator@)v?(\d+\.\d+\.\d+)")
 
 
 def get_latest_release_version() -> str:
     """Get the latest release tag from GitHub."""
+    gh = shutil.which("gh")
+    if gh is None:
+        raise FileNotFoundError("gh")
     result = subprocess.run(
-        ["gh", "release", "list", "--limit", "1", "--exclude-drafts", "--json", "tagName", "-q", ".[0].tagName"],
+        [
+            gh,
+            "release",
+            "list",
+            "--limit",
+            "1",
+            "--exclude-drafts",
+            "--json",
+            "tagName",
+            "-q",
+            ".[0].tagName",
+        ],
         capture_output=True,
         text=True,
         check=True,
     )
-    return result.stdout.strip()
+    version = result.stdout.strip().lstrip("vV")
+    if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+        raise RuntimeError(f"Unexpected release tag format: {result.stdout!r}")
+    return version
 
 
 def update_file(file_path: Path, version: str, *, check: bool) -> bool:

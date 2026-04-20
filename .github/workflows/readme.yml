@@ -21,42 +21,23 @@ on:
       - "tox.ini"
       - "pyproject.toml"
       - ".github/workflows/readme.yml"
-  pull_request_target:
-    types: [labeled]
-    paths:
-      - "README.md"
-      - "docs/index.md"
-      - "fastapi_code_generator/**"
-      - "scripts/update_command_help_on_markdown.py"
-      - "tox.ini"
-      - "pyproject.toml"
-      - ".github/workflows/readme.yml"
 
 permissions:
   contents: write
 
 jobs:
   update-readme:
-    if: |
-      github.event_name == 'push' ||
-      !github.event.pull_request.head.repo.fork ||
-      github.actor == 'koxudaxi' ||
-      (github.event_name == 'pull_request_target' && github.event.label.name == 'safe-to-fix' &&
-       github.event.sender.login == 'koxudaxi')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
       - uses: actions/checkout@v5
-        if: github.event_name == 'push' || github.event_name == 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           token: ${{ secrets.PAT || github.token }}
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v8.0.0
@@ -67,7 +48,7 @@ jobs:
       - name: Update README snapshots
         run: tox -e readme
       - name: Commit and push if changed
-        if: github.event_name == 'push' || github.event_name == 'pull_request_target' || github.event.pull_request.head.repo.full_name == github.repository
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

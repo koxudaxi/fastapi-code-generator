@@ -46,7 +46,12 @@ jobs:
             } > CHANGELOG.md
           fi
 
-          awk '/^---$/ && !found {found=1; print > "header.md"; next} !found {print > "header.md"} found {print > "old_entries.md"}' CHANGELOG.md
+          awk '
+            /^```/ { in_codeblock = !in_codeblock }
+            /^---$/ && !in_codeblock && !found { found = 1; print > "header.md"; next }
+            !found { print > "header.md"; next }
+            { print > "old_entries.md" }
+          ' CHANGELOG.md
           touch old_entries.md
           cat header.md new_entry.md old_entries.md > CHANGELOG.md
           rm -f header.md new_entry.md old_entries.md
