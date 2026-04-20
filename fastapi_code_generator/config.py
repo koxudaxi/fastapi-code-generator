@@ -214,8 +214,7 @@ def _normalize_default(value: Any) -> Any:
 
 def get_command_config_params() -> dict[str, Any]:
     """Return the actionable CLI params that should map to `GenerateConfig`."""
-
-    from fastapi_code_generator.__main__ import app
+    from fastapi_code_generator.cli import app
 
     command = get_command(app)
     return {

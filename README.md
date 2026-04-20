@@ -46,34 +46,27 @@ This block is generated from the current CLI so the README and docs overview sta
 ```text
 Usage: fastapi-codegen [OPTIONS]
 
-╭─ Options ──────────────────────────────────────────────────────────────────────────────────╮
-│    --encoding               -e      TEXT                        [default: utf-8]           │
-│ *  --input                  -i      TEXT                        [required]                 │
-│ *  --output                 -o      PATH                        [required]                 │
-│    --model-file             -m      TEXT                                                   │
-│    --template-dir           -t      PATH                                                   │
-│    --model-template-dir             PATH                                                   │
-│    --enum-field-as-literal          [all|one]                                              │
-│    --generate-routers       -r                                                             │
-│    --specify-tags                   TEXT                                                   │
-│    --custom-visitor         -c      PATH                                                   │
-│    --disable-timestamp                                                                     │
-│    --output-model-type      -d      [pydantic.BaseModel|pydant  [default:                  │
-│                                     ic_v2.BaseModel|dataclasse  pydantic.BaseModel]        │
-│                                     s.dataclass|typing.TypedDi                             │
-│                                     ct|msgspec.Struct]                                     │
-│    --python-version         -p      [3.9|3.10|3.11|3.12|3.13|3  [default: 3.10]            │
-│                                     .14]                                                   │
-│    --version                -V                                                             │
-│    --install-completion                                         Install completion for the │
-│                                                                 current shell.             │
-│    --show-completion                                            Show completion for the    │
-│                                                                 current shell, to copy it  │
-│                                                                 or customize the           │
-│                                                                 installation.              │
-│    --help                                                       Show this message and      │
-│                                                                 exit.                      │
-╰────────────────────────────────────────────────────────────────────────────────────────────╯
+Options:
+  -e, --encoding TEXT             [default: utf-8]
+  -i, --input TEXT                [required]
+  -o, --output PATH               [required]
+  -m, --model-file TEXT
+  -t, --template-dir PATH
+  --model-template-dir PATH
+  --enum-field-as-literal [all|one]
+  -r, --generate-routers
+  --specify-tags TEXT
+  -c, --custom-visitor PATH
+  --disable-timestamp
+  -d, --output-model-type [pydantic.BaseModel|pydantic_v2.BaseModel|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
+                                  [default: pydantic.BaseModel]
+  -p, --python-version [3.9|3.10|3.11|3.12|3.13|3.14]
+                                  [default: 3.10]
+  -V, --version
+  --install-completion            Install completion for the current shell.
+  --show-completion               Show completion for the current shell, to
+                                  copy it or customize the installation.
+  --help                          Show this message and exit.
 ```
 <!-- end command help -->
 

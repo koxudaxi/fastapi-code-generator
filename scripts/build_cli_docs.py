@@ -6,53 +6,44 @@ import argparse
 import json
 import os
 import re
+import subprocess
+import sys
 from pathlib import Path
-
-from click.testing import CliRunner
-from typer.main import get_command
-
-from fastapi_code_generator.__main__ import app
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DOCS_PATH = PROJECT_ROOT / "docs" / "cli-reference.md"
 COLLECTION_PATH = PROJECT_ROOT / "tests" / "cli_doc" / ".cli_doc_collection.json"
 
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
-BOX_DRAWING_TRANSLATION = str.maketrans(
-    {
-        "┌": "╭",
-        "┐": "╮",
-        "└": "╰",
-        "┘": "╯",
-    }
-)
 
 
 def _normalize_help_text(text: str) -> str:
-    normalized = text.translate(BOX_DRAWING_TRANSLATION)
-    return "\n".join(line.rstrip() for line in normalized.splitlines()).strip()
+    return "\n".join(line.rstrip() for line in text.splitlines()).strip()
 
 
 def get_help_text() -> str:
     """Return normalized CLI help output for the current environment."""
     env = os.environ.copy()
     env["COLUMNS"] = "94"
-    env["TERMINAL_WIDTH"] = "94"
     env["LINES"] = "24"
     env["NO_COLOR"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
     env["PYTHONUTF8"] = "1"
     env["TERM"] = "dumb"
-    completed = CliRunner(env=env).invoke(
-        get_command(app),
-        ["--help"],
-        color=False,
-        prog_name="fastapi-codegen",
+    env["TYPER_USE_RICH"] = "0"
+    completed = subprocess.run(
+        [sys.executable, "-m", "fastapi_code_generator", "--help"],
+        cwd=PROJECT_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
     )
-    if completed.exit_code != 0:
-        msg = completed.stderr or completed.output or "failed to render CLI help"
+    if completed.returncode != 0:
+        msg = completed.stderr or completed.stdout or "failed to render CLI help"
         raise RuntimeError(msg)
-    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.output))
+    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.stdout))
 
 
 def load_cli_doc_collection() -> dict[str, object]:

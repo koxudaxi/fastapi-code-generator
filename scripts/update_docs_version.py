@@ -63,7 +63,7 @@ def main() -> int:
 
     try:
         version = get_latest_release_version()
-    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+    except (subprocess.CalledProcessError, FileNotFoundError, RuntimeError) as exc:
         print(f"Error getting latest release: {exc}", file=sys.stderr)
         return 1
 
