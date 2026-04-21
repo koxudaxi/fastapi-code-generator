@@ -1,5 +1,18 @@
 version: 2
 updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "10:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+    rebase-strategy: auto
+    groups:
+      actions:
+        patterns:
+          - "*"
   - package-ecosystem: pip
     directory: "/"
     schedule:

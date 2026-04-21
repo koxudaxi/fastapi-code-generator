@@ -11,8 +11,10 @@ jobs:
       contents: write
     steps:
       - id: preflight
+        env:
+          PAT: ${{ secrets.PAT }}
         run: |
-          if [ -n "${{ secrets.PAT }}" ]; then
+          if [ -n "${PAT:-}" ]; then
             echo "has_pat=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_pat=false" >> "$GITHUB_OUTPUT"
@@ -21,7 +23,7 @@ jobs:
         if: steps.preflight.outputs.has_pat == 'true'
         with:
           ref: main
-          token: ${{ secrets.PAT }}
+          persist-credentials: false
 
       - name: Get release info and update CHANGELOG
         if: steps.preflight.outputs.has_pat == 'true'
@@ -70,12 +72,19 @@ jobs:
         if: steps.preflight.outputs.has_pat == 'true'
         env:
           TAG: ${{ github.event.release.tag_name }}
+          PAT: ${{ secrets.PAT }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git diff --cached --quiet || git commit -m "docs: update CHANGELOG.md for $TAG"
-          git push
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: update CHANGELOG.md for $TAG"
+            # shellcheck disable=SC2016
+            HELPER='!f() { printf "username=x-access-token\npassword=%s\n" "$PAT"; }; f'
+            git -c credential.helper= -c "credential.helper=$HELPER" \
+              push "https://github.com/$REPOSITORY.git" HEAD:main
+          fi
       - name: Skip auto-update when PAT is unavailable
         if: steps.preflight.outputs.has_pat != 'true'
         run: echo "PAT is required for changelog write-back; skipping update."

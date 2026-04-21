@@ -36,6 +36,7 @@ jobs:
           import json
           import os
           import re
+          import secrets
           from pathlib import Path
 
           event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
@@ -67,8 +68,14 @@ jobs:
                   "as a non-breaking release update."
               )
 
+          def unique_delimiter(*values: str) -> str:
+              while True:
+                  candidate = f"EOF_{secrets.token_hex(16)}"
+                  if all(candidate not in value for value in values):
+                      return candidate
+
           output_path = Path(os.environ["GITHUB_OUTPUT"])
-          delimiter = "EOF_BREAKING_CHANGES"
+          delimiter = unique_delimiter(extracted, reasoning)
           with output_path.open("a", encoding="utf-8") as output:
               output.write(f"has_breaking_changes={'true' if has_breaking_changes else 'false'}\n")
               output.write(f"breaking_changes_content<<{delimiter}\n")
@@ -84,11 +91,13 @@ jobs:
       - name: Add breaking-change-analyzed label
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "breaking-change-analyzed"
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --add-label "breaking-change-analyzed"
 
       - name: Post analysis result to PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           HAS_BC: ${{ steps.parse.outputs.has_breaking_changes }}
           BC_CONTENT: ${{ steps.parse.outputs.breaking_changes_content }}
           REASONING: ${{ steps.parse.outputs.reasoning }}
@@ -110,11 +119,12 @@ jobs:
             printf '*This analysis was performed by repository automation using PR labels and the `## Breaking Changes` section.*\n'
           } > "$TMPFILE"
 
-          gh pr comment ${{ github.event.pull_request.number }} --body-file "$TMPFILE"
+          gh pr comment "$PR_NUMBER" --body-file "$TMPFILE"
 
       - name: Calculate version and update draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
           HAS_BC: ${{ steps.parse.outputs.has_breaking_changes }}
           BC_CONTENT: ${{ steps.parse.outputs.breaking_changes_content }}
         run: |
@@ -169,7 +179,7 @@ jobs:
             GENERATED_NOTES=$(gh api \
               --method POST \
               -H "Accept: application/vnd.github+json" \
-              /repos/${{ github.repository }}/releases/generate-notes \
+              "/repos/$REPOSITORY/releases/generate-notes" \
               -f tag_name="$NEXT_VERSION" \
               -f previous_tag_name="$LATEST_TAG_RAW" \
               --jq '.body')
@@ -177,7 +187,7 @@ jobs:
             GENERATED_NOTES=$(gh api \
               --method POST \
               -H "Accept: application/vnd.github+json" \
-              /repos/${{ github.repository }}/releases/generate-notes \
+              "/repos/$REPOSITORY/releases/generate-notes" \
               -f tag_name="$NEXT_VERSION" \
               --jq '.body')
           fi

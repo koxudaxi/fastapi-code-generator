@@ -12,15 +12,22 @@ concurrency:
   group: docs-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-24.04
     outputs:
-      preview-enabled: ${{ steps.preview-preflight.outputs.enabled }}
+      preview-target: ${{ steps.targets.outputs.preview }}
+      dev-target: ${{ steps.targets.outputs.dev }}
+      prod-target: ${{ steps.targets.outputs.prod }}
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
@@ -30,22 +37,68 @@ jobs:
         run: uv tool install --python 3.14 tox --with tox-uv
       - name: Build site
         run: tox -e docs
-      - name: Compute preview preflight
-        id: preview-preflight
+      - name: Compute deploy targets
+        id: targets
         env:
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ] &&
-             [ "${{ github.event.pull_request.head.repo.full_name }}" = "${{ github.repository }}" ] &&
-             [ -n "${CLOUDFLARE_API_TOKEN:-}" ] &&
-             [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPO" = "$REPOSITORY" ]; then
+            echo "preview=true" >> "$GITHUB_OUTPUT"
           else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "preview=false" >> "$GITHUB_OUTPUT"
           fi
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ "$EVENT_NAME" = "release" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "prod=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prod=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload site artifact
+        if: |
+          steps.targets.outputs.preview == 'true' ||
+          steps.targets.outputs.dev == 'true' ||
+          steps.targets.outputs.prod == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: docs-site
+          path: site/
+          retention-days: 1
+
+  deploy-preview:
+    needs: build
+    if: needs.build.outputs.preview-target == 'true'
+    runs-on: ubuntu-24.04
+    outputs:
+      deployed: ${{ steps.cf-check.outputs.ready }}
+    permissions:
+      contents: read
+    steps:
+      - id: cf-check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download site artifact
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+          path: site
       - name: Deploy Preview
-        if: steps.preview-preflight.outputs.enabled == 'true'
+        if: steps.cf-check.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -54,11 +107,32 @@ jobs:
             pages deploy site
             --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
             --branch=pr-${{ github.event.pull_request.number }}
+
+  deploy-dev:
+    needs: build
+    if: needs.build.outputs.dev-target == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - id: cf-check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download site artifact
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+          path: site
       - name: Deploy Dev
-        if: >
-          github.event_name == 'push' &&
-          secrets.CLOUDFLARE_API_TOKEN != '' &&
-          secrets.CLOUDFLARE_ACCOUNT_ID != ''
+        if: steps.cf-check.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -67,11 +141,32 @@ jobs:
             pages deploy site
             --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
             --branch=dev
+
+  deploy-production:
+    needs: build
+    if: needs.build.outputs.prod-target == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - id: cf-check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download site artifact
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+          path: site
       - name: Deploy Production
-        if: >
-          (github.event_name == 'release' || github.event_name == 'workflow_dispatch') &&
-          secrets.CLOUDFLARE_API_TOKEN != '' &&
-          secrets.CLOUDFLARE_ACCOUNT_ID != ''
+        if: steps.cf-check.outputs.ready == 'true'
         uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -82,17 +177,19 @@ jobs:
             --branch=main
 
   comment-preview:
-    needs: build-deploy
-    if: needs.build-deploy.outputs.preview-enabled == 'true'
+    needs: deploy-preview
+    if: needs.deploy-preview.outputs.deployed == 'true'
     runs-on: ubuntu-24.04
     permissions:
       issues: write
     steps:
       - name: Comment Preview URL on PR
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PROJECT_NAME: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
         with:
           script: |
-            const projectName = '${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}';
+            const projectName = process.env.PROJECT_NAME;
             const previewUrl = `https://pr-${context.issue.number}.${projectName}.pages.dev`;
             const body = `📚 **Docs Preview:** ${previewUrl}`;
 
