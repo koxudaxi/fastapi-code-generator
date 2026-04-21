@@ -79,7 +79,7 @@ test = [
   "pytest-codspeed>=2.2",
   "pytest-mock>=3.14",
   "pytest-xdist>=3.6",
-  "time-machine>=2.15",
+  "time-machine>=3.2.0",
 ]
 benchmark = [
   "pytest-benchmark>=5",
