@@ -275,7 +275,7 @@ jobs:
           path: .tox/htmlcov
       - name: Upload coverage to Codecov
         if: steps.coverage.outcome == 'success'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: .tox/coverage.xml
           flags: unittests
