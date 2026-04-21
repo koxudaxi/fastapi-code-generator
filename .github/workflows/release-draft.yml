@@ -9,123 +9,82 @@ concurrency:
   group: release-draft
   cancel-in-progress: false
 
-permissions:
-  contents: write
-  pull-requests: write
-
 jobs:
-  preflight:
+  update-draft:
     if: |
       github.event.pull_request.merged == true &&
       !contains(github.event.pull_request.labels.*.name, 'breaking-change-analyzed')
     runs-on: ubuntu-latest
-    outputs:
-      enabled: ${{ steps.check.outputs.enabled }}
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
-      - id: check
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        run: |
-          if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  analyze-and-draft:
-    needs: preflight
-    if: needs.preflight.outputs.enabled == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
       - name: Ensure labels exist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh label create "breaking-change-analyzed" --color "0E8A16" --description "PR has been analyzed for breaking changes" 2>/dev/null || true
+          gh label create "breaking-change-analyzed" --color "0E8A16" --description "PR has been checked for release draft updates" 2>/dev/null || true
           gh label create "breaking-change" --color "D93F0B" --description "PR contains breaking changes" 2>/dev/null || true
 
-      - name: Run Claude Code Analysis
-        id: claude
-        timeout-minutes: 10
-        uses: anthropics/claude-code-action@5d5c10a4f389689f992ea10bb14dcb6fcc83146d # v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          show_full_output: true
-          prompt: |
-            Analyze PR #${{ github.event.pull_request.number }} for breaking changes.
-
-            PR Title: ${{ github.event.pull_request.title }}
-            PR Body:
-            ${{ github.event.pull_request.body }}
-
-            Analyze the merged changes and determine if this PR contains breaking changes.
-
-            Breaking changes for fastapi-code-generator include:
-            1. Code generation changes - Changes to generated FastAPI app output that may break existing users
-            2. Template compatibility changes - Changes requiring users to update custom Jinja2 templates
-            3. API or CLI changes - Changes to command-line options or Python API
-            4. Default behavior changes - Changes to default values or behavior
-            5. Python or dependency support changes - Dropping Python, FastAPI, or Pydantic compatibility
-            6. Error handling changes - Changes to how errors are reported or handled
-
-            If breaking changes are found, format them EXACTLY like this CHANGELOG.md format:
-
-            ### Category Name
-            * Description of breaking change - Detailed explanation (#${{ github.event.pull_request.number }})
-
-            Rules:
-            - Each category should be a ### heading
-            - Each item starts with "* " followed by a brief title, then " - " and detailed explanation
-            - Include PR number at the end as (#NUMBER)
-            - If code examples help, include them in markdown code blocks
-            - Only include categories that have actual breaking changes
-            - Return empty string for breaking_changes_content if no breaking changes
-
-          claude_args: |
-            --model claude-opus-4-6
-            --max-turns 50
-            --json-schema '{"type":"object","properties":{"has_breaking_changes":{"type":"boolean","description":"Whether this PR contains breaking changes"},"breaking_changes_content":{"type":"string","description":"Formatted breaking changes section content (without ## Breaking Changes header), or empty string if none"},"reasoning":{"type":"string","description":"Brief explanation of why this is or is not a breaking change"}},"required":["has_breaking_changes","breaking_changes_content","reasoning"]}'
-
-      - name: Parse Claude output
+      - name: Collect breaking change metadata
         id: parse
         env:
-          CLAUDE_OUTPUT: ${{ steps.claude.outputs.structured_output }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          HAS_BC=$(echo "$CLAUDE_OUTPUT" | jq -r '.has_breaking_changes // false')
-          BC_CONTENT=$(echo "$CLAUDE_OUTPUT" | jq -r '.breaking_changes_content // ""')
-          REASONING=$(echo "$CLAUDE_OUTPUT" | jq -r '.reasoning // ""')
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
 
-          echo "has_breaking_changes=$HAS_BC" >> "$GITHUB_OUTPUT"
-          DELIMITER="EOF_$(date +%s%N)"
+          event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
+          pull_request = event["pull_request"]
+          labels = {label["name"] for label in pull_request.get("labels", [])}
+          has_breaking_changes = "breaking-change" in labels
+          body = pull_request.get("body") or ""
+          match = re.search(
+              r"(?ms)^##\s+Breaking Changes\s*$\n(.*?)(?=^##\s+|\Z)",
+              body,
+          )
+          extracted = match.group(1).strip() if match else ""
+          pr_number = os.environ["PR_NUMBER"]
 
-          {
-            echo "breaking_changes_content<<$DELIMITER"
-            printf '%s\n' "$BC_CONTENT"
-            echo "$DELIMITER"
-          } >> "$GITHUB_OUTPUT"
+          if has_breaking_changes and not extracted:
+              extracted = (
+                  "### Breaking Changes\n"
+                  f"* See pull request #{pr_number} for breaking-change details (#{pr_number})"
+              )
 
-          {
-            echo "reasoning<<$DELIMITER"
-            printf '%s\n' "$REASONING"
-            echo "$DELIMITER"
-          } >> "$GITHUB_OUTPUT"
+          if has_breaking_changes:
+              reasoning = (
+                  "The maintainer-applied `breaking-change` label is present, "
+                  "so this PR is treated as a breaking change."
+              )
+          else:
+              reasoning = (
+                  "The `breaking-change` label is absent, so this PR is treated "
+                  "as a non-breaking release update."
+              )
+
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
+          delimiter = "EOF_BREAKING_CHANGES"
+          with output_path.open("a", encoding="utf-8") as output:
+              output.write(f"has_breaking_changes={'true' if has_breaking_changes else 'false'}\n")
+              output.write(f"breaking_changes_content<<{delimiter}\n")
+              output.write(extracted)
+              output.write("\n")
+              output.write(f"{delimiter}\n")
+              output.write(f"reasoning<<{delimiter}\n")
+              output.write(reasoning)
+              output.write("\n")
+              output.write(f"{delimiter}\n")
+          PY
 
       - name: Add breaking-change-analyzed label
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr edit ${{ github.event.pull_request.number }} --add-label "breaking-change-analyzed"
-
-      - name: Add breaking-change label if applicable
-        if: steps.parse.outputs.has_breaking_changes == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "breaking-change"
 
       - name: Post analysis result to PR
         env:
@@ -140,7 +99,7 @@ jobs:
           {
             printf '## Breaking Change Analysis\n\n'
             if [ "$HAS_BC" = "true" ]; then
-              printf 'Result: Breaking changes detected\n\n'
+              printf 'Result: Breaking changes detected from maintainer label\n\n'
               printf 'Reasoning: %s\n\n' "$REASONING"
               printf '### Content for Release Notes\n\n%s\n\n' "$BC_CONTENT"
             else
@@ -148,7 +107,7 @@ jobs:
               printf 'Reasoning: %s\n\n' "$REASONING"
             fi
             printf -- '---\n'
-            printf '*This analysis was performed by Claude Code Action*\n'
+            printf '*This analysis was performed by repository automation using PR labels and the `## Breaking Changes` section.*\n'
           } > "$TMPFILE"
 
           gh pr comment ${{ github.event.pull_request.number }} --body-file "$TMPFILE"
@@ -293,10 +252,3 @@ jobs:
               exit 1
             fi
           fi
-
-  skipped:
-    needs: preflight
-    if: needs.preflight.outputs.enabled != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "CLAUDE_CODE_OAUTH_TOKEN is not configured; skipping release draft automation."
