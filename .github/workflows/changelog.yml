@@ -13,20 +13,21 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: main
-          token: ${{ secrets.PAT || github.token }}
+          token: ${{ github.token }}
 
       - name: Get release info and update CHANGELOG
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          TAG="${{ github.event.release.tag_name }}"
           DATE=$(gh release view "$TAG" --json publishedAt --jq '.publishedAt | split("T")[0]')
           BODY=$(gh release view "$TAG" --json body --jq '.body // ""')
 
           {
-            echo "## [$TAG](https://github.com/${{ github.repository }}/releases/tag/$TAG) - $DATE"
+            echo "## [$TAG](https://github.com/$REPOSITORY/releases/tag/$TAG) - $DATE"
             echo ""
             printf '%s\n' "$BODY"
             echo ""
@@ -57,9 +58,11 @@ jobs:
           rm -f header.md new_entry.md old_entries.md
 
       - name: Commit and push
+        env:
+          TAG: ${{ github.event.release.tag_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git diff --cached --quiet || git commit -m "docs: update CHANGELOG.md for ${{ github.event.release.tag_name }}"
+          git diff --cached --quiet || git commit -m "docs: update CHANGELOG.md for $TAG"
           git push
