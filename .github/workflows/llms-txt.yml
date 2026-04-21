@@ -32,15 +32,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
         with:
           fetch-depth: 0
+      - id: pat-preflight
+        run: |
+          if [ -n "${{ secrets.PAT }}" ]; then
+            echo "has_pat=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_pat=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        if: |
+          steps.pat-preflight.outputs.has_pat == 'true' &&
+          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
-          token: ${{ github.token }}
+          token: ${{ secrets.PAT }}
       - id: preflight
         run: |
           if [ -f scripts/build_llms_txt.py ] && grep -q '^\[testenv:llms-txt\]' tox.ini; then
@@ -66,6 +74,7 @@ jobs:
         run: .tox/llms-txt/bin/python scripts/build_llms_txt.py
       - name: Commit and push if changed
         if: |
+          steps.pat-preflight.outputs.has_pat == 'true' &&
           steps.preflight.outputs.enabled == 'true' &&
           (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
         env:
@@ -81,6 +90,12 @@ jobs:
             git pull --rebase origin "$BRANCH_REF"
             git push
           fi
+      - name: Skip auto-update when PAT is unavailable
+        if: |
+          steps.preflight.outputs.enabled == 'true' &&
+          steps.pat-preflight.outputs.has_pat != 'true' &&
+          (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+        run: echo "PAT is required for llms.txt auto-update pushes; skipping write-back."
       - name: Skip when llms.txt support is not present
         if: steps.preflight.outputs.enabled != 'true'
         run: echo "No llms.txt generator is defined for this repository."

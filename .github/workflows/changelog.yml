@@ -10,12 +10,21 @@ jobs:
     permissions:
       contents: write
     steps:
+      - id: preflight
+        run: |
+          if [ -n "${{ secrets.PAT }}" ]; then
+            echo "has_pat=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_pat=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        if: steps.preflight.outputs.has_pat == 'true'
         with:
           ref: main
-          token: ${{ github.token }}
+          token: ${{ secrets.PAT }}
 
       - name: Get release info and update CHANGELOG
+        if: steps.preflight.outputs.has_pat == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
@@ -58,6 +67,7 @@ jobs:
           rm -f header.md new_entry.md old_entries.md
 
       - name: Commit and push
+        if: steps.preflight.outputs.has_pat == 'true'
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -66,3 +76,6 @@ jobs:
           git add CHANGELOG.md
           git diff --cached --quiet || git commit -m "docs: update CHANGELOG.md for $TAG"
           git push
+      - name: Skip auto-update when PAT is unavailable
+        if: steps.preflight.outputs.has_pat != 'true'
+        run: echo "PAT is required for changelog write-back; skipping update."
