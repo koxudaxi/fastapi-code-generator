@@ -7,8 +7,9 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import typer
 from click import Abort, ClickException
-from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
-from datamodel_code_generator.format import CodeFormatter
+from datamodel_code_generator import LiteralType, chdir
+from datamodel_code_generator.enums import DataModelType
+from datamodel_code_generator.format import CodeFormatter, PythonVersion
 from datamodel_code_generator.model import get_data_model_types
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from typer.main import get_command
@@ -71,7 +72,7 @@ def main(
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
     output_model_type: DataModelType = typer.Option(
-        DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
+        DataModelType.PydanticV2BaseModel.value, "--output-model-type", "-d"
     ),
     python_version: PythonVersion = typer.Option(
         PythonVersion.PY_310.value, "--python-version", "-p"
@@ -143,7 +144,7 @@ def generate_code(
     disable_timestamp: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
-    output_model_type: DataModelType = DataModelType.PydanticBaseModel,
+    output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
 ) -> None:
     global all_tags

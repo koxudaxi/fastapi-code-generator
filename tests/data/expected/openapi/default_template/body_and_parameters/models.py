@@ -4,10 +4,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel, RootModel
 
 
 class Pet(BaseModel):
@@ -27,28 +26,28 @@ class PetForm(BaseModel):
 
 
 class UserGetResponse(BaseModel):
-    timestamp: datetime
+    timestamp: AwareDatetime
     name: str
     age: Optional[str] = None
 
 
 class UserPostRequest(BaseModel):
-    timestamp: datetime
+    timestamp: AwareDatetime
     name: str
     age: Optional[str] = None
 
 
 class UsersGetResponseItem(BaseModel):
-    timestamp: datetime
+    timestamp: AwareDatetime
     name: str
     age: Optional[str] = None
 
 
 class UsersPostRequestItem(BaseModel):
-    timestamp: datetime
+    timestamp: AwareDatetime
     name: str
     age: Optional[str] = None
 
 
-class UsersPostRequest(BaseModel):
-    __root__: List[UsersPostRequestItem]
+class UsersPostRequest(RootModel[List[UsersPostRequestItem]]):
+    root: List[UsersPostRequestItem]

@@ -9,19 +9,20 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypedDict, cast, get_args, get_origin
 
-from datamodel_code_generator import DataModelType, InputFileType, generate
+from datamodel_code_generator import generate
+from datamodel_code_generator.enums import DataModelType, InputFileType
 from pydantic import BaseModel, ConfigDict, Field
 from typer.main import get_command
 
-EnumFieldAsLiteral = Literal["all", "one"]
+EnumFieldAsLiteral = Literal["all", "one", "none"]
 OutputModelTypeName = Literal[
-    "pydantic.BaseModel",
     "pydantic_v2.BaseModel",
+    "pydantic_v2.dataclass",
     "dataclasses.dataclass",
     "typing.TypedDict",
     "msgspec.Struct",
 ]
-TargetPythonVersion = Literal["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+TargetPythonVersion = Literal["3.10", "3.11", "3.12", "3.13", "3.14"]
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 GENERATED_TYPES_PATH = (
@@ -36,8 +37,8 @@ INPUT_FORMAT_DESCRIPTIONS: dict[str, str] = {
 }
 
 OUTPUT_MODEL_TYPE_DESCRIPTIONS: dict[OutputModelTypeName, str] = {
-    "pydantic.BaseModel": "Classic Pydantic BaseModel output.",
     "pydantic_v2.BaseModel": "Pydantic v2 BaseModel output.",
+    "pydantic_v2.dataclass": "Pydantic v2 dataclass output.",
     "dataclasses.dataclass": "Standard-library dataclass output.",
     "typing.TypedDict": "TypedDict-based model output.",
     "msgspec.Struct": "msgspec Struct output.",
@@ -150,7 +151,7 @@ class GenerateConfig(BaseModel):
         json_schema_extra=cast(Any, _cli_metadata("--disable-timestamp")),
     )
     output_model_type: OutputModelTypeName = Field(
-        default="pydantic.BaseModel",
+        default="pydantic_v2.BaseModel",
         description="Model backend passed through to datamodel-code-generator.",
         json_schema_extra=cast(Any, _cli_metadata("--output-model-type", "-d")),
     )

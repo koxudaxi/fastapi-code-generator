@@ -77,7 +77,7 @@ PROMPT_DATA: dict[str, Any] = {
             'default': None,
             'multiple': False,
             'type': 'literal | null',
-            'choices': ['all', 'one'],
+            'choices': ['all', 'one', 'none'],
         },
         {
             'name': 'generate_routers',
@@ -127,12 +127,12 @@ PROMPT_DATA: dict[str, Any] = {
             'description': 'Model backend passed through to '
             'datamodel-code-generator.',
             'required': False,
-            'default': 'pydantic.BaseModel',
+            'default': 'pydantic_v2.BaseModel',
             'multiple': False,
             'type': 'literal',
             'choices': [
-                'pydantic.BaseModel',
                 'pydantic_v2.BaseModel',
+                'pydantic_v2.dataclass',
                 'dataclasses.dataclass',
                 'typing.TypedDict',
                 'msgspec.Struct',
@@ -147,7 +147,7 @@ PROMPT_DATA: dict[str, Any] = {
             'default': '3.10',
             'multiple': False,
             'type': 'literal',
-            'choices': ['3.9', '3.10', '3.11', '3.12', '3.13', '3.14'],
+            'choices': ['3.10', '3.11', '3.12', '3.13', '3.14'],
         },
     ],
     'cli_examples': [
@@ -441,9 +441,9 @@ PROMPT_DATA: dict[str, Any] = {
     '\n'
     '| Output model type | Status | Notes |\n'
     '|-------------------|--------|-------|\n'
-    '| `pydantic.BaseModel` | supported | Classic Pydantic '
-    'BaseModel output. |\n'
     '| `pydantic_v2.BaseModel` | supported | Pydantic v2 BaseModel '
+    'output. |\n'
+    '| `pydantic_v2.dataclass` | supported | Pydantic v2 dataclass '
     'output. |\n'
     '| `dataclasses.dataclass` | supported | Standard-library '
     'dataclass output. |\n'

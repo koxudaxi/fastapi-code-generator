@@ -25,13 +25,14 @@ from datamodel_code_generator import (
     DefaultPutDict,
     LiteralType,
     OpenAPIScope,
-    PythonVersion,
     snooper_to_methods,
 )
+from datamodel_code_generator.enums import StrictTypes
+from datamodel_code_generator.format import PythonVersion
 from datamodel_code_generator.imports import Import, Imports
 from datamodel_code_generator.model import DataModel, DataModelFieldBase
-from datamodel_code_generator.model import pydantic as pydantic_model
-from datamodel_code_generator.model.pydantic import CustomRootType, DataModelField
+from datamodel_code_generator.model import pydantic_v2 as pydantic_model
+from datamodel_code_generator.model.pydantic_v2 import DataModelField
 from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
 from datamodel_code_generator.parser.openapi import MediaObject
 from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
@@ -42,16 +43,16 @@ from datamodel_code_generator.parser.openapi import (
     RequestBodyObject,
     ResponseObject,
 )
-from datamodel_code_generator.types import DataType, DataTypeManager, StrictTypes
-from pydantic import BaseModel, ValidationInfo
+from datamodel_code_generator.types import DataType, DataTypeManager
+from pydantic import BaseModel, ConfigDict, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
 
 
 class CachedPropertyModel(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        keep_untouched = (cached_property,)
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True, ignored_types=(cached_property,)
+    )
 
 
 class Response(BaseModel):
@@ -239,7 +240,7 @@ class OpenAPIParser(OpenAPIModelParser):
         source: Union[str, pathlib.Path, List[pathlib.Path], ParseResult],
         *,
         data_model_type: Type[DataModel] = pydantic_model.BaseModel,
-        data_model_root_type: Type[DataModel] = pydantic_model.CustomRootType,
+        data_model_root_type: Type[DataModel] = pydantic_model.RootModel,
         data_type_manager_type: Type[DataTypeManager] = pydantic_model.DataTypeManager,
         data_model_field_type: Type[DataModelFieldBase] = pydantic_model.DataModelField,
         base_class: Optional[str] = None,
@@ -629,7 +630,7 @@ class OpenAPIParser(OpenAPIModelParser):
         except RecursionError:  # pragma: no cover
             return data_type
         source = reference.source
-        if not isinstance(source, CustomRootType):
+        if not isinstance(source, self.data_model_root_type):
             return data_type
         data_type.remove_reference()
         data_type = source.fields[0].data_type

@@ -52,14 +52,14 @@ Options:
   -m, --model-file TEXT
   -t, --template-dir PATH
   --model-template-dir PATH
-  --enum-field-as-literal [all|one]
+  --enum-field-as-literal [all|one|none]
   -r, --generate-routers
   --specify-tags TEXT
   -c, --custom-visitor PATH
   --disable-timestamp
-  -d, --output-model-type [pydantic.BaseModel|pydantic_v2.BaseModel|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
-                                  [default: pydantic.BaseModel]
-  -p, --python-version [3.9|3.10|3.11|3.12|3.13|3.14]
+  -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
+                                  [default: pydantic_v2.BaseModel]
+  -p, --python-version [3.10|3.11|3.12|3.13|3.14]
                                   [default: 3.10]
   -V, --version
   --install-completion            Install completion for the current shell.
