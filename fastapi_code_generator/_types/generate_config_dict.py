@@ -8,7 +8,7 @@ from typing import Literal
 from typing_extensions import NotRequired, TypedDict
 
 
-class GenerateConfigDict(TypedDict, closed=True):
+class GenerateConfigDict(TypedDict):
     custom_visitors: NotRequired[list[str] | None]
     disable_timestamp: NotRequired[bool]
     encoding: NotRequired[str]

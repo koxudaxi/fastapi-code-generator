@@ -305,7 +305,8 @@ def build_generate_config_typed_dict() -> str:
             disable_timestamp=True,
             use_standard_collections=True,
         )
-        return output_path.read_text(encoding="utf-8")
+        content = output_path.read_text(encoding="utf-8")
+        return content.replace("(TypedDict, closed=True)", "(TypedDict)")
 
 
 def update_generated_types(
