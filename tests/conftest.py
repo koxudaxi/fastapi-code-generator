@@ -53,17 +53,15 @@ def pytest_collection_modifyitems(
 ) -> None:
     del session
     for item in items:
-        marker = item.get_closest_marker("cli_doc")
-        if marker is None:
-            continue
-        kwargs = cast("CliDocKwargs", marker.kwargs)
-        config._cli_doc_items.append(
-            {
-                "node_id": item.nodeid,
-                "marker_kwargs": kwargs,
-                "option_description": kwargs.get("option_description", ""),
-            }
-        )
+        for marker in reversed(list(item.iter_markers(name="cli_doc"))):
+            kwargs = cast("CliDocKwargs", marker.kwargs)
+            config._cli_doc_items.append(
+                {
+                    "node_id": item.nodeid,
+                    "marker_kwargs": kwargs,
+                    "option_description": kwargs.get("option_description", ""),
+                }
+            )
 
 
 def pytest_runtestloop(session: pytest.Session) -> bool | None:  # pragma: no cover

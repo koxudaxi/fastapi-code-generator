@@ -1,32 +1,220 @@
 name: Docs
 
 on:
+  pull_request:
+  release:
+    types: [published]
   push:
-    branches:
-    - main
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  build-deploy:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
+    outputs:
+      preview-target: ${{ steps.targets.outputs.preview }}
+      dev-target: ${{ steps.targets.outputs.dev }}
+      prod-target: ${{ steps.targets.outputs.prod }}
+    permissions:
+      contents: read
     steps:
-    - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: Install tox
+        run: uv tool install --python 3.14 tox --with tox-uv
+      - name: Build site
+        run: tox -e docs
+      - name: Compute deploy targets
+        id: targets
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ] && [ "$HEAD_REPO" = "$REPOSITORY" ]; then
+            echo "preview=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "preview=false" >> "$GITHUB_OUTPUT"
+          fi
 
-    - name: Setup Python
-      uses: actions/setup-python@v6
-      with:
-        python-version: "3.14"
-        allow-prereleases: true
+          if [ "$EVENT_NAME" = "push" ]; then
+            echo "dev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dev=false" >> "$GITHUB_OUTPUT"
+          fi
 
-    - uses: astral-sh/setup-uv@v8.0.0
-      with:
-        enable-cache: true
-    - name: Install tox
-      run: uv tool install tox --with tox-uv
-    - name: build site
-      run: tox -e docs
-    - name: Deploy
-      uses: peaceiris/actions-gh-pages@v2
-      env:
-        PERSONAL_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-        PUBLISH_BRANCH: gh-pages
-        PUBLISH_DIR: ./site
+          if [ "$EVENT_NAME" = "release" ] || [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "prod=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prod=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload site artifact
+        if: |
+          steps.targets.outputs.preview == 'true' ||
+          steps.targets.outputs.dev == 'true' ||
+          steps.targets.outputs.prod == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: docs-site
+          path: site/
+          retention-days: 1
+
+  deploy-preview:
+    needs: build
+    if: needs.build.outputs.preview-target == 'true'
+    runs-on: ubuntu-24.04
+    outputs:
+      deployed: ${{ steps.cf-check.outputs.ready }}
+    permissions:
+      contents: read
+    steps:
+      - id: cf-check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download site artifact
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+          path: site
+      - name: Deploy Preview
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy site
+            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
+            --branch=pr-${{ github.event.pull_request.number }}
+
+  deploy-dev:
+    needs: build
+    if: needs.build.outputs.dev-target == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - id: cf-check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download site artifact
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+          path: site
+      - name: Deploy Dev
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy site
+            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
+            --branch=dev
+
+  deploy-production:
+    needs: build
+    if: needs.build.outputs.prod-target == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - id: cf-check
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "${CLOUDFLARE_API_TOKEN:-}" ] && [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download site artifact
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: docs-site
+          path: site
+      - name: Deploy Production
+        if: steps.cf-check.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@9acf94ace14e7dc412b076f2c5c20b8ce93c79cd # v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: >-
+            pages deploy site
+            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
+            --branch=main
+
+  comment-preview:
+    needs: deploy-preview
+    if: needs.deploy-preview.outputs.deployed == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      issues: write
+    steps:
+      - name: Comment Preview URL on PR
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PROJECT_NAME: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
+        with:
+          script: |
+            const projectName = process.env.PROJECT_NAME;
+            const previewUrl = `https://pr-${context.issue.number}.${projectName}.pages.dev`;
+            const body = `📚 **Docs Preview:** ${previewUrl}`;
+
+            const comments = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const existingComment = comments.data.find((comment) =>
+              comment.body && comment.body.includes('Docs Preview:')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }

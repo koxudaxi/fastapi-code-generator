@@ -1,18 +1,33 @@
 name: Test
 
 on:
-  pull_request: {}
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   lint-and-type:
     name: Lint and type check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.10"
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
       - name: Install tox
@@ -26,12 +41,14 @@ jobs:
     name: CLI docs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14"
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
       - name: Install tox
@@ -47,12 +64,107 @@ jobs:
           os.replace(pathlib.Path(".tox") / ".coverage.cli-docs", target)
         shell: python
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           include-hidden-files: true
           name: coverage-cli-docs-ubuntu-latest
           path: .tox/.coverage.*
           retention-days: 3
+
+  readme:
+    name: README
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check README snapshots
+        run: tox -e readme -- --check
+
+  llms-txt:
+    name: llms.txt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check llms.txt artifacts
+        run: tox -e llms-txt -- --check
+
+  schema-docs:
+    name: Schema docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check supported formats docs
+        run: tox -e schema-docs -- --check
+
+  config-types:
+    name: Config types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Check generated config types
+        run: tox -e config-types -- --check
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: "3.14"
+          allow-prereleases: true
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+      - name: Install tox
+        run: uv tool install tox --with tox-uv
+      - name: Build docs
+        run: tox -e docs
 
   test:
     name: Test on Python ${{ matrix.python-version }} and ${{ matrix.os }}
@@ -108,12 +220,14 @@ jobs:
             tox-env: py314-parallel
 
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
       - name: Install tox
@@ -130,7 +244,7 @@ jobs:
           os.replace(pathlib.Path(".tox") / f".coverage.{env_name}", target)
         shell: python
       - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           include-hidden-files: true
           name: coverage-${{ matrix.tox-env }}-${{ matrix.os }}
@@ -143,15 +257,20 @@ jobs:
     needs:
       - test
       - cli-docs
+      - readme
+      - llms-txt
+      - schema-docs
+      - config-types
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v6
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14"
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
       - name: Install tox
@@ -159,7 +278,7 @@ jobs:
       - name: Setup coverage environment
         run: tox -e coverage --notest
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: .tox
           pattern: coverage-*
@@ -170,13 +289,13 @@ jobs:
         continue-on-error: true
       - name: Upload HTML coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: htmlcov
           path: .tox/htmlcov
       - name: Upload coverage to Codecov
         if: steps.coverage.outcome == 'success'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
         with:
           files: .tox/coverage.xml
           flags: unittests
@@ -191,12 +310,14 @@ jobs:
     name: Package metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14"
           allow-prereleases: true
-      - uses: astral-sh/setup-uv@v8.0.0
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
           enable-cache: true
       - name: Install tox
@@ -205,16 +326,21 @@ jobs:
         run: tox -e pkg_meta
 
   check:
-    if: github.event.pull_request.draft == false
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     needs:
       - lint-and-type
       - cli-docs
+      - readme
+      - llms-txt
+      - schema-docs
+      - config-types
+      - docs
       - test
       - coverage
       - package
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
-        uses: re-actors/alls-green@release/v1
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}

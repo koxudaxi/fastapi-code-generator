@@ -4,36 +4,29 @@ This page is generated from the current `fastapi-codegen --help` output.
 Run `tox run -e cli-docs` after changing CLI options.
 
 ```text
-Usage: fastapi-codegen [OPTIONS]                                                             
-                                                                                              
-╭─ Options ──────────────────────────────────────────────────────────────────────────────────╮
-│    --encoding               -e      TEXT                        [default: utf-8]           │
-│ *  --input                  -i      TEXT                        [required]                 │
-│ *  --output                 -o      PATH                        [required]                 │
-│    --model-file             -m      TEXT                                                   │
-│    --template-dir           -t      PATH                                                   │
-│    --model-template-dir             PATH                                                   │
-│    --enum-field-as-literal          [all|one]                                              │
-│    --generate-routers       -r                                                             │
-│    --specify-tags                   TEXT                                                   │
-│    --custom-visitor         -c      PATH                                                   │
-│    --disable-timestamp                                                                     │
-│    --output-model-type      -d      [pydantic.BaseModel|pydant  [default:                  │
-│                                     ic_v2.BaseModel|dataclasse  pydantic.BaseModel]        │
-│                                     s.dataclass|typing.TypedDi                             │
-│                                     ct|msgspec.Struct]                                     │
-│    --python-version         -p      [3.9|3.10|3.11|3.12|3.13|3  [default: 3.10]            │
-│                                     .14]                                                   │
-│    --version                -V                                                             │
-│    --install-completion                                         Install completion for the │
-│                                                                 current shell.             │
-│    --show-completion                                            Show completion for the    │
-│                                                                 current shell, to copy it  │
-│                                                                 or customize the           │
-│                                                                 installation.              │
-│    --help                                                       Show this message and      │
-│                                                                 exit.                      │
-╰────────────────────────────────────────────────────────────────────────────────────────────╯
+Usage: fastapi-codegen [OPTIONS]
+
+Options:
+  -e, --encoding TEXT             [default: utf-8]
+  -i, --input TEXT                [required]
+  -o, --output PATH               [required]
+  -m, --model-file TEXT
+  -t, --template-dir PATH
+  --model-template-dir PATH
+  --enum-field-as-literal [all|one]
+  -r, --generate-routers
+  --specify-tags TEXT
+  -c, --custom-visitor PATH
+  --disable-timestamp
+  -d, --output-model-type [pydantic.BaseModel|pydantic_v2.BaseModel|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
+                                  [default: pydantic.BaseModel]
+  -p, --python-version [3.9|3.10|3.11|3.12|3.13|3.14]
+                                  [default: 3.10]
+  -V, --version
+  --install-completion            Install completion for the current shell.
+  --show-completion               Show completion for the current shell, to
+                                  copy it or customize the installation.
+  --help                          Show this message and exit.
 ```
 
 ## Tested CLI Scenarios
@@ -106,13 +99,45 @@ Render enum fields as Literal annotations.
 
 Input schema: `openapi/default_template/duplicate_anonymus_parameter.yaml`
 
-### --model-file, --model-template-dir, --output-model-type, --python-version
+### --model-file
 
-Customize generated model paths and datamodel-code-generator output settings.
+Write generated models to a custom module path.
 
 `fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
 
 Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-template-dir`, `--output-model-type`, `--python-version`
+
+### --model-template-dir
+
+Use a custom datamodel-code-generator template directory.
+
+`fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
+
+Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-file`, `--output-model-type`, `--python-version`
+
+### --output-model-type
+
+Choose the datamodel-code-generator output backend.
+
+`fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
+
+Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-file`, `--model-template-dir`, `--python-version`
+
+### --python-version
+
+Target a specific Python version when formatting generated code.
+
+`fastapi-codegen --input openapi/default_template/body_and_parameters.yaml --output app --model-file custom_models.py --model-template-dir model_templates --output-model-type pydantic_v2.BaseModel --python-version 3.13`
+
+Input schema: `openapi/default_template/body_and_parameters.yaml`
+
+Related options: `--model-file`, `--model-template-dir`, `--output-model-type`
 
 ### --custom-visitor
 

@@ -1,0 +1,90 @@
+name: Update CHANGELOG
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - id: preflight
+        env:
+          PAT: ${{ secrets.PAT }}
+        run: |
+          if [ -n "${PAT:-}" ]; then
+            echo "has_pat=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_pat=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        if: steps.preflight.outputs.has_pat == 'true'
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Get release info and update CHANGELOG
+        if: steps.preflight.outputs.has_pat == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          DATE=$(gh release view "$TAG" --json publishedAt --jq '.publishedAt | split("T")[0]')
+          BODY=$(gh release view "$TAG" --json body --jq '.body // ""')
+
+          {
+            echo "## [$TAG](https://github.com/$REPOSITORY/releases/tag/$TAG) - $DATE"
+            echo ""
+            printf '%s\n' "$BODY"
+            echo ""
+            echo "---"
+            echo ""
+          } > new_entry.md
+
+          if [ ! -f CHANGELOG.md ]; then
+            {
+              echo "# Changelog"
+              echo ""
+              echo "All notable changes to this project are documented in this file."
+              echo "This changelog is automatically generated from GitHub Releases."
+              echo ""
+              echo "---"
+              echo ""
+            } > CHANGELOG.md
+          fi
+
+          awk '
+            /^```/ { in_codeblock = !in_codeblock }
+            /^---$/ && !in_codeblock && !found { found = 1; print > "header.md"; next }
+            !found { print > "header.md"; next }
+            { print > "old_entries.md" }
+          ' CHANGELOG.md
+          touch old_entries.md
+          cat header.md new_entry.md old_entries.md > CHANGELOG.md
+          rm -f header.md new_entry.md old_entries.md
+
+      - name: Commit and push
+        if: steps.preflight.outputs.has_pat == 'true'
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PAT: ${{ secrets.PAT }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: update CHANGELOG.md for $TAG"
+            # shellcheck disable=SC2016
+            HELPER='!f() { printf "username=x-access-token\npassword=%s\n" "$PAT"; }; f'
+            git -c credential.helper= -c "credential.helper=$HELPER" \
+              push "https://github.com/$REPOSITORY.git" HEAD:main
+          fi
+      - name: Skip auto-update when PAT is unavailable
+        if: steps.preflight.outputs.has_pat != 'true'
+        run: echo "PAT is required for changelog write-back; skipping update."
