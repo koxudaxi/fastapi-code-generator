@@ -27,7 +27,7 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-  "datamodel-code-generator[http]>=0.45,<0.46",
+  "datamodel-code-generator[http]>=0.56.1,<0.57",
   "jinja2>=2.11.2,<4",
   "pydantic>=2.12,<3",
   "pysnooper>=0.4.1,<2",
