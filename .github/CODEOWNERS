@@ -1,0 +1,4 @@
+# Protect automation that can affect CI/CD behavior or trusted release jobs.
+/.github/workflows/** @koxudaxi
+/.github/CODEOWNERS @koxudaxi
+/.github/dependabot.yml @koxudaxi
