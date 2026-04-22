@@ -50,5 +50,5 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: >-
             pages deploy site
-            --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT || 'fastapi-code-generator' }}
+            --project-name=fastapi-code-generator
             --branch=${{ inputs.deploy_branch }}
