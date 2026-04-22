@@ -389,12 +389,12 @@ class OpenAPIParser(OpenAPIModelParser):
         if parameters.in_ == ParameterLocation.query and schema.is_array:
             self.imports_for_fastapi.append(Import(from_='fastapi', import_='Query'))
             default_value = '...' if field.required else repr(schema.default)
-            alias = f", alias='{orig_name}'" if orig_name != name else ''
+            alias = f", alias={orig_name!r}" if orig_name != name else ''
             default = f"Query({default_value}{alias})"
         elif orig_name != name:
             param_is = parameters.in_.value.lower().capitalize()
             self.imports_for_fastapi.append(Import(from_='fastapi', import_=param_is))
-            default = f"{param_is}({'...' if field.required else repr(schema.default)}, alias='{orig_name}')"
+            default = f"{param_is}({'...' if field.required else repr(schema.default)}, alias={orig_name!r})"
         else:
             default = repr(schema.default) if schema.has_default else None
         self.imports_for_fastapi.append(field.imports)
