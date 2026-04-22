@@ -59,7 +59,7 @@ docs = [
 lint = [
   "black==24.10.0",
   "isort==5.13.2",
-  "pre-commit>=4,<5",
+  "pre-commit>=4.6.0,<5",
 ]
 pkg-meta = [
   "check-wheel-contents>=0.6.1",
