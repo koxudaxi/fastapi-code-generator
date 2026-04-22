@@ -1,4 +1,4 @@
-name: Check Schema Docs
+name: Update Schema Docs
 
 on:
   pull_request:
@@ -17,7 +17,7 @@ permissions:
   contents: read
 
 jobs:
-  check-schema-docs:
+  update-schema-docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -32,5 +32,9 @@ jobs:
           python-version: "3.14"
       - name: Install tox
         run: uv tool install --python 3.14 tox --with tox-uv
-      - name: Check schema docs
-        run: tox -e schema-docs -- --check
+      - name: Setup environment
+        run: tox run -vv --notest --skip-missing-interpreters false -e schema-docs
+        env:
+          UV_PYTHON_PREFERENCE: "only-managed"
+      - name: Build schema docs
+        run: .tox/schema-docs/bin/python scripts/build_schema_docs.py

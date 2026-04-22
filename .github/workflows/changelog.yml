@@ -19,17 +19,16 @@ jobs:
 
       - name: Get release info and update CHANGELOG
         env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
+          TAG="${{ github.event.release.tag_name }}"
           DATE=$(gh release view "$TAG" --json publishedAt --jq '.publishedAt | split("T")[0]')
           BODY=$(gh release view "$TAG" --json body --jq '.body // ""')
 
           {
-            echo "## [$TAG](https://github.com/$REPOSITORY/releases/tag/$TAG) - $DATE"
+            echo "## [$TAG](https://github.com/${{ github.repository }}/releases/tag/$TAG) - $DATE"
             echo ""
             printf '%s\n' "$BODY"
             echo ""
@@ -49,12 +48,7 @@ jobs:
             } > CHANGELOG.md
           fi
 
-          awk '
-            /^```/ { in_codeblock = !in_codeblock }
-            /^---$/ && !in_codeblock && !found { found = 1; print > "header.md"; next }
-            !found { print > "header.md"; next }
-            { print > "old_entries.md" }
-          ' CHANGELOG.md
+          awk '/^---$/ && !found {found=1; print > "header.md"; next} !found {print > "header.md"} found {print > "old_entries.md"}' CHANGELOG.md
           touch old_entries.md
           cat header.md new_entry.md old_entries.md > CHANGELOG.md
           rm -f header.md new_entry.md old_entries.md
@@ -101,7 +95,6 @@ jobs:
 
       - name: Commit and push
         env:
-          TAG: ${{ github.event.release.tag_name }}
           GH_TOKEN: ${{ github.token }}
           PATCH_PATH: ${{ runner.temp }}/changelog.patch
         run: |
@@ -112,7 +105,7 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git commit -m "docs: update CHANGELOG.md for $TAG"
+          git commit -m "docs: update CHANGELOG.md for ${{ github.event.release.tag_name }}"
           git fetch origin main
           git rebase origin/main
           git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main
