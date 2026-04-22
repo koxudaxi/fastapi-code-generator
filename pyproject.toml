@@ -68,7 +68,7 @@ pkg-meta = [
 ]
 coverage = [
   "coverage[toml]>=7.10",
-  "diff-cover>=9.7",
+  "diff-cover>=10.2.0",
 ]
 test = [
   "black==24.10.0",
