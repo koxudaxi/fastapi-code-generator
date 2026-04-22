@@ -19,9 +19,15 @@ def cli_doc_collection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
                 "items": [
                     {
                         "marker_kwargs": {
-                            "options": ["--input", "--output"],
+                            "options": ["--input"],
                         },
                         "option_description": "Generate a FastAPI application from an OpenAPI input file.",
+                    },
+                    {
+                        "marker_kwargs": {
+                            "options": ["--output"],
+                        },
+                        "option_description": "Directory where the generated FastAPI application is written.",
                     },
                     {
                         "marker_kwargs": {
@@ -66,7 +72,7 @@ def test_build_prompt_data_generates_file(
         in content
     )
     assert (
-        '    "--output": "Generate a FastAPI application from an OpenAPI input file.",'
+        '    "--output": "Directory where the generated FastAPI application is written.",'
         in content
     )
     assert "--empty" not in content

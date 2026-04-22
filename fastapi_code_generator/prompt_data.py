@@ -16,7 +16,7 @@ OPTION_DESCRIPTIONS: dict[str, str] = {
     "--input": "Generate a FastAPI application from an OpenAPI input file.",
     "--model-file": "Write generated models to a custom module path.",
     "--model-template-dir": "Use a custom datamodel-code-generator template directory.",
-    "--output": "Generate a FastAPI application from an OpenAPI input file.",
+    "--output": "Directory where the generated FastAPI application is written.",
     "--output-model-type": "Choose the datamodel-code-generator output backend.",
     "--python-version": "Target a specific Python version when formatting generated code.",
     "--specify-tags": "Regenerate only the routers matching a comma-separated tag list.",

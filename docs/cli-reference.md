@@ -43,13 +43,25 @@ Show the installed fastapi-codegen version.
 
 `fastapi-codegen --version`
 
-### --input, --output
+### --output
+
+Directory where the generated FastAPI application is written.
+
+`fastapi-codegen --input openapi/default_template/simple.yaml --output app`
+
+Input schema: `openapi/default_template/simple.yaml`
+
+Related options: `--input`
+
+### --input
 
 Generate a FastAPI application from an OpenAPI input file.
 
 `fastapi-codegen --input openapi/default_template/simple.yaml --output app`
 
 Input schema: `openapi/default_template/simple.yaml`
+
+Related options: `--output`
 
 ### --template-dir
 
