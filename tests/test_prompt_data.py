@@ -127,8 +127,10 @@ def test_update_prompt_data_supports_python_output_and_stdout(
 
 
 def test_update_prompt_data_requires_output_for_check(
+    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    monkeypatch.setattr(prompt_data_module, "build_prompt_payload", lambda: {})
     assert update_prompt_data(output_path=None, check=True) == 1
     assert capsys.readouterr().err.strip() == "--check requires --output"
 
