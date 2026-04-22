@@ -714,7 +714,6 @@ pkg-meta = [
     { name = "uv" },
 ]
 test = [
-    { name = "black" },
     { name = "inline-snapshot" },
     { name = "pytest" },
     { name = "pytest-benchmark" },
@@ -787,7 +786,6 @@ pkg-meta = [
     { name = "uv", specifier = ">=0.9.18" },
 ]
 test = [
-    { name = "black", specifier = "==24.10.0" },
     { name = "inline-snapshot", specifier = ">=0.31" },
     { name = "pytest", specifier = ">=8.3" },
     { name = "pytest-benchmark", specifier = ">=5" },

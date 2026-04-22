@@ -67,15 +67,11 @@ jobs:
       - name: Build CLI docs
         run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
       - name: Build prompt data
-        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py
+        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py
       - name: Build schema docs
         run: .tox/schema-docs/bin/python scripts/build_schema_docs.py
       - name: Build llms.txt
         run: .tox/llms-txt/bin/python scripts/build_llms_txt.py
-      - name: Update GitHub Action version in docs
-        run: python3 scripts/update_docs_version.py
-        env:
-          GH_TOKEN: ${{ github.token }}
       - name: Create generated docs patch
         id: patch
         env:
