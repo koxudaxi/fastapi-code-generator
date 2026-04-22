@@ -5,28 +5,19 @@ on:
     types: [published]
 
 jobs:
-  update-changelog:
+  build-changelog:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      has_changes: ${{ steps.patch.outputs.has_changes }}
     steps:
-      - id: preflight
-        env:
-          PAT: ${{ secrets.PAT }}
-        run: |
-          if [ -n "${PAT:-}" ]; then
-            echo "has_pat=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_pat=false" >> "$GITHUB_OUTPUT"
-          fi
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        if: steps.preflight.outputs.has_pat == 'true'
         with:
           ref: main
           persist-credentials: false
 
       - name: Get release info and update CHANGELOG
-        if: steps.preflight.outputs.has_pat == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.release.tag_name }}
@@ -68,23 +59,60 @@ jobs:
           cat header.md new_entry.md old_entries.md > CHANGELOG.md
           rm -f header.md new_entry.md old_entries.md
 
+      - name: Create changelog patch
+        id: patch
+        env:
+          PATCH_PATH: ${{ runner.temp }}/changelog.patch
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- CHANGELOG.md; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --binary -- CHANGELOG.md > "$PATCH_PATH"
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload changelog patch
+        if: steps.patch.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: changelog-patch
+          path: ${{ runner.temp }}/changelog.patch
+          if-no-files-found: error
+
+  commit-changelog:
+    needs: build-changelog
+    if: needs.build-changelog.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download changelog patch
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: changelog-patch
+          path: ${{ runner.temp }}
+
       - name: Commit and push
-        if: steps.preflight.outputs.has_pat == 'true'
         env:
           TAG: ${{ github.event.release.tag_name }}
-          PAT: ${{ secrets.PAT }}
-          REPOSITORY: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          PATCH_PATH: ${{ runner.temp }}/changelog.patch
         run: |
+          set -euo pipefail
+          git apply --index --whitespace=nowarn "$PATCH_PATH"
+          if git diff --staged --quiet; then
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          if ! git diff --cached --quiet; then
-            git commit -m "docs: update CHANGELOG.md for $TAG"
-            # shellcheck disable=SC2016
-            HELPER='!f() { printf "username=x-access-token\npassword=%s\n" "$PAT"; }; f'
-            git -c credential.helper= -c "credential.helper=$HELPER" \
-              push "https://github.com/$REPOSITORY.git" HEAD:main
-          fi
-      - name: Skip auto-update when PAT is unavailable
-        if: steps.preflight.outputs.has_pat != 'true'
-        run: echo "PAT is required for changelog write-back; skipping update."
+          git commit -m "docs: update CHANGELOG.md for $TAG"
+          git fetch origin main
+          git rebase origin/main
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" HEAD:main

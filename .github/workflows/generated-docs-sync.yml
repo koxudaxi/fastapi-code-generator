@@ -1,0 +1,160 @@
+name: Sync Generated Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**/*.md"
+      - "fastapi_code_generator/**"
+      - "tests/**"
+      - "scripts/build_cli_docs.py"
+      - "scripts/build_prompt_data.py"
+      - "scripts/build_schema_docs.py"
+      - "scripts/build_llms_txt.py"
+      - "scripts/update_command_help_on_markdown.py"
+      - "scripts/update_docs_version.py"
+      - "tox.ini"
+      - "pyproject.toml"
+      - "uv.lock"
+      - "zensical.toml"
+      - ".github/workflows/generated-docs-sync.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: generated-docs-main
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-24.04
+    outputs:
+      has_changes: ${{ steps.patch.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+          python-version: "3.14"
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python 3.14 tox --with tox-uv
+      - name: Setup README environment
+        run: tox run -vv --notest --skip-missing-interpreters false -e readme
+        env:
+          UV_PYTHON_PREFERENCE: "only-managed"
+      - name: Setup CLI docs environment
+        run: tox run -vv --notest --skip-missing-interpreters false -e cli-docs
+        env:
+          UV_PYTHON_PREFERENCE: "only-managed"
+      - name: Setup schema docs environment
+        run: tox run -vv --notest --skip-missing-interpreters false -e schema-docs
+        env:
+          UV_PYTHON_PREFERENCE: "only-managed"
+      - name: Setup llms.txt environment
+        run: tox run -vv --notest --skip-missing-interpreters false -e llms-txt
+        env:
+          UV_PYTHON_PREFERENCE: "only-managed"
+      - name: Update README
+        run: .tox/readme/bin/python scripts/update_command_help_on_markdown.py
+      - name: Collect CLI doc metadata
+        run: .tox/cli-docs/bin/pytest --collect-cli-docs -p no:xdist -q
+      - name: Build CLI docs
+        run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
+      - name: Build prompt data
+        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py
+      - name: Format generated prompt data
+        run: uvx --from black==24.10.0 black --quiet fastapi_code_generator/prompt_data.py
+      - name: Build schema docs
+        run: .tox/schema-docs/bin/python scripts/build_schema_docs.py
+      - name: Build llms.txt
+        run: .tox/llms-txt/bin/python scripts/build_llms_txt.py
+      - name: Update GitHub Action version in docs
+        run: python3 scripts/update_docs_version.py
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Create generated docs patch
+        id: patch
+        env:
+          PATCH_PATH: ${{ runner.temp }}/generated-docs.patch
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- README.md docs/index.md docs/cli-reference.md docs/llms.txt docs/llms-full.txt docs/supported_formats.md fastapi_code_generator/prompt_data.py; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git diff --binary -- README.md docs/index.md docs/cli-reference.md docs/llms.txt docs/llms-full.txt docs/supported_formats.md fastapi_code_generator/prompt_data.py > "$PATCH_PATH"
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+      - name: Upload generated docs patch
+        if: steps.patch.outputs.has_changes == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: generated-docs-patch
+          path: ${{ runner.temp }}/generated-docs.patch
+          if-no-files-found: error
+
+  push:
+    needs: generate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    outputs:
+      final_sha: ${{ steps.record_sha.outputs.final_sha }}
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Download generated docs patch
+        if: needs.generate.outputs.has_changes == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: generated-docs-patch
+          path: ${{ runner.temp }}
+      - name: Commit generated docs
+        if: needs.generate.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REPO: ${{ github.repository }}
+          TARGET_REF: ${{ github.ref_name }}
+          PATCH_PATH: ${{ runner.temp }}/generated-docs.patch
+        run: |
+          set -euo pipefail
+          git apply --index --whitespace=nowarn "$PATCH_PATH"
+          if git diff --staged --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs: sync generated docs"
+          git fetch origin "${TARGET_REF}"
+          git rebase "origin/${TARGET_REF}"
+          # Use GITHUB_TOKEN intentionally so this sync commit does not trigger
+          # another push workflow run. Docs deployment is chained below.
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git" "HEAD:${TARGET_REF}"
+      - name: Record final revision
+        id: record_sha
+        env:
+          DEFAULT_SHA: ${{ github.sha }}
+        run: |
+          if [ "${{ needs.generate.outputs.has_changes }}" = "true" ]; then
+            echo "final_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          else
+            echo "final_sha=${DEFAULT_SHA}" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy-docs:
+    needs: push
+    uses: ./.github/workflows/docs-deploy.yml
+    with:
+      checkout_ref: ${{ needs.push.outputs.final_sha }}
+      deploy_branch: dev
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
