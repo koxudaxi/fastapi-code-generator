@@ -86,7 +86,7 @@ benchmark = [
   "pytest-codspeed>=2.2",
 ]
 type = [
-  "mypy>=1.13",
+  "mypy>=1.20.2",
   "types-jinja2>=2.11.9",
 ]
 
