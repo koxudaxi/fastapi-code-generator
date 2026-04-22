@@ -71,7 +71,6 @@ coverage = [
   "diff-cover>=9.7",
 ]
 test = [
-  "black==24.10.0",
   "inline-snapshot>=0.31",
   "PyYAML>=6",
   "pytest>=8.3",

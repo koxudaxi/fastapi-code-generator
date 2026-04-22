@@ -86,11 +86,20 @@ def test_generate_into_existing_output_dir(output_dir: Path) -> None:
 
 
 @pytest.mark.cli_doc(
-    options=["--input", "--output"],
+    options=["--output"],
+    option_description="Directory where the generated FastAPI application is written.",
+    cli_args=["--input", "openapi/default_template/simple.yaml", "--output", "app"],
+    input_schema="openapi/default_template/simple.yaml",
+    golden_output="openapi/default_template/simple/main.py",
+    related_options=["--input"],
+)
+@pytest.mark.cli_doc(
+    options=["--input"],
     option_description="Generate a FastAPI application from an OpenAPI input file.",
     cli_args=["--input", "openapi/default_template/simple.yaml", "--output", "app"],
     input_schema="openapi/default_template/simple.yaml",
     golden_output="openapi/default_template/simple/main.py",
+    related_options=["--output"],
 )
 @pytest.mark.parametrize(
     "oas_file",

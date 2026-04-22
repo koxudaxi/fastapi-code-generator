@@ -6,12 +6,17 @@ on:
     paths:
       - "README.md"
       - "docs/**/*.md"
+      - "fastapi_code_generator/**"
+      - "tests/main/**"
+      - "tests/cli_doc/**"
+      - "tests/data/openapi/**"
+      - "scripts/build_cli_docs.py"
+      - "scripts/build_prompt_data.py"
+      - "scripts/build_schema_docs.py"
       - "docs/llms.txt"
       - "docs/llms-full.txt"
       - "zensical.toml"
       - "scripts/build_llms_txt.py"
-      - "tox.ini"
-      - "pyproject.toml"
       - ".github/workflows/llms-txt.yml"
 
 permissions:
@@ -56,7 +61,7 @@ jobs:
       - name: Build CLI docs
         run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
       - name: Build prompt data
-        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py
+        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py
       - name: Build schema docs
         run: .tox/schema-docs/bin/python scripts/build_schema_docs.py
       - name: Build llms.txt

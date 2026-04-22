@@ -4,17 +4,14 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - "fastapi_code_generator/**"
+      - "fastapi_code_generator/__main__.py"
+      - "fastapi_code_generator/cli.py"
       - "tests/cli_doc/**"
       - "tests/main/**"
-      - "tests/data/openapi/**"
       - "scripts/build_cli_docs.py"
       - "scripts/build_prompt_data.py"
-      - "scripts/build_schema_docs.py"
       - "docs/cli-reference.md"
       - "fastapi_code_generator/prompt_data.py"
-      - "tox.ini"
-      - "pyproject.toml"
       - ".github/workflows/cli-docs.yml"
 
 permissions:
@@ -45,4 +42,4 @@ jobs:
       - name: Build CLI docs
         run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
       - name: Build prompt data
-        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py
+        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py
