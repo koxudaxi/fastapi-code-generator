@@ -164,7 +164,19 @@ PROMPT_DATA: dict[str, Any] = {
             'input_schema': None,
         },
         {
-            'options': ['--input', '--output'],
+            'options': ['--output'],
+            'description': 'Directory where the generated FastAPI application '
+            'is written.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/simple.yaml',
+                '--output',
+                'app',
+            ],
+            'input_schema': 'openapi/default_template/simple.yaml',
+        },
+        {
+            'options': ['--input'],
             'description': 'Generate a FastAPI application from an OpenAPI '
             'input file.',
             'cli_args': [

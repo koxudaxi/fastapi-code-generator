@@ -25,7 +25,10 @@ def build_prompt_payload() -> dict[str, object]:
     try:
         collection = load_cli_doc_collection()
     except FileNotFoundError:
-        print("Warning: cli doc collection is missing; prompt examples will be empty.", file=sys.stderr)
+        print(
+            "Warning: cli doc collection is missing; prompt examples will be empty.",
+            file=sys.stderr,
+        )
         collection = {"items": []}
     examples: list[dict[str, object]] = []
     seen: set[str] = set()

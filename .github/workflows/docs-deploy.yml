@@ -36,26 +36,21 @@ jobs:
           python-version: "3.14"
       - name: Install dependencies
         run: uv sync --frozen --group docs
+      - name: Copy CHANGELOG to docs
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            cp CHANGELOG.md docs/changelog.md
+          else
+            echo "# Changelog" > docs/changelog.md
+            echo "" >> docs/changelog.md
+            echo "Changelog will be available after the first release." >> docs/changelog.md
+          fi
       - name: Update GitHub Action version in docs
         run: uv run python scripts/update_docs_version.py
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Build site
         run: uv run zensical build --clean
-      - name: Validate Cloudflare credentials
-        if: inputs.deploy_branch != ''
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error::CLOUDFLARE_API_TOKEN is required when deploy_branch is set"
-            exit 1
-          fi
-          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::error::CLOUDFLARE_ACCOUNT_ID is required when deploy_branch is set"
-            exit 1
-          fi
       - name: Deploy
         if: inputs.deploy_branch != ''
         env:
