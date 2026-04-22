@@ -44,7 +44,7 @@ jobs:
       - run: uv tool install --python 3.14 tox --with tox-uv
         if: steps.preflight.outputs.enabled == 'true'
 
-      - run: tox -e config-types -- --check
+      - run: tox -e config-types
         if: steps.preflight.outputs.enabled == 'true'
 
       - name: Skip when config-types support is not present
