@@ -8,6 +8,8 @@ import pprint
 import sys
 from pathlib import Path
 
+from black import FileMode, format_str
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -77,10 +79,18 @@ def _render_json_payload(payload: dict[str, object]) -> str:
 
 def _render_python_payload(payload: dict[str, object]) -> str:
     rendered = pprint.pformat(payload, sort_dicts=False, width=88)
-    return (
+    source = (
         "from __future__ import annotations\n\n"
         "from typing import Any\n\n"
         f"PROMPT_DATA: dict[str, Any] = {rendered}\n"
+    )
+    return format_str(
+        source,
+        mode=FileMode(
+            line_length=88,
+            string_normalization=False,
+            target_versions=set(),
+        ),
     )
 
 

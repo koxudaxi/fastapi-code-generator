@@ -68,8 +68,6 @@ jobs:
         run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
       - name: Build prompt data
         run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py
-      - name: Format generated prompt data
-        run: uvx --from black==24.10.0 black --quiet fastapi_code_generator/prompt_data.py
       - name: Build schema docs
         run: .tox/schema-docs/bin/python scripts/build_schema_docs.py
       - name: Build llms.txt
@@ -117,6 +115,8 @@ jobs:
         with:
           name: generated-docs-patch
           path: ${{ runner.temp }}
+      # Use GITHUB_TOKEN intentionally so this sync commit does not trigger
+      # another push workflow run. Docs deployment is chained below.
       - name: Commit generated docs
         if: needs.generate.outputs.has_changes == 'true'
         env:
@@ -135,8 +135,6 @@ jobs:
           git commit -m "docs: sync generated docs"
           git fetch origin "${TARGET_REF}"
           git rebase "origin/${TARGET_REF}"
-          # Use GITHUB_TOKEN intentionally so this sync commit does not trigger
-          # another push workflow run. Docs deployment is chained below.
           git push "https://x-access-token:${GH_TOKEN}@github.com/${TARGET_REPO}.git" "HEAD:${TARGET_REF}"
       - name: Record final revision
         id: record_sha
