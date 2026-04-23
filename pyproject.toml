@@ -63,7 +63,7 @@ lint = [
 ]
 pkg-meta = [
   "check-wheel-contents>=0.6.1",
-  "twine>=6.1",
+  "twine>=6.2.0",
   "uv>=0.9.18",
 ]
 coverage = [
