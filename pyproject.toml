@@ -58,7 +58,7 @@ docs = [
 ]
 lint = [
   "black==24.10.0",
-  "isort==5.13.2",
+  "isort==8.0.1",
   "pre-commit>=4,<5",
 ]
 pkg-meta = [
