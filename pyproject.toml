@@ -62,7 +62,7 @@ lint = [
   "pre-commit>=4,<5",
 ]
 pkg-meta = [
-  "check-wheel-contents>=0.6.1",
+  "check-wheel-contents>=0.6.3",
   "twine>=6.1",
   "uv>=0.9.18",
 ]
