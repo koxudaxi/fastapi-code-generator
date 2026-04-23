@@ -74,7 +74,7 @@ test = [
   "inline-snapshot>=0.31",
   "PyYAML>=6",
   "pytest>=8.3",
-  "pytest-benchmark>=5",
+  "pytest-benchmark>=5.2.3",
   "pytest-cov>=5",
   "pytest-codspeed>=2.2",
   "pytest-mock>=3.14",
@@ -82,7 +82,7 @@ test = [
   "time-machine>=2.15",
 ]
 benchmark = [
-  "pytest-benchmark>=5",
+  "pytest-benchmark>=5.2.3",
   "pytest-codspeed>=2.2",
 ]
 type = [
