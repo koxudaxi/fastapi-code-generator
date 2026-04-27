@@ -315,7 +315,6 @@ FastAPI's [Bigger Applications](https://fastapi.tiangolo.com/tutorial/bigger-app
 
 - Use the [CLI reference](cli-reference.md) for option-by-option behavior and tested scenarios
 - Use the [development and contributing guide](development-contributing.md) for the local workflow, docs sync, and release-adjacent checks
-
 ---
 
 # CLI Reference
@@ -481,7 +480,6 @@ Load a custom visitor module and expose additional template variables.
 `fastapi-codegen --input openapi/default_template/simple.yaml --output app --template-dir template --generate-routers --custom-visitor visitor.py`
 
 Input schema: `openapi/default_template/simple.yaml`
-
 ---
 
 # Supported Formats
@@ -519,7 +517,6 @@ Run `tox run -e schema-docs` after changing supported inputs or model backends.
 | `dataclasses.dataclass` | supported | Standard-library dataclass output. |
 | `typing.TypedDict` | supported | TypedDict-based model output. |
 | `msgspec.Struct` | supported | msgspec Struct output. |
-
 ---
 
 # Development and Contributing
