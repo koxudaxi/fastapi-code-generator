@@ -381,7 +381,7 @@ class OpenAPIParser(OpenAPIModelParser):
             if isinstance(content.schema_, ReferenceObject):
                 data_type = self.get_ref_data_type(content.schema_.ref)
                 ref_model = self.get_ref_model(content.schema_.ref)
-                schema = JsonSchemaObject.parse_obj(ref_model)  # pragma: no cover
+                schema = JsonSchemaObject.model_validate(ref_model)  # pragma: no cover
             else:
                 schema = content.schema_
             break
@@ -494,7 +494,23 @@ class OpenAPIParser(OpenAPIModelParser):
         request_body: RequestBodyObject,
         path: List[str],
     ) -> Dict[str, DataType]:
-        request_body_fields = super().parse_request_body(name, request_body, path)
+        if 'multipart/form-data' in request_body.content:
+            content = {
+                media_type: media_obj
+                for media_type, media_obj in request_body.content.items()
+                if media_type != 'multipart/form-data'
+            }
+            request_body_fields = (
+                super().parse_request_body(
+                    name,
+                    request_body.model_copy(update={'content': content}),
+                    path,
+                )
+                if content
+                else {}
+            )
+        else:
+            request_body_fields = super().parse_request_body(name, request_body, path)
         arguments: List[Argument] = []
         for (
             media_type,
@@ -545,10 +561,11 @@ class OpenAPIParser(OpenAPIModelParser):
                         Import.from_full_path("fastapi.Request")
                     )
                 elif media_type == 'multipart/form-data':
+                    file_name, type_hint = self._get_upload_file_type(media_obj.schema_)
                     arguments.append(
                         Argument(
-                            name='file',  # type: ignore
-                            type_hint='UploadFile',  # type: ignore
+                            name=file_name,  # type: ignore
+                            type_hint=type_hint,  # type: ignore
                             required=True,
                         )
                     )
@@ -557,6 +574,48 @@ class OpenAPIParser(OpenAPIModelParser):
                     )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
         return request_body_fields
+
+    def _get_upload_file_type(
+        self, schema: Union[JsonSchemaObject, ReferenceObject]
+    ) -> tuple[str, str]:
+        if isinstance(schema, ReferenceObject):
+            schema = JsonSchemaObject.model_validate(self.get_ref_model(schema.ref))
+        file_name = self._get_upload_file_name(schema)
+        if self._is_upload_file_array(schema):
+            self.imports_for_fastapi.append(Import(from_='typing', import_='List'))
+            return file_name, 'List[UploadFile]'
+        return file_name, 'UploadFile'
+
+    def _get_upload_file_name(self, schema: JsonSchemaObject) -> str:
+        if schema.properties:
+            # The operation template supports one multipart upload argument.
+            for property_name, property_schema in schema.properties.items():
+                if self._is_upload_file_array(
+                    property_schema
+                ) or self._is_upload_file_schema(property_schema):
+                    return stringcase.snakecase(
+                        self.model_resolver.get_valid_field_name(property_name)
+                    )
+        return 'file'
+
+    def _is_upload_file_array(self, schema: Any) -> bool:
+        if not isinstance(schema, JsonSchemaObject):
+            return False
+        if schema.is_array and self._is_upload_file_schema(schema.items):
+            return True
+        if schema.properties:
+            return any(
+                self._is_upload_file_array(property_schema)
+                for property_schema in schema.properties.values()
+            )
+        return False
+
+    def _is_upload_file_schema(self, schema: Any) -> bool:
+        return (
+            isinstance(schema, JsonSchemaObject)
+            and schema.type == 'string'
+            and schema.format == 'binary'
+        )
 
     def parse_responses(  # type: ignore[override]
         self,
