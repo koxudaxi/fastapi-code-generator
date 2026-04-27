@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import json
+import runpy
 import sys
 from pathlib import Path
 
 import pytest
 
+from scripts import build_cli_docs as cli_docs_module
 from scripts import build_prompt_data as prompt_data_module
-from scripts.build_prompt_data import build_prompt_data
+from scripts.build_prompt_data import build_prompt_payload, update_prompt_data
 
 
 @pytest.fixture
@@ -19,113 +21,147 @@ def cli_doc_collection(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
                 "items": [
                     {
                         "marker_kwargs": {
-                            "options": ["--input"],
+                            "options": ["--input", "--output"],
+                            "cli_args": ["--input", "api.yaml", "--output", "app"],
+                            "input_schema": "simple.yaml",
                         },
                         "option_description": "Generate a FastAPI application from an OpenAPI input file.",
-                    },
-                    {
-                        "marker_kwargs": {
-                            "options": ["--output"],
-                        },
-                        "option_description": "Directory where the generated FastAPI application is written.",
-                    },
-                    {
-                        "marker_kwargs": {
-                            "options": ["--input"],
-                        },
-                        "option_description": "Generate a FastAPI application from an OpenAPI input file.\nExtra detail.",
-                    },
-                    {
-                        "marker_kwargs": {
-                            "options": ["--long"],
-                        },
-                        "option_description": "x" * 200,
-                    },
-                    {
-                        "marker_kwargs": {
-                            "options": ["--empty"],
-                        },
-                        "option_description": "",
-                    },
+                    }
                 ]
             }
         ),
         encoding="utf-8",
     )
-    monkeypatch.setattr(prompt_data_module, "COLLECTION_PATH", collection_path)
+    monkeypatch.setattr(cli_docs_module, "COLLECTION_PATH", collection_path)
     return collection_path
 
 
-def test_build_prompt_data_generates_file(
-    tmp_path: Path, cli_doc_collection: Path, monkeypatch: pytest.MonkeyPatch
+def test_build_prompt_payload_contains_examples_and_config(
+    cli_doc_collection: Path,
 ) -> None:
     assert cli_doc_collection.exists()
-    output_path = tmp_path / "prompt_data.py"
-    monkeypatch.setattr(prompt_data_module, "OUTPUT_PATH", output_path)
+    payload = build_prompt_payload()
 
-    assert build_prompt_data(check=False) == 0
-
-    content = output_path.read_text(encoding="utf-8")
-    assert 'OPTION_DESCRIPTIONS: dict[str, str] = {' in content
-    assert (
-        '    "--input": "Generate a FastAPI application from an OpenAPI input file.",'
-        in content
-    )
-    assert (
-        '    "--output": "Directory where the generated FastAPI application is written.",'
-        in content
-    )
-    assert "--empty" not in content
-    assert "..." in content
+    assert payload["project"] == "fastapi-code-generator"
+    assert payload["entrypoint"] == "fastapi-codegen"
+    assert payload["config_options"]
+    assert payload["cli_examples"]
+    assert payload["schema_fixture_suites"]
 
 
-def test_build_prompt_data_missing_collection(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+def test_update_prompt_data_round_trip(
+    tmp_path: Path, cli_doc_collection: Path
 ) -> None:
-    collection_path = tmp_path / ".cli_doc_collection.json"
-    output_path = tmp_path / "prompt_data.py"
-    monkeypatch.setattr(prompt_data_module, "COLLECTION_PATH", collection_path)
-    monkeypatch.setattr(prompt_data_module, "OUTPUT_PATH", output_path)
+    assert cli_doc_collection.exists()
+    output_path = tmp_path / "prompt-data.json"
 
-    assert build_prompt_data(check=False) == 1
-    assert capsys.readouterr().err.splitlines() == [
-        f"Collection file not found: {collection_path}",
-        "Run: pytest --collect-cli-docs -p no:xdist",
-    ]
+    assert update_prompt_data(output_path=output_path, check=False) == 0
+    assert update_prompt_data(output_path=output_path, check=True) == 0
+    assert update_prompt_data(output_path=output_path, check=False) == 0
 
 
-def test_build_prompt_data_check_modes(
+def test_build_prompt_payload_handles_missing_collection(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(
+        prompt_data_module,
+        "load_cli_doc_collection",
+        lambda: (_ for _ in ()).throw(FileNotFoundError),
+    )
+
+    payload = build_prompt_payload()
+
+    assert payload["cli_examples"] == []
+    assert (
+        capsys.readouterr().err.strip()
+        == "Warning: cli doc collection is missing; prompt examples will be empty."
+    )
+
+
+def test_build_prompt_payload_deduplicates_examples(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        prompt_data_module,
+        "load_cli_doc_collection",
+        lambda: {
+            "items": [
+                {
+                    "marker_kwargs": {
+                        "options": ["--input", "--output"],
+                        "cli_args": ["--input", "api.yaml", "--output", "app"],
+                        "input_schema": "simple.yaml",
+                    },
+                    "option_description": "Generate app.",
+                },
+                {
+                    "marker_kwargs": {
+                        "options": ["--input", "--output"],
+                        "cli_args": ["--input", "api.yaml", "--output", "app"],
+                        "input_schema": "simple.yaml",
+                    },
+                    "option_description": "Generate app.",
+                },
+            ]
+        },
+    )
+
+    payload = build_prompt_payload()
+
+    assert len(payload["cli_examples"]) == 1
+
+
+def test_update_prompt_data_supports_python_output_and_stdout(
     tmp_path: Path,
     cli_doc_collection: Path,
-    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     assert cli_doc_collection.exists()
     output_path = tmp_path / "prompt_data.py"
-    monkeypatch.setattr(prompt_data_module, "OUTPUT_PATH", output_path)
 
-    assert build_prompt_data(check=True) == 1
-    assert capsys.readouterr().err.strip() == f"Output file not found: {output_path}"
+    assert update_prompt_data(output_path=output_path, check=False) == 0
+    assert "PROMPT_DATA: dict[str, Any] =" in output_path.read_text(encoding="utf-8")
 
-    output_path.write_text("stale\n", encoding="utf-8")
-    assert build_prompt_data(check=True) == 1
-    assert capsys.readouterr().err.strip() == f"Content mismatch: {output_path}"
+    assert update_prompt_data(output_path=None, check=False) == 0
+    assert '"project": "fastapi-code-generator"' in capsys.readouterr().out
 
-    assert build_prompt_data(check=False) == 0
-    assert build_prompt_data(check=True) == 0
-    assert capsys.readouterr().out.splitlines()[-1] == f"OK: {output_path}"
+
+def test_update_prompt_data_requires_output_for_check(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(prompt_data_module, "build_prompt_payload", lambda: {})
+    assert update_prompt_data(output_path=None, check=True) == 1
+    assert capsys.readouterr().err.strip() == "--check requires --output"
 
 
 def test_main_executes_cli_entrypoint(
     tmp_path: Path, cli_doc_collection: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     assert cli_doc_collection.exists()
-    output_path = tmp_path / "prompt_data.py"
-    monkeypatch.setattr(prompt_data_module, "OUTPUT_PATH", output_path)
-    monkeypatch.setattr(sys, "argv", ["build_prompt_data.py"])
+    output_path = tmp_path / "prompt-data.json"
+    script_path = Path(prompt_data_module.__file__)
+    project_root = str(script_path.resolve().parent.parent)
+    monkeypatch.setattr(
+        sys, "path", [path for path in sys.path if path != project_root]
+    )
 
-    assert prompt_data_module.main() == 0
-    assert output_path.exists()
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["build_prompt_data.py", "--output", str(output_path)],
+    )
+    with pytest.raises(SystemExit) as exc_info:
+        runpy.run_path(str(script_path), run_name="__main__")
 
-    monkeypatch.setattr(sys, "argv", ["build_prompt_data.py", "--check"])
-    assert prompt_data_module.main() == 0
+    assert exc_info.value.code == 0
+
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["build_prompt_data.py", "--check", "--output", str(output_path)],
+    )
+    with pytest.raises(SystemExit) as exc_info:
+        runpy.run_path(str(script_path), run_name="__main__")
+
+    assert exc_info.value.code == 0

@@ -1,6 +1,10 @@
 version = 1
 revision = 3
 requires-python = ">=3.10"
+resolution-markers = [
+    "python_full_version >= '3.14'",
+    "python_full_version < '3.14'",
+]
 
 [[package]]
 name = "annotated-doc"
@@ -559,7 +563,7 @@ wheels = [
 
 [[package]]
 name = "datamodel-code-generator"
-version = "0.45.0"
+version = "0.56.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "argcomplete" },
@@ -568,14 +572,13 @@ dependencies = [
     { name = "inflect" },
     { name = "isort" },
     { name = "jinja2" },
-    { name = "packaging" },
     { name = "pydantic" },
     { name = "pyyaml" },
-    { name = "tomli", marker = "python_full_version < '3.12'" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/45/993fb3f7f4005bfa167fa94929e5737c8f574dc77fb1a4ebca359a106b56/datamodel_code_generator-0.45.0.tar.gz", hash = "sha256:a493add7a59e5a9c1620deb508694bc84e2e2ca80da4bb58a75262a28b9b2c84", size = 554380, upload-time = "2025-12-19T00:13:13.157Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6f/9c/5379be8daf9ff2fbbb9a7efcf68c037b089e5b76f360c4f9ca730916e2ee/datamodel_code_generator-0.56.1.tar.gz", hash = "sha256:697abd90cc4eb2c65f130be79a83a24746c3f2d0e15e6eb9dbf17b96784449be", size = 840372, upload-time = "2026-04-16T17:09:53.537Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4d/15/b9b64a3576c3ac230c8f69806f32937364f837cda4facaa9b6d09dafd872/datamodel_code_generator-0.45.0-py3-none-any.whl", hash = "sha256:1c7065d3c9ebff7a0c967f2282e0472be971c721593c7e9cbe3f374f378749b8", size = 182003, upload-time = "2025-12-19T00:13:10.422Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/cd/4a4a13f55069d88d8405aa325874b04c1b1dbc830f0d66c0e56cbd16aa12/datamodel_code_generator-0.56.1-py3-none-any.whl", hash = "sha256:cb2adc18a301f1a2cfcd56672037218eeaff0573669861c2b371eefe86753874", size = 256845, upload-time = "2026-04-16T17:09:51.81Z" },
 ]
 
 [package.optional-dependencies]
@@ -731,7 +734,7 @@ type = [
 
 [package.metadata]
 requires-dist = [
-    { name = "datamodel-code-generator", extras = ["http"], specifier = ">=0.45,<0.46" },
+    { name = "datamodel-code-generator", extras = ["http"], specifier = ">=0.56.1,<0.57" },
     { name = "jinja2", specifier = ">=2.11.2,<4" },
     { name = "pydantic", specifier = ">=2.12,<3" },
     { name = "pysnooper", specifier = ">=0.4.1,<2" },
@@ -891,7 +894,7 @@ name = "importlib-metadata"
 version = "9.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.14'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/a9/01/15bb152d77b21318514a96f43af312635eb2500c96b55398d020c93d86ea/importlib_metadata-9.0.0.tar.gz", hash = "sha256:a4f57ab599e6a2e3016d7595cfd72eb4661a5106e787a95bcc90c7105b831efc", size = 56405, upload-time = "2026-03-20T06:42:56.999Z" }
 wheels = [

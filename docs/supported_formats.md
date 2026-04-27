@@ -26,8 +26,8 @@ Run `tox run -e schema-docs` after changing supported inputs or model backends.
 
 | Output model type | Status | Notes |
 |-------------------|--------|-------|
-| `pydantic.BaseModel` | supported | Classic Pydantic BaseModel output. |
 | `pydantic_v2.BaseModel` | supported | Pydantic v2 BaseModel output. |
+| `pydantic_v2.dataclass` | supported | Pydantic v2 dataclass output. |
 | `dataclasses.dataclass` | supported | Standard-library dataclass output. |
 | `typing.TypedDict` | supported | TypedDict-based model output. |
 | `msgspec.Struct` | supported | msgspec Struct output. |

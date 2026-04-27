@@ -1,14 +1,16 @@
 import re
 import sys
 from datetime import datetime, timezone
+from functools import lru_cache
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import typer
 from click import Abort, ClickException
-from datamodel_code_generator import DataModelType, LiteralType, PythonVersion, chdir
-from datamodel_code_generator.format import CodeFormatter
+from datamodel_code_generator import LiteralType, chdir
+from datamodel_code_generator.enums import DataModelType
+from datamodel_code_generator.format import CodeFormatter, PythonVersion
 from datamodel_code_generator.model import get_data_model_types
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from typer.main import get_command
@@ -30,6 +32,24 @@ BUILTIN_TEMPLATE_DIR = Path(__file__).parent / "template"
 BUILTIN_VISITOR_DIR = Path(__file__).parent / "visitors"
 
 MODEL_PATH: Path = Path("models")
+
+
+@lru_cache(maxsize=None)
+def _get_code_formatter(
+    python_version: PythonVersion, settings_path: Path
+) -> CodeFormatter:
+    return CodeFormatter(python_version, settings_path)
+
+
+@lru_cache(maxsize=None)
+def _get_template_environment(template_dir: Path) -> Environment:
+    return Environment(
+        loader=FileSystemLoader(template_dir, encoding="utf8"),
+        autoescape=select_autoescape(
+            enabled_extensions=("html", "htm", "xml"),
+            default_for_string=False,
+        ),
+    )
 
 
 def dynamic_load_module(module_path: Path) -> Any:
@@ -71,7 +91,7 @@ def main(
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
     output_model_type: DataModelType = typer.Option(
-        DataModelType.PydanticBaseModel.value, "--output-model-type", "-d"
+        DataModelType.PydanticV2BaseModel.value, "--output-model-type", "-d"
     ),
     python_version: PythonVersion = typer.Option(
         PythonVersion.PY_310.value, "--python-version", "-p"
@@ -143,7 +163,7 @@ def generate_code(
     disable_timestamp: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
-    output_model_type: DataModelType = DataModelType.PydanticBaseModel,
+    output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
 ) -> None:
     global all_tags
@@ -160,6 +180,7 @@ def generate_code(
     if not custom_visitors:
         custom_visitors = []
     data_model_types = get_data_model_types(output_model_type, python_version)
+    code_formatter = _get_code_formatter(python_version, Path().resolve())
 
     parser = OpenAPIParser(
         input_text,
@@ -174,31 +195,32 @@ def generate_code(
     )
 
     with chdir(output_dir):
-        models = parser.parse()
+        models = parser.parse(format_=False)
     if not models:
         # if no models (schemas), just generate an empty model file.
         modules = {output_dir / model_path.with_suffix('.py'): ("", input_name)}
     elif isinstance(models, str):
-        modules = {output_dir / model_path.with_suffix('.py'): (models, input_name)}
+        output_path = output_dir / model_path.with_suffix('.py')
+        modules = {
+            output_path: (
+                code_formatter.format_code(models),
+                input_name,
+            )
+        }
     else:
         modules = {
-            output_dir / model_path / module_name[0]: (model.body, input_name)
+            output_dir
+            / model_path
+            / module_name[0]: (
+                code_formatter.format_code(model.body),
+                input_name,
+            )
             for module_name, model in models.items()
         }
 
-    environment: Environment = Environment(
-        loader=FileSystemLoader(
-            template_dir if template_dir else f"{Path(__file__).parent}/template",
-            encoding="utf8",
-        ),
-        autoescape=select_autoescape(
-            enabled_extensions=("html", "htm", "xml"),
-            default_for_string=False,
-        ),
-    )
+    environment = _get_template_environment(template_dir.resolve())
 
     results: Dict[Path, str] = {}
-    code_formatter = CodeFormatter(python_version, Path().resolve())
 
     template_vars: Dict[str, object] = {"info": parser.parse_info()}
     visitors: List[Visitor] = []

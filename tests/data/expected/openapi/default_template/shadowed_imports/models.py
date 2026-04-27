@@ -11,5 +11,5 @@ from pydantic import BaseModel, Field
 
 
 class MarketingOptIn(BaseModel):
-    optedIn: Optional[bool] = Field(None, example=False)
-    date: Optional[date_aliased] = Field(None, example='2018-04-26T17:03:25.155Z')
+    optedIn: Optional[bool] = Field(None, examples=[False])
+    date: Optional[date_aliased] = Field(None, examples=['2018-04-26T17:03:25.155Z'])

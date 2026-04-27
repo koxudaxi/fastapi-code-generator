@@ -12,6 +12,7 @@ from typing import Iterator
 import pytest
 import yaml
 
+from fastapi_code_generator.cli import generate_code
 from tests.conftest import freeze_time, validate_generated_code
 from tests.main.conftest import (
     DATA_PATH,
@@ -223,6 +224,41 @@ def test_generate_from_json_input(tmp_path: Path, output_dir: Path) -> None:
         assert generated.replace("simple.json", "simple.yaml").replace(
             "\r\n", "\n"
         ) == expected.replace("\r\n", "\n")
+    validate_generated_code(output_dir)
+
+
+@freeze_time("2020-06-19")
+def test_generate_escapes_aliases_in_parameter_defaults(output_dir: Path) -> None:
+    spec = """openapi: 3.0.0
+info:
+  title: Escaped aliases
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: ok
+      parameters:
+        - name: message-"\\\\texts
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: X-"\\\\Token
+          in: header
+          required: false
+          schema:
+            type: string
+"""
+    generate_code("escaped_aliases.yaml", spec, "utf-8", output_dir, None)
+
+    generated = (output_dir / "main.py").read_text(encoding="utf-8")
+
+    assert "Query(None, alias='message-\"\\\\\\\\texts')" in generated
+    assert "Header(None, alias='X-\"\\\\\\\\Token')" in generated
     validate_generated_code(output_dir)
 
 

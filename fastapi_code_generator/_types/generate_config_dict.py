@@ -3,30 +3,30 @@
 
 from __future__ import annotations
 
-from typing import Literal, Optional, TypedDict
+from typing import Literal
 
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypedDict
 
 
 class GenerateConfigDict(TypedDict):
-    custom_visitors: NotRequired[Optional[list[str]]]
+    custom_visitors: NotRequired[list[str] | None]
     disable_timestamp: NotRequired[bool]
     encoding: NotRequired[str]
-    enum_field_as_literal: NotRequired[Optional[Literal['all', 'one']]]
+    enum_field_as_literal: NotRequired[Literal['all', 'one', 'none'] | None]
     generate_routers: NotRequired[bool]
     input_file: str
-    model_file: NotRequired[Optional[str]]
-    model_template_dir: NotRequired[Optional[str]]
+    model_file: NotRequired[str | None]
+    model_template_dir: NotRequired[str | None]
     output_dir: str
     output_model_type: NotRequired[
         Literal[
-            'pydantic.BaseModel',
             'pydantic_v2.BaseModel',
+            'pydantic_v2.dataclass',
             'dataclasses.dataclass',
             'typing.TypedDict',
             'msgspec.Struct',
         ]
     ]
-    python_version: NotRequired[Literal['3.9', '3.10', '3.11', '3.12', '3.13', '3.14']]
-    specify_tags: NotRequired[Optional[str]]
-    template_dir: NotRequired[Optional[str]]
+    python_version: NotRequired[Literal['3.10', '3.11', '3.12', '3.13', '3.14']]
+    specify_tags: NotRequired[str | None]
+    template_dir: NotRequired[str | None]

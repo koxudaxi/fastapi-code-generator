@@ -27,7 +27,7 @@ def test_generate_config_defaults() -> None:
     config = GenerateConfig(input_file="api.yaml", output_dir="app")
 
     assert config.encoding == "utf-8"
-    assert config.output_model_type == "pydantic.BaseModel"
+    assert config.output_model_type == "pydantic_v2.BaseModel"
     assert config.python_version == "3.10"
     assert config.custom_visitors is None
     assert config.generate_routers is False
@@ -45,8 +45,8 @@ def test_iter_config_options_exposes_real_cli_metadata() -> None:
     assert options["output_dir"].cli_flags == ("--output", "-o")
     assert options["custom_visitors"].multiple is True
     assert options["output_model_type"].choices == (
-        "pydantic.BaseModel",
         "pydantic_v2.BaseModel",
+        "pydantic_v2.dataclass",
         "dataclasses.dataclass",
         "typing.TypedDict",
         "msgspec.Struct",
