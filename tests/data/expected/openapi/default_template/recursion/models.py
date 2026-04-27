@@ -9,18 +9,16 @@ from typing import Optional
 from pydantic import BaseModel, Field, constr
 
 
-class ID(BaseModel):
-    __root__: constr(regex=r'^[0-9a-fA-F]{24}$') = Field(
-        ..., example='5abbe4b7ddc1b351ef961414'
+class Card(BaseModel):
+    id: Optional[constr(pattern=r'^[0-9a-fA-F]{24}$')] = Field(
+        None, examples=['5abbe4b7ddc1b351ef961414']
     )
 
 
-class Card(BaseModel):
-    id: Optional[ID] = None
-
-
 class Board(BaseModel):
-    id: Optional[ID] = None
+    id: Optional[constr(pattern=r'^[0-9a-fA-F]{24}$')] = Field(
+        None, examples=['5abbe4b7ddc1b351ef961414']
+    )
 
 
 class Data(BaseModel):

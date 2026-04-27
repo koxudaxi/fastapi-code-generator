@@ -1,0 +1,37 @@
+openapi: "3.0.0"
+info:
+  title: Job API
+  version: 1.0.0
+paths:
+  /jobs:
+    post:
+      operationId: createJob
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobCreated"
+        "404":
+          description: Missing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    JobCreated:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
