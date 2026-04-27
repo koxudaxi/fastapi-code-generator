@@ -16,7 +16,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from fastapi_code_generator.config import iter_config_options
 from scripts.build_cli_docs import load_cli_doc_collection
-from scripts.build_schema_docs import FIXTURE_SUITES, render_document as render_schema_docs
+from scripts.build_schema_docs import (
+    FIXTURE_SUITES,
+    render_document as render_schema_docs,
+)
 
 
 def build_prompt_payload() -> dict[str, object]:
@@ -127,7 +130,10 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        help="Optional path to write the generated JSON payload.",
+        help=(
+            "Optional path to write the generated payload. "
+            "Use .json for JSON or .py for a Python module."
+        ),
     )
     args = parser.parse_args()
     return update_prompt_data(output_path=args.output, check=args.check)

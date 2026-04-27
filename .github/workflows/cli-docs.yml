@@ -41,4 +41,4 @@ jobs:
       - name: Build CLI docs
         run: .tox/cli-docs/bin/python scripts/build_cli_docs.py --check
       - name: Build prompt data
-        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --check
+        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --output fastapi_code_generator/prompt_data.py --check

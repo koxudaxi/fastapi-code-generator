@@ -377,22 +377,26 @@ class OpenAPIParser(OpenAPIModelParser):
         if schema is None:
             raise RuntimeError("schema is None")  # pragma: no cover
 
+        parameter_location = parameters.in_
         field = DataModelField(
             name=name,
             data_type=data_type,
-            required=parameters.required or parameters.in_ == ParameterLocation.path,
+            required=parameters.required
+            or parameter_location == ParameterLocation.path,
         )  # type: ignore[call-arg]
 
-        if parameters.in_ is None and orig_name != name:
+        if parameter_location is None and orig_name != name:
             raise RuntimeError("parameters.in_ is None")  # pragma: no cover
 
-        if parameters.in_ == ParameterLocation.query and schema.is_array:
+        default: Optional[str]
+        if parameter_location == ParameterLocation.query and schema.is_array:
             self.imports_for_fastapi.append(Import(from_='fastapi', import_='Query'))
             default_value = '...' if field.required else repr(schema.default)
             alias = f", alias={orig_name!r}" if orig_name != name else ''
             default = f"Query({default_value}{alias})"
         elif orig_name != name:
-            param_is = parameters.in_.value.lower().capitalize()
+            assert parameter_location is not None  # pragma: no cover
+            param_is = parameter_location.value.lower().capitalize()
             self.imports_for_fastapi.append(Import(from_='fastapi', import_=param_is))
             default = f"{param_is}({'...' if field.required else repr(schema.default)}, alias={orig_name!r})"
         else:
