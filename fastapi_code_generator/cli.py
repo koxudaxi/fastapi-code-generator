@@ -103,6 +103,7 @@ def main(
         callback=_show_version,
         is_eager=True,
     ),
+    use_annotated: bool = typer.Option(False, "--use-annotated"),
 ) -> None:
     del version
     input_name: str = Path(input_file).name
@@ -128,6 +129,7 @@ def main(
         specify_tags=specify_tags,
         output_model_type=output_model_type,
         python_version=python_version,
+        use_annotated=use_annotated,
     )
 
 
@@ -165,6 +167,7 @@ def generate_code(
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
+    use_annotated: bool = False,
 ) -> None:
     global all_tags
     if not model_path:  # pragma: no cover
@@ -192,6 +195,7 @@ def generate_code(
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
         custom_template_dir=model_template_dir,
         target_python_version=python_version,
+        use_annotated=use_annotated,
     )
 
     with chdir(output_dir):

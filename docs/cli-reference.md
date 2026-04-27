@@ -23,6 +23,7 @@ Options:
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
                                   [default: 3.10]
   -V, --version
+  --use-annotated
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
@@ -110,6 +111,14 @@ Render enum fields as Literal annotations.
 `fastapi-codegen --input openapi/default_template/duplicate_anonymus_parameter.yaml --output app --enum-field-as-literal all`
 
 Input schema: `openapi/default_template/duplicate_anonymus_parameter.yaml`
+
+### --use-annotated
+
+Render model field constraints with typing.Annotated.
+
+`fastapi-codegen --input openapi/default_template/recursion.yaml --output app --use-annotated`
+
+Input schema: `openapi/default_template/recursion.yaml`
 
 ### --model-file
 

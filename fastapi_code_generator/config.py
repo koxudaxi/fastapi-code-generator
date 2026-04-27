@@ -160,6 +160,11 @@ class GenerateConfig(BaseModel):
         description="Target Python version used when formatting generated code.",
         json_schema_extra=cast(Any, _cli_metadata("--python-version", "-p")),
     )
+    use_annotated: bool = Field(
+        default=False,
+        description="Use `typing.Annotated` for generated model field constraints.",
+        json_schema_extra=cast(Any, _cli_metadata("--use-annotated")),
+    )
 
 
 def _type_label(annotation: Any) -> str:

@@ -149,6 +149,17 @@ PROMPT_DATA: dict[str, Any] = {
             'type': 'literal',
             'choices': ['3.10', '3.11', '3.12', '3.13', '3.14'],
         },
+        {
+            'name': 'use_annotated',
+            'cli_flags': ['--use-annotated'],
+            'description': 'Use `typing.Annotated` for generated model field '
+            'constraints.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
     ],
     'cli_examples': [
         {
@@ -270,6 +281,18 @@ PROMPT_DATA: dict[str, Any] = {
                 'all',
             ],
             'input_schema': 'openapi/default_template/duplicate_anonymus_parameter.yaml',
+        },
+        {
+            'options': ['--use-annotated'],
+            'description': 'Render model field constraints with ' 'typing.Annotated.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/recursion.yaml',
+                '--output',
+                'app',
+                '--use-annotated',
+            ],
+            'input_schema': 'openapi/default_template/recursion.yaml',
         },
         {
             'options': ['--model-file'],

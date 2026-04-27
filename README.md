@@ -65,6 +65,7 @@ Options:
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
                                   [default: 3.10]
   -V, --version
+  --use-annotated
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
