@@ -41,6 +41,17 @@ def _get_code_formatter(
     return CodeFormatter(python_version, settings_path)
 
 
+@lru_cache(maxsize=None)
+def _get_template_environment(template_dir: Path) -> Environment:
+    return Environment(
+        loader=FileSystemLoader(template_dir, encoding="utf8"),
+        autoescape=select_autoescape(
+            enabled_extensions=("html", "htm", "xml"),
+            default_for_string=False,
+        ),
+    )
+
+
 def dynamic_load_module(module_path: Path) -> Any:
     module_name = module_path.stem
     spec = spec_from_file_location(module_name, str(module_path))
@@ -207,16 +218,7 @@ def generate_code(
             for module_name, model in models.items()
         }
 
-    environment: Environment = Environment(
-        loader=FileSystemLoader(
-            template_dir if template_dir else f"{Path(__file__).parent}/template",
-            encoding="utf8",
-        ),
-        autoescape=select_autoescape(
-            enabled_extensions=("html", "htm", "xml"),
-            default_for_string=False,
-        ),
-    )
+    environment = _get_template_environment(template_dir.resolve())
 
     results: Dict[Path, str] = {}
 
