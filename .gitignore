@@ -176,4 +176,7 @@ fabric.properties
 
 .idea
 
+.vscode/
+
 version.py
+tests/cli_doc/.cli_doc_collection.json

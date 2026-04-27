@@ -1,0 +1,264 @@
+name: Release Draft
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: release-draft
+  cancel-in-progress: false
+
+jobs:
+  update-draft:
+    if: |
+      github.event.pull_request.merged == true &&
+      !contains(github.event.pull_request.labels.*.name, 'breaking-change-analyzed')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "breaking-change-analyzed" --color "0E8A16" --description "PR has been checked for release draft updates" 2>/dev/null || true
+          gh label create "breaking-change" --color "D93F0B" --description "PR contains breaking changes" 2>/dev/null || true
+
+      - name: Collect breaking change metadata
+        id: parse
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          import secrets
+          from pathlib import Path
+
+          event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
+          pull_request = event["pull_request"]
+          labels = {label["name"] for label in pull_request.get("labels", [])}
+          has_breaking_changes = "breaking-change" in labels
+          body = pull_request.get("body") or ""
+          match = re.search(
+              r"(?ms)^##\s+Breaking Changes\s*$\n(.*?)(?=^##\s+|\Z)",
+              body,
+          )
+          extracted = match.group(1).strip() if match else ""
+          pr_number = os.environ["PR_NUMBER"]
+
+          if has_breaking_changes and not extracted:
+              extracted = (
+                  "### Breaking Changes\n"
+                  f"* See pull request #{pr_number} for breaking-change details (#{pr_number})"
+              )
+
+          if has_breaking_changes:
+              reasoning = (
+                  "The maintainer-applied `breaking-change` label is present, "
+                  "so this PR is treated as a breaking change."
+              )
+          else:
+              reasoning = (
+                  "The `breaking-change` label is absent, so this PR is treated "
+                  "as a non-breaking release update."
+              )
+
+          def unique_delimiter(*values: str) -> str:
+              while True:
+                  candidate = f"EOF_{secrets.token_hex(16)}"
+                  if all(candidate not in value for value in values):
+                      return candidate
+
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
+          delimiter = unique_delimiter(extracted, reasoning)
+          with output_path.open("a", encoding="utf-8") as output:
+              output.write(f"has_breaking_changes={'true' if has_breaking_changes else 'false'}\n")
+              output.write(f"breaking_changes_content<<{delimiter}\n")
+              output.write(extracted)
+              output.write("\n")
+              output.write(f"{delimiter}\n")
+              output.write(f"reasoning<<{delimiter}\n")
+              output.write(reasoning)
+              output.write("\n")
+              output.write(f"{delimiter}\n")
+          PY
+
+      - name: Add breaking-change-analyzed label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --add-label "breaking-change-analyzed"
+
+      - name: Post analysis result to PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HAS_BC: ${{ steps.parse.outputs.has_breaking_changes }}
+          BC_CONTENT: ${{ steps.parse.outputs.breaking_changes_content }}
+          REASONING: ${{ steps.parse.outputs.reasoning }}
+        run: |
+          TMPFILE=$(mktemp)
+          trap 'rm -f "$TMPFILE"' EXIT
+
+          {
+            printf '## Breaking Change Analysis\n\n'
+            if [ "$HAS_BC" = "true" ]; then
+              printf 'Result: Breaking changes detected from maintainer label\n\n'
+              printf 'Reasoning: %s\n\n' "$REASONING"
+              printf '### Content for Release Notes\n\n%s\n\n' "$BC_CONTENT"
+            else
+              printf 'Result: No breaking changes detected\n\n'
+              printf 'Reasoning: %s\n\n' "$REASONING"
+            fi
+            printf -- '---\n'
+            printf '*This analysis was performed by repository automation using PR labels and the `## Breaking Changes` section.*\n'
+          } > "$TMPFILE"
+
+          gh pr comment "$PR_NUMBER" --body-file "$TMPFILE"
+
+      - name: Calculate version and update draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          HAS_BC: ${{ steps.parse.outputs.has_breaking_changes }}
+          BC_CONTENT: ${{ steps.parse.outputs.breaking_changes_content }}
+        run: |
+          set -euo pipefail
+
+          LATEST_TAG_RAW=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // "0.0.0"')
+          LATEST_TAG="${LATEST_TAG_RAW#v}"
+          LATEST_TAG="${LATEST_TAG#V}"
+
+          MAJOR=$(echo "$LATEST_TAG" | cut -d. -f1)
+          MINOR=$(echo "$LATEST_TAG" | cut -d. -f2)
+          PATCH=$(echo "$LATEST_TAG" | cut -d. -f3)
+
+          if ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]] || ! [[ "$PATCH" =~ ^[0-9]+$ ]]; then
+            MAJOR=0
+            MINOR=0
+            PATCH=0
+          fi
+
+          DRAFT_TAG_RAW=$(gh release list --json tagName,isDraft --jq '[.[] | select(.isDraft == true)] | .[0].tagName // ""')
+          DRAFT_TAG="${DRAFT_TAG_RAW#v}"
+          DRAFT_TAG="${DRAFT_TAG#V}"
+          BC_SOURCE_TAG_RAW="$DRAFT_TAG_RAW"
+
+          if [ -n "$DRAFT_TAG" ]; then
+            DRAFT_MINOR=$(echo "$DRAFT_TAG" | cut -d. -f2)
+            DRAFT_PATCH=$(echo "$DRAFT_TAG" | cut -d. -f3)
+
+            if [ "$HAS_BC" = "true" ] && [ "$DRAFT_PATCH" != "0" ]; then
+              NEW_MINOR=$((MINOR + 1))
+              NEXT_VERSION="${MAJOR}.${NEW_MINOR}.0"
+              OLD_DRAFT_TAG="$DRAFT_TAG_RAW"
+              DRAFT_TAG_RAW=""
+              DRAFT_TAG=""
+            else
+              NEXT_VERSION="$DRAFT_TAG"
+              OLD_DRAFT_TAG=""
+            fi
+          else
+            OLD_DRAFT_TAG=""
+            BC_SOURCE_TAG_RAW=""
+            if [ "$HAS_BC" = "true" ]; then
+              NEW_MINOR=$((MINOR + 1))
+              NEXT_VERSION="${MAJOR}.${NEW_MINOR}.0"
+            else
+              NEW_PATCH=$((PATCH + 1))
+              NEXT_VERSION="${MAJOR}.${MINOR}.${NEW_PATCH}"
+            fi
+          fi
+
+          if [ -n "$LATEST_TAG" ] && [ "$LATEST_TAG" != "0.0.0" ]; then
+            GENERATED_NOTES=$(gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$REPOSITORY/releases/generate-notes" \
+              -f tag_name="$NEXT_VERSION" \
+              -f previous_tag_name="$LATEST_TAG_RAW" \
+              --jq '.body')
+          else
+            GENERATED_NOTES=$(gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/$REPOSITORY/releases/generate-notes" \
+              -f tag_name="$NEXT_VERSION" \
+              --jq '.body')
+          fi
+
+          EXISTING_BC=""
+          if [ -n "$BC_SOURCE_TAG_RAW" ]; then
+            EXISTING_BODY=$(gh release view "$BC_SOURCE_TAG_RAW" --json body --jq '.body // ""')
+            if echo "$EXISTING_BODY" | grep -q '^## Breaking Changes$'; then
+              EXISTING_BC=$(echo "$EXISTING_BODY" | awk '
+                /^## Breaking Changes$/ { found=1; next }
+                found && /^## / { exit }
+                found { print }
+              ')
+            fi
+          fi
+
+          FINAL_BC=""
+          if [ -n "$BC_CONTENT" ] && [ -n "$EXISTING_BC" ]; then
+            MERGED_BC=$(printf '%s\n\n%s' "$EXISTING_BC" "$BC_CONTENT" | awk '
+              BEGIN { current_section = ""; in_fence = 0; }
+              /^```/ || /^~~~/ { in_fence = !in_fence; }
+              /^### / && !in_fence {
+                current_section = $0;
+                if (!(current_section in sections)) {
+                  order[++order_count] = current_section;
+                }
+                next;
+              }
+              /^[[:space:]]*$/ && !in_fence { next; }
+              current_section != "" {
+                if (sections[current_section] != "") {
+                  sections[current_section] = sections[current_section] "\n" $0;
+                } else {
+                  sections[current_section] = $0;
+                }
+              }
+              END {
+                for (i = 1; i <= order_count; i++) {
+                  section = order[i];
+                  if (i > 1) print "";
+                  print section;
+                  print sections[section];
+                }
+              }
+            ')
+            FINAL_BC=$(printf '## Breaking Changes\n\n%s' "$MERGED_BC")
+          elif [ -n "$BC_CONTENT" ]; then
+            FINAL_BC=$(printf '## Breaking Changes\n\n%s' "$BC_CONTENT")
+          elif [ -n "$EXISTING_BC" ]; then
+            FINAL_BC=$(printf '## Breaking Changes\n\n%s' "$EXISTING_BC")
+          fi
+
+          if [ -n "$FINAL_BC" ]; then
+            RELEASE_BODY=$(printf '%s\n\n%s' "$FINAL_BC" "$GENERATED_NOTES")
+          else
+            RELEASE_BODY="$GENERATED_NOTES"
+          fi
+
+          if [ -n "$DRAFT_TAG_RAW" ] && [ "$DRAFT_TAG" = "$NEXT_VERSION" ]; then
+            echo "$RELEASE_BODY" | gh release edit "$DRAFT_TAG_RAW" \
+              --title "$NEXT_VERSION" \
+              --notes-file -
+          else
+            if echo "$RELEASE_BODY" | gh release create "$NEXT_VERSION" \
+              --title "$NEXT_VERSION" \
+              --notes-file - \
+              --draft; then
+              if [ -n "$OLD_DRAFT_TAG" ]; then
+                gh release delete "$OLD_DRAFT_TAG" --yes 2>/dev/null || true
+              fi
+            else
+              exit 1
+            fi
+          fi
