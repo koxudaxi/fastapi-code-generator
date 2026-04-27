@@ -27,7 +27,7 @@ def create_fat_cats() -> None:
     pass
 
 
-@router.get('/cats/{cat_id}', response_model=Pet, tags=['Fat Cats'])
+@router.get('/cats/{catId}', response_model=Pet, tags=['Fat Cats'])
 def show_cat_by_id(cat_id: str = Path(..., alias='catId')) -> Pet:
     """
     Info For a Specific Cat

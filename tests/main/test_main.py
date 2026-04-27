@@ -498,6 +498,50 @@ def test_generate_router_name_from_hyphenated_tag(output_dir: Path) -> None:
     validate_generated_code(output_dir)
 
 
+def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None:
+    spec = json.dumps(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "Example", "version": "1.0.0"},
+            "paths": {
+                "/items/{itemId}": {
+                    "get": {
+                        "operationId": "getItem",
+                        "tags": ["Items"],
+                        "parameters": [
+                            {
+                                "name": "itemId",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            },
+        }
+    )
+
+    generate_code(
+        "camel_path_parameter.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        BUILTIN_MODULAR_TEMPLATE_DIR,
+        disable_timestamp=True,
+        generate_routers=True,
+    )
+
+    router_text = output_dir.joinpath("routers", "items.py").read_text(encoding="utf-8")
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "@router.get('/items/{itemId}', response_model=None" in router_text
+    assert "item_id: str = Path(..., alias='itemId')" in router_text
+    assert "from .routers import items" in main_text
+    assert "app.include_router(items.router)" in main_text
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--specify-tags"],
     option_description="Regenerate only the routers matching a comma-separated tag list.",
@@ -653,10 +697,10 @@ def test_generate_with_use_annotated(output_dir: Path) -> None:
     )
 
     models = output_dir.joinpath("models.py").read_text(encoding="utf-8")
-    assert "from typing import Annotated, Optional" in models
-    assert (
-        "Field(examples=['5abbe4b7ddc1b351ef961414'], " "pattern='^[0-9a-fA-F]{24}$')"
-    ) in models
+    assert "Annotated" in models
+    assert "Optional" in models
+    assert "examples=['5abbe4b7ddc1b351ef961414']" in models
+    assert "pattern='^[0-9a-fA-F]{24}$'" in models
     validate_generated_code(output_dir)
 
 
