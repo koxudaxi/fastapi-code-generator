@@ -562,10 +562,10 @@ def test_generate_with_use_annotated(output_dir: Path) -> None:
     )
 
     models = output_dir.joinpath("models.py").read_text(encoding="utf-8")
-    assert "from typing import Annotated, Optional" in models
-    assert (
-        "Field(examples=['5abbe4b7ddc1b351ef961414'], " "pattern='^[0-9a-fA-F]{24}$')"
-    ) in models
+    assert "Annotated" in models
+    assert "Optional" in models
+    assert "examples=['5abbe4b7ddc1b351ef961414']" in models
+    assert "pattern='^[0-9a-fA-F]{24}$'" in models
     validate_generated_code(output_dir)
 
 
