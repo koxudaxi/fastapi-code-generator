@@ -150,6 +150,14 @@ class GenerateConfig(BaseModel):
         description="Omit timestamp headers from generated files.",
         json_schema_extra=cast(Any, _cli_metadata("--disable-timestamp")),
     )
+    include_request_argument: bool = Field(
+        default=False,
+        description=(
+            "Auto-inject a FastAPI Request argument in generated operation "
+            "signatures when not present."
+        ),
+        json_schema_extra=cast(Any, _cli_metadata("--include-request-argument")),
+    )
     output_model_type: OutputModelTypeName = Field(
         default="pydantic_v2.BaseModel",
         description="Model backend passed through to datamodel-code-generator.",

@@ -262,6 +262,97 @@ paths:
     validate_generated_code(output_dir)
 
 
+@freeze_time("2020-06-19")
+def test_custom_template_can_use_plain_arguments(
+    tmp_path: Path, output_dir: Path
+) -> None:
+    template_dir = tmp_path / "template"
+    template_dir.mkdir()
+    template_dir.joinpath("main.jinja2").write_text(
+        """
+PLAIN_ARGUMENTS = "{{ operations[0].plain_arguments }}"
+PLAIN_PARAMETERS = "{{ operations[0].plain_parameters }}"
+LEGACY_ARGUMENTS = "{{ operations[0].snake_case_arguments }}"
+""",
+        encoding="utf-8",
+    )
+    spec = """openapi: 3.0.0
+info:
+  title: Plain arguments
+  version: 1.0.0
+paths:
+  /pets/{pet_id}:
+    get:
+      operationId: listPets
+      responses:
+        '200':
+          description: ok
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+"""
+
+    generate_code(
+        "plain_arguments.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        template_dir,
+    )
+
+    generated = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert 'PLAIN_ARGUMENTS = "pet_id, limit"' in generated
+    assert 'PLAIN_PARAMETERS = "pet_id: str, limit: Optional[int] = 0"' in generated
+    assert 'LEGACY_ARGUMENTS = "pet_id: str, limit: Optional[int] = 0"' in generated
+    validate_generated_code(output_dir)
+
+
+@pytest.mark.cli_doc(
+    options=["--include-request-argument"],
+    option_description=(
+        "Auto-inject a FastAPI Request argument in generated operation signatures "
+        "when not present."
+    ),
+    cli_args=[
+        "--input",
+        "openapi/default_template/simple.yaml",
+        "--output",
+        "app",
+        "--include-request-argument",
+    ],
+    input_schema="openapi/default_template/simple.yaml",
+)
+@freeze_time("2020-06-19")
+def test_include_request_argument(output_dir: Path) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "simple.yaml"),
+                "--output",
+                str(output_dir),
+                "--include-request-argument",
+            ]
+        )
+        == 0
+    )
+
+    generated = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "Request" in generated
+    assert "def list_pets(" in generated
+    assert "request: Request" in generated
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--encoding"],
     option_description="Read the input schema using an explicit text encoding.",

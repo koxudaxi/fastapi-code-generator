@@ -14,6 +14,7 @@ class GenerateConfigDict(TypedDict):
     encoding: NotRequired[str]
     enum_field_as_literal: NotRequired[Literal['all', 'one', 'none'] | None]
     generate_routers: NotRequired[bool]
+    include_request_argument: NotRequired[bool]
     input_file: str
     model_file: NotRequired[str | None]
     model_template_dir: NotRequired[str | None]

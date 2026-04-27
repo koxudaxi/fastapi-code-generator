@@ -31,6 +31,7 @@ def test_generate_config_defaults() -> None:
     assert config.python_version == "3.10"
     assert config.custom_visitors is None
     assert config.generate_routers is False
+    assert config.include_request_argument is False
 
 
 def test_validate_generate_config_model_matches_cli() -> None:

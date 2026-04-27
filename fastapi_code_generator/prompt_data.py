@@ -122,6 +122,17 @@ PROMPT_DATA: dict[str, Any] = {
             'choices': [],
         },
         {
+            'name': 'include_request_argument',
+            'cli_flags': ['--include-request-argument'],
+            'description': 'Auto-inject a FastAPI Request argument in '
+            'generated operation signatures when not present.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
+        {
             'name': 'output_model_type',
             'cli_flags': ['--output-model-type', '-d'],
             'description': 'Model backend passed through to '
@@ -211,6 +222,19 @@ PROMPT_DATA: dict[str, Any] = {
                 'custom_template/security',
             ],
             'input_schema': 'openapi/custom_template_security/custom_security.yaml',
+        },
+        {
+            'options': ['--include-request-argument'],
+            'description': 'Auto-inject a FastAPI Request argument in generated '
+            'operation signatures when not present.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/simple.yaml',
+                '--output',
+                'app',
+                '--include-request-argument',
+            ],
+            'input_schema': 'openapi/default_template/simple.yaml',
         },
         {
             'options': ['--encoding'],

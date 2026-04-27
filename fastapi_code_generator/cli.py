@@ -90,6 +90,14 @@ def main(
         None, "--custom-visitor", "-c"
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
+    include_request_argument: bool = typer.Option(
+        False,
+        "--include-request-argument",
+        help=(
+            "Auto-inject a FastAPI Request parameter into operations when not "
+            "present."
+        ),
+    ),
     output_model_type: DataModelType = typer.Option(
         DataModelType.PydanticV2BaseModel.value, "--output-model-type", "-d"
     ),
@@ -129,6 +137,7 @@ def main(
         enum_field_as_literal=enum_field_as_literal or None,
         custom_visitors=custom_visitors,
         disable_timestamp=disable_timestamp,
+        include_request_argument=include_request_argument,
         generate_routers=generate_routers,
         specify_tags=specify_tags,
         output_model_type=output_model_type,
@@ -167,6 +176,7 @@ def generate_code(
     enum_field_as_literal: Optional[LiteralType] = None,
     custom_visitors: Optional[List[Path]] = None,
     disable_timestamp: bool = False,
+    include_request_argument: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
@@ -199,6 +209,7 @@ def generate_code(
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
         custom_template_dir=model_template_dir,
         target_python_version=python_version,
+        include_request_argument=include_request_argument,
         use_annotated=use_annotated,
     )
 

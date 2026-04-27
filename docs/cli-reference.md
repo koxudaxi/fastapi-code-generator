@@ -18,6 +18,8 @@ Options:
   --specify-tags TEXT
   -c, --custom-visitor PATH
   --disable-timestamp
+  --include-request-argument      Auto-inject a FastAPI Request parameter into
+                                  operations when not present.
   -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
                                   [default: pydantic_v2.BaseModel]
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
@@ -72,6 +74,14 @@ Render generated files with a custom template directory.
 `fastapi-codegen --input openapi/custom_template_security/custom_security.yaml --output app --template-dir custom_template/security`
 
 Input schema: `openapi/custom_template_security/custom_security.yaml`
+
+### --include-request-argument
+
+Auto-inject a FastAPI Request argument in generated operation signatures when not present.
+
+`fastapi-codegen --input openapi/default_template/simple.yaml --output app --include-request-argument`
+
+Input schema: `openapi/default_template/simple.yaml`
 
 ### --encoding
 
