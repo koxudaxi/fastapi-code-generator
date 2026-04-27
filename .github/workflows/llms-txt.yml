@@ -28,7 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
-          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           persist-credentials: false
@@ -55,14 +54,14 @@ jobs:
         env:
           UV_PYTHON_PREFERENCE: "only-managed"
       - name: Update README
-        run: .tox/readme/bin/python scripts/update_command_help_on_markdown.py
+        run: .tox/readme/bin/python scripts/update_command_help_on_markdown.py --check
       - name: Collect CLI doc metadata
         run: .tox/cli-docs/bin/pytest --collect-cli-docs -p no:xdist -q
       - name: Build CLI docs
-        run: .tox/cli-docs/bin/python scripts/build_cli_docs.py
+        run: .tox/cli-docs/bin/python scripts/build_cli_docs.py --check
       - name: Build prompt data
-        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py
+        run: .tox/cli-docs/bin/python scripts/build_prompt_data.py --check
       - name: Build schema docs
-        run: .tox/schema-docs/bin/python scripts/build_schema_docs.py
+        run: .tox/schema-docs/bin/python scripts/build_schema_docs.py --check
       - name: Build llms.txt
-        run: .tox/llms-txt/bin/python scripts/build_llms_txt.py
+        run: .tox/llms-txt/bin/python scripts/build_llms_txt.py --check
