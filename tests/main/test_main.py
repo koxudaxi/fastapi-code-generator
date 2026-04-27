@@ -442,9 +442,7 @@ def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None
         generate_routers=True,
     )
 
-    router_text = output_dir.joinpath("routers", "items.py").read_text(
-        encoding="utf-8"
-    )
+    router_text = output_dir.joinpath("routers", "items.py").read_text(encoding="utf-8")
     assert "@router.get('/items/{itemId}', response_model=None" in router_text
     assert "item_id: str = Path(..., alias='itemId')" in router_text
     validate_generated_code(output_dir)
