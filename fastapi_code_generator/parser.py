@@ -126,6 +126,10 @@ class Argument(CachedPropertyModel):
             return f'{stringcase.snakecase(self.name)}: {type_hint}'
         return f'{stringcase.snakecase(self.name)}: {type_hint} = {self.default}'
 
+    @property
+    def plain_parameter(self) -> str:
+        return self.snakecase
+
 
 class Operation(CachedPropertyModel):
     method: UsefulStr
@@ -185,35 +189,34 @@ class Operation(CachedPropertyModel):
         """
         return self.method
 
+    @cached_property
+    def _merged_arguments(self) -> List[Argument]:
+        return Operation.merge_arguments_with_union(self.arguments_list)
+
     @property
     def arguments(self) -> str:  # pragma: no cover
-        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
-        return ", ".join(argument.argument for argument in sorted_arguments)
+        return ", ".join(argument.argument for argument in self._merged_arguments)
 
     @property
     def snake_case_arguments(self) -> str:
-        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
-        return ", ".join(argument.snakecase for argument in sorted_arguments)
+        return ", ".join(argument.snakecase for argument in self._merged_arguments)
 
     @property
     def plain_arguments(self) -> str:
-        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
         return ", ".join(
-            stringcase.snakecase(argument.name) for argument in sorted_arguments
+            stringcase.snakecase(argument.name) for argument in self._merged_arguments
         )
 
     @property
     def plain_parameters(self) -> str:
-        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
         return ", ".join(
-            f"{stringcase.snakecase(argument.name)}: {argument.resolved_type_hint}"
-            for argument in sorted_arguments
+            argument.plain_parameter for argument in self._merged_arguments
         )
 
     @property
     def imports(self) -> Imports:
         imports = Imports()
-        for argument in Operation.merge_arguments_with_union(self.arguments_list):
+        for argument in self._merged_arguments:
             if isinstance(argument.field, list):
                 for field in argument.field:
                     imports.append(field.data_type.import_)
@@ -284,6 +287,7 @@ class OpenAPIParser(OpenAPIModelParser):
         field_extra_keys: Optional[Set[str]] = None,
         field_include_all_keys: bool = False,
         include_request_argument: bool = False,
+        use_annotated: bool = False,
     ):
         super().__init__(
             source=source,
@@ -297,7 +301,7 @@ class OpenAPIParser(OpenAPIModelParser):
             target_python_version=target_python_version,
             dump_resolve_reference_action=dump_resolve_reference_action,
             validation=validation,
-            field_constraints=field_constraints,
+            field_constraints=field_constraints or use_annotated,
             snake_case_field=snake_case_field,
             strip_default_none=strip_default_none,
             aliases=aliases,
@@ -323,6 +327,7 @@ class OpenAPIParser(OpenAPIModelParser):
             field_extra_keys=field_extra_keys,
             field_include_all_keys=field_include_all_keys,
             openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
+            use_annotated=use_annotated,
         )
         self.operations: Dict[str, Operation] = {}
         self._temporary_operation: Dict[str, Any] = {}
@@ -454,12 +459,13 @@ class OpenAPIParser(OpenAPIModelParser):
         if self.include_request_argument and not any(
             argument.name == "request" for argument in arguments
         ):
-            arguments.append(
+            arguments.insert(
+                0,
                 Argument(
                     name='request',  # type: ignore
                     type_hint='Request',  # type: ignore
                     required=True,
-                )
+                ),
             )
             self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
 
@@ -523,7 +529,7 @@ class OpenAPIParser(OpenAPIModelParser):
                         )
                     )
                     self.imports_for_fastapi.append(
-                        Import.from_full_path('starlette.requests.Request')
+                        Import.from_full_path('fastapi.Request')
                     )
                 elif media_type == 'application/octet-stream':
                     arguments.append(

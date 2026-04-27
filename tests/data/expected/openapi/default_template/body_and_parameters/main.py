@@ -7,7 +7,6 @@ from __future__ import annotations
 from typing import List, Optional, Union
 
 from fastapi import FastAPI, Path, Query, Request
-from starlette.requests import Request
 
 from .models import (
     Error,

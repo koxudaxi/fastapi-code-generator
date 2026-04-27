@@ -152,7 +152,10 @@ class GenerateConfig(BaseModel):
     )
     include_request_argument: bool = Field(
         default=False,
-        description="Include a FastAPI Request argument in generated operation signatures.",
+        description=(
+            "Auto-inject a FastAPI Request argument in generated operation "
+            "signatures when not present."
+        ),
         json_schema_extra=cast(Any, _cli_metadata("--include-request-argument")),
     )
     output_model_type: OutputModelTypeName = Field(
@@ -164,6 +167,11 @@ class GenerateConfig(BaseModel):
         default="3.10",
         description="Target Python version used when formatting generated code.",
         json_schema_extra=cast(Any, _cli_metadata("--python-version", "-p")),
+    )
+    use_annotated: bool = Field(
+        default=False,
+        description="Use `typing.Annotated` for generated model field constraints.",
+        json_schema_extra=cast(Any, _cli_metadata("--use-annotated")),
     )
 
 

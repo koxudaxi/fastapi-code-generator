@@ -60,12 +60,14 @@ Options:
   --specify-tags TEXT
   -c, --custom-visitor PATH
   --disable-timestamp
-  --include-request-argument
+  --include-request-argument      Auto-inject a FastAPI Request parameter into
+                                  operations when not present.
   -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
                                   [default: pydantic_v2.BaseModel]
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
                                   [default: 3.10]
   -V, --version
+  --use-annotated
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.

@@ -281,13 +281,18 @@ info:
   title: Plain arguments
   version: 1.0.0
 paths:
-  /pets:
+  /pets/{pet_id}:
     get:
       operationId: listPets
       responses:
         '200':
           description: ok
       parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: string
         - name: limit
           in: query
           required: false
@@ -305,15 +310,18 @@ paths:
     )
 
     generated = output_dir.joinpath("main.py").read_text(encoding="utf-8")
-    assert 'PLAIN_ARGUMENTS = "limit"' in generated
-    assert 'PLAIN_PARAMETERS = "limit: Optional[int]"' in generated
-    assert 'LEGACY_ARGUMENTS = "limit: Optional[int] = 0"' in generated
+    assert 'PLAIN_ARGUMENTS = "pet_id, limit"' in generated
+    assert 'PLAIN_PARAMETERS = "pet_id: str, limit: Optional[int] = 0"' in generated
+    assert 'LEGACY_ARGUMENTS = "pet_id: str, limit: Optional[int] = 0"' in generated
     validate_generated_code(output_dir)
 
 
 @pytest.mark.cli_doc(
     options=["--include-request-argument"],
-    option_description="Include a FastAPI Request argument in generated operation signatures.",
+    option_description=(
+        "Auto-inject a FastAPI Request argument in generated operation signatures "
+        "when not present."
+    ),
     cli_args=[
         "--input",
         "openapi/default_template/simple.yaml",
@@ -341,7 +349,7 @@ def test_include_request_argument(output_dir: Path) -> None:
     generated = output_dir.joinpath("main.py").read_text(encoding="utf-8")
     assert "Request" in generated
     assert "def list_pets(" in generated
-    assert "request: Request = ..." in generated
+    assert "request: Request" in generated
     validate_generated_code(output_dir)
 
 
@@ -455,6 +463,39 @@ def test_generate_using_routers(oas_file: Path, output_dir: Path) -> None:
             "--generate-routers",
         ],
     )
+
+
+def test_generate_router_name_from_hyphenated_tag(output_dir: Path) -> None:
+    spec = json.dumps(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "Example", "version": "1.0.0"},
+            "paths": {
+                "/items": {
+                    "get": {
+                        "tags": ["Foo-Bar"],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            },
+        }
+    )
+
+    generate_code(
+        "hyphenated_tag.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        BUILTIN_MODULAR_TEMPLATE_DIR,
+        disable_timestamp=True,
+        generate_routers=True,
+    )
+
+    assert output_dir.joinpath("routers", "foo_bar.py").exists()
+    assert "from .routers import foo_bar" in output_dir.joinpath("main.py").read_text(
+        encoding="utf-8"
+    )
+    validate_generated_code(output_dir)
 
 
 @pytest.mark.cli_doc(
@@ -581,6 +622,42 @@ def test_generate_with_enum_field_as_literal(output_dir: Path) -> None:
         expected_path=EXPECTED_OPENAPI_PATH / "coverage" / "enum_field_as_literal",
         extra_args=["--enum-field-as-literal", "all"],
     )
+
+
+@pytest.mark.cli_doc(
+    options=["--use-annotated"],
+    option_description="Render model field constraints with typing.Annotated.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/recursion.yaml",
+        "--output",
+        "app",
+        "--use-annotated",
+    ],
+    input_schema="openapi/default_template/recursion.yaml",
+    golden_output="openapi/default_template/recursion/models.py",
+)
+@freeze_time("2020-06-19")
+def test_generate_with_use_annotated(output_dir: Path) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "recursion.yaml"),
+                "--output",
+                str(output_dir),
+                "--use-annotated",
+            ]
+        )
+        == 0
+    )
+
+    models = output_dir.joinpath("models.py").read_text(encoding="utf-8")
+    assert "from typing import Annotated, Optional" in models
+    assert (
+        "Field(examples=['5abbe4b7ddc1b351ef961414'], " "pattern='^[0-9a-fA-F]{24}$')"
+    ) in models
+    validate_generated_code(output_dir)
 
 
 @pytest.mark.parametrize(

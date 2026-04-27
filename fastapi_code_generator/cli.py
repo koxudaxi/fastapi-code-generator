@@ -23,7 +23,7 @@ app = typer.Typer()
 
 all_tags: List[str] = []
 
-TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| ')
+TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z -])(?=[A-Z])|[ -]+')
 
 BUILTIN_MODULAR_TEMPLATE_DIR = Path(__file__).parent / "modular_template"
 
@@ -90,7 +90,14 @@ def main(
         None, "--custom-visitor", "-c"
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
-    include_request_argument: bool = typer.Option(False, "--include-request-argument"),
+    include_request_argument: bool = typer.Option(
+        False,
+        "--include-request-argument",
+        help=(
+            "Auto-inject a FastAPI Request parameter into operations when not "
+            "present."
+        ),
+    ),
     output_model_type: DataModelType = typer.Option(
         DataModelType.PydanticV2BaseModel.value, "--output-model-type", "-d"
     ),
@@ -104,6 +111,7 @@ def main(
         callback=_show_version,
         is_eager=True,
     ),
+    use_annotated: bool = typer.Option(False, "--use-annotated"),
 ) -> None:
     del version
     input_name: str = Path(input_file).name
@@ -130,6 +138,7 @@ def main(
         specify_tags=specify_tags,
         output_model_type=output_model_type,
         python_version=python_version,
+        use_annotated=use_annotated,
     )
 
 
@@ -168,6 +177,7 @@ def generate_code(
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
+    use_annotated: bool = False,
 ) -> None:
     global all_tags
     if not model_path:  # pragma: no cover
@@ -196,6 +206,7 @@ def generate_code(
         custom_template_dir=model_template_dir,
         target_python_version=python_version,
         include_request_argument=include_request_argument,
+        use_annotated=use_annotated,
     )
 
     with chdir(output_dir):
