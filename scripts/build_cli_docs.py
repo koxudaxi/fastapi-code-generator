@@ -17,22 +17,33 @@ COLLECTION_PATH = PROJECT_ROOT / "tests" / "cli_doc" / ".cli_doc_collection.json
 ANSI_ESCAPE_PATTERN = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
+def _normalize_help_text(text: str) -> str:
+    return "\n".join(line.rstrip() for line in text.splitlines()).strip()
+
+
 def get_help_text() -> str:
     """Return normalized CLI help output for the current environment."""
     env = os.environ.copy()
     env["COLUMNS"] = "94"
     env["LINES"] = "24"
     env["NO_COLOR"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
+    env["PYTHONUTF8"] = "1"
     env["TERM"] = "dumb"
+    env["TYPER_USE_RICH"] = "0"
     completed = subprocess.run(
         [sys.executable, "-m", "fastapi_code_generator", "--help"],
-        check=True,
-        capture_output=True,
-        text=True,
         cwd=PROJECT_ROOT,
         env=env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
     )
-    return ANSI_ESCAPE_PATTERN.sub("", completed.stdout).strip()
+    if completed.returncode != 0:
+        msg = completed.stderr or completed.stdout or "failed to render CLI help"
+        raise RuntimeError(msg)
+    return _normalize_help_text(ANSI_ESCAPE_PATTERN.sub("", completed.stdout))
 
 
 def load_cli_doc_collection() -> dict[str, object]:

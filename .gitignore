@@ -180,4 +180,3 @@ fabric.properties
 
 version.py
 tests/cli_doc/.cli_doc_collection.json
-docs/index.md

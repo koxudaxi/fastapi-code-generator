@@ -25,18 +25,6 @@ class PetForm(BaseModel):
     age: Optional[int] = None
 
 
-class PetsGetResponse(RootModel[List[Pet]]):
-    root: List[Pet]
-
-
-class FoodFoodIdGetResponse(RootModel[List[int]]):
-    root: List[int]
-
-
-class MessageTexts(RootModel[List[str]]):
-    root: List[str]
-
-
 class UserGetResponse(BaseModel):
     timestamp: AwareDatetime
     name: str
@@ -53,10 +41,6 @@ class UsersGetResponseItem(BaseModel):
     timestamp: AwareDatetime
     name: str
     age: Optional[str] = None
-
-
-class UsersGetResponse(RootModel[List[UsersGetResponseItem]]):
-    root: List[UsersGetResponseItem]
 
 
 class UsersPostRequestItem(BaseModel):

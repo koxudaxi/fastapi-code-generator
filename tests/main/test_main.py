@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.resources import as_file, files
@@ -9,7 +10,9 @@ from threading import Thread
 from typing import Iterator
 
 import pytest
+import yaml
 
+from fastapi_code_generator.cli import generate_code
 from tests.conftest import freeze_time, validate_generated_code
 from tests.main.conftest import (
     DATA_PATH,
@@ -84,11 +87,20 @@ def test_generate_into_existing_output_dir(output_dir: Path) -> None:
 
 
 @pytest.mark.cli_doc(
-    options=["--input", "--output"],
+    options=["--output"],
+    option_description="Directory where the generated FastAPI application is written.",
+    cli_args=["--input", "openapi/default_template/simple.yaml", "--output", "app"],
+    input_schema="openapi/default_template/simple.yaml",
+    golden_output="openapi/default_template/simple/main.py",
+    related_options=["--input"],
+)
+@pytest.mark.cli_doc(
+    options=["--input"],
     option_description="Generate a FastAPI application from an OpenAPI input file.",
     cli_args=["--input", "openapi/default_template/simple.yaml", "--output", "app"],
     input_schema="openapi/default_template/simple.yaml",
     golden_output="openapi/default_template/simple/main.py",
+    related_options=["--output"],
 )
 @pytest.mark.parametrize(
     "oas_file",
@@ -181,6 +193,73 @@ def test_generate_remote_ref(tmp_path: Path, output_dir: Path) -> None:
             output_path=output_dir,
             expected_path=EXPECTED_OPENAPI_PATH / "remote_ref" / oas_file.stem,
         )
+
+
+@freeze_time("2020-06-19")
+def test_generate_from_json_input(tmp_path: Path, output_dir: Path) -> None:
+    source = DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "simple.yaml"
+    json_input = tmp_path / "simple.json"
+    json_input.write_text(
+        json.dumps(yaml.safe_load(source.read_text(encoding="utf-8"))),
+        encoding="utf-8",
+    )
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(json_input),
+                "--output",
+                str(output_dir),
+            ]
+        )
+        == 0
+    )
+    expected_dir = EXPECTED_OPENAPI_PATH / "default_template" / "simple"
+    assert sorted(
+        path.relative_to(output_dir) for path in output_dir.rglob("*") if path.is_file()
+    ) == [Path("main.py"), Path("models.py")]
+    for relative_path in [Path("main.py"), Path("models.py")]:
+        generated = output_dir.joinpath(relative_path).read_text(encoding="utf-8")
+        expected = expected_dir.joinpath(relative_path).read_text(encoding="utf-8")
+        assert generated.replace("simple.json", "simple.yaml").replace(
+            "\r\n", "\n"
+        ) == expected.replace("\r\n", "\n")
+    validate_generated_code(output_dir)
+
+
+@freeze_time("2020-06-19")
+def test_generate_escapes_aliases_in_parameter_defaults(output_dir: Path) -> None:
+    spec = """openapi: 3.0.0
+info:
+  title: Escaped aliases
+  version: 1.0.0
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: ok
+      parameters:
+        - name: message-"\\\\texts
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: X-"\\\\Token
+          in: header
+          required: false
+          schema:
+            type: string
+"""
+    generate_code("escaped_aliases.yaml", spec, "utf-8", output_dir, None)
+
+    generated = (output_dir / "main.py").read_text(encoding="utf-8")
+
+    assert "Query(None, alias='message-\"\\\\\\\\texts')" in generated
+    assert "Header(None, alias='X-\"\\\\\\\\Token')" in generated
+    validate_generated_code(output_dir)
 
 
 @pytest.mark.cli_doc(
@@ -436,13 +515,8 @@ def test_generate_callbacks(oas_file: Path, output_dir: Path) -> None:
 
 
 @pytest.mark.cli_doc(
-    options=[
-        "--model-file",
-        "--model-template-dir",
-        "--output-model-type",
-        "--python-version",
-    ],
-    option_description="Customize generated model paths and datamodel-code-generator output settings.",
+    options=["--model-file"],
+    option_description="Write generated models to a custom module path.",
     cli_args=[
         "--input",
         "openapi/default_template/body_and_parameters.yaml",
@@ -459,6 +533,74 @@ def test_generate_callbacks(oas_file: Path, output_dir: Path) -> None:
     ],
     input_schema="openapi/default_template/body_and_parameters.yaml",
     golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=[
+        "--model-template-dir",
+        "--output-model-type",
+        "--python-version",
+    ],
+)
+@pytest.mark.cli_doc(
+    options=["--model-template-dir"],
+    option_description="Use a custom datamodel-code-generator template directory.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--model-file",
+        "custom_models.py",
+        "--model-template-dir",
+        "model_templates",
+        "--output-model-type",
+        "pydantic_v2.BaseModel",
+        "--python-version",
+        "3.13",
+    ],
+    input_schema="openapi/default_template/body_and_parameters.yaml",
+    golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=["--model-file", "--output-model-type", "--python-version"],
+)
+@pytest.mark.cli_doc(
+    options=["--output-model-type"],
+    option_description="Choose the datamodel-code-generator output backend.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--model-file",
+        "custom_models.py",
+        "--model-template-dir",
+        "model_templates",
+        "--output-model-type",
+        "pydantic_v2.BaseModel",
+        "--python-version",
+        "3.13",
+    ],
+    input_schema="openapi/default_template/body_and_parameters.yaml",
+    golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=["--model-file", "--model-template-dir", "--python-version"],
+)
+@pytest.mark.cli_doc(
+    options=["--python-version"],
+    option_description="Target a specific Python version when formatting generated code.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--model-file",
+        "custom_models.py",
+        "--model-template-dir",
+        "model_templates",
+        "--output-model-type",
+        "pydantic_v2.BaseModel",
+        "--python-version",
+        "3.13",
+    ],
+    input_schema="openapi/default_template/body_and_parameters.yaml",
+    golden_output="openapi/coverage/model_options/custom_models.py",
+    related_options=["--model-file", "--model-template-dir", "--output-model-type"],
 )
 @freeze_time("2020-06-19")
 def test_generate_with_model_options(tmp_path: Path, output_dir: Path) -> None:

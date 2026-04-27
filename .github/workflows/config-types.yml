@@ -1,0 +1,52 @@
+name: Check config types
+
+on:
+  push:
+    paths:
+      - "fastapi_code_generator/**"
+      - "pyproject.toml"
+      - "tox.ini"
+      - ".github/workflows/config-types.yml"
+  pull_request:
+    paths:
+      - "fastapi_code_generator/**"
+      - "pyproject.toml"
+      - "tox.ini"
+      - ".github/workflows/config-types.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  config-types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+
+      - id: preflight
+        run: |
+          if grep -q '^\[testenv:config-types\]' tox.ini; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        if: steps.preflight.outputs.enabled == 'true'
+        with:
+          enable-cache: true
+
+      - run: uv python install 3.14
+        if: steps.preflight.outputs.enabled == 'true'
+
+      - run: uv tool install --python 3.14 tox --with tox-uv
+        if: steps.preflight.outputs.enabled == 'true'
+
+      - run: tox -e config-types
+        if: steps.preflight.outputs.enabled == 'true'
+
+      - name: Skip when config-types support is not present
+        if: steps.preflight.outputs.enabled != 'true'
+        run: echo "No config-types tox environment is defined for this repository."

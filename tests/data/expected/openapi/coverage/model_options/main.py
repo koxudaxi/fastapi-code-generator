@@ -4,22 +4,19 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from fastapi import FastAPI, Path, Query, Request
 from starlette.requests import Request
 
 from .custom_models import (
     Error,
-    FoodFoodIdGetResponse,
-    MessageTexts,
     Pet,
     PetForm,
-    PetsGetResponse,
     UserGetResponse,
     UserPostRequest,
-    UsersGetResponse,
-    UsersPostRequest,
+    UsersGetResponseItem,
+    UsersPostRequestItem,
 )
 
 app = FastAPI(
@@ -64,10 +61,10 @@ def post_food(body: str) -> Optional[str]:
     pass
 
 
-@app.get('/food/{food_id}', response_model=FoodFoodIdGetResponse, tags=['foods'])
+@app.get('/food/{food_id}', response_model=List[int], tags=['foods'])
 def show_food_by_id(
-    food_id: str, message_texts: Optional[MessageTexts] = None
-) -> FoodFoodIdGetResponse:
+    food_id: str, message_texts: Optional[List[str]] = Query(None)
+) -> List[int]:
     """
     Info for a specific pet
     """
@@ -76,7 +73,7 @@ def show_food_by_id(
 
 @app.get(
     '/pets',
-    response_model=PetsGetResponse,
+    response_model=List[Pet],
     responses={'default': {'model': Error}},
     tags=['pets'],
 )
@@ -84,7 +81,7 @@ def list_pets(
     limit: Optional[int] = 0,
     home_address: Optional[str] = Query('Unknown', alias='HomeAddress'),
     kind: Optional[str] = 'dog',
-) -> Union[PetsGetResponse, Error]:
+) -> Union[List[Pet], Error]:
     """
     List all pets
     """
@@ -139,13 +136,13 @@ def post_user(body: UserPostRequest) -> None:
     pass
 
 
-@app.get('/users', response_model=UsersGetResponse, tags=['user'])
-def get_users() -> UsersGetResponse:
+@app.get('/users', response_model=List[UsersGetResponseItem], tags=['user'])
+def get_users() -> List[UsersGetResponseItem]:
     pass
 
 
 @app.post('/users', response_model=None, tags=['user'])
-def post_users(body: UsersPostRequest) -> None:
+def post_users(body: List[UsersPostRequestItem]) -> None:
     pass
 
 
