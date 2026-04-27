@@ -443,8 +443,11 @@ def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None
     )
 
     router_text = output_dir.joinpath("routers", "items.py").read_text(encoding="utf-8")
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
     assert "@router.get('/items/{itemId}', response_model=None" in router_text
     assert "item_id: str = Path(..., alias='itemId')" in router_text
+    assert "from .routers import items" in main_text
+    assert "app.include_router(items.router)" in main_text
     validate_generated_code(output_dir)
 
 
