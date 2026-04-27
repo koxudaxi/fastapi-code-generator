@@ -53,8 +53,8 @@ jobs:
           enable-cache: true
       - name: Install tox
         run: uv tool install tox --with tox-uv
-      - name: Build CLI docs
-        run: tox -e cli-docs
+      - name: Check CLI docs
+        run: tox -e cli-docs -- --check
       - name: Rename coverage file
         run: |
           import os
@@ -87,12 +87,10 @@ jobs:
           enable-cache: true
       - name: Install tox
         run: uv tool install tox --with tox-uv
-      - name: Setup README environment
-        run: tox run -vv --notest --skip-missing-interpreters false -e readme
+      - name: Check README help snapshots
+        run: tox run -vv --skip-missing-interpreters false -e readme
         env:
           UV_PYTHON_PREFERENCE: "only-managed"
-      - name: Update README
-        run: .tox/readme/bin/python scripts/update_command_help_on_markdown.py
 
   llms-txt:
     name: llms.txt
@@ -110,8 +108,8 @@ jobs:
           enable-cache: true
       - name: Install tox
         run: uv tool install tox --with tox-uv
-      - name: Build llms.txt artifacts
-        run: tox -e llms-txt
+      - name: Check llms.txt artifacts
+        run: tox -e llms-txt -- --check
 
   schema-docs:
     name: Schema docs
@@ -129,8 +127,8 @@ jobs:
           enable-cache: true
       - name: Install tox
         run: uv tool install tox --with tox-uv
-      - name: Build supported formats docs
-        run: tox -e schema-docs
+      - name: Check supported formats docs
+        run: tox -e schema-docs -- --check
 
   config-types:
     name: Config types
