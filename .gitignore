@@ -179,3 +179,4 @@ fabric.properties
 .vscode/
 
 version.py
+tests/cli_doc/.cli_doc_collection.json

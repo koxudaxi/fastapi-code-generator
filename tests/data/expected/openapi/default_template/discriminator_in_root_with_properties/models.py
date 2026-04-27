@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Literal, Optional, Union
 
-from pydantic import BaseModel, Extra, Field
+from pydantic import BaseModel, ConfigDict, Field, RootModel
 
 
 class IssueContextVariable(BaseModel):
@@ -21,23 +21,22 @@ class UserContextVariable(BaseModel):
 
 
 class CustomContextVariable1(UserContextVariable):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     type: Literal['user'] = Field(..., description='Type of custom context variable.')
 
 
 class CustomContextVariable2(IssueContextVariable):
-    class Config:
-        extra = Extra.forbid
-
+    model_config = ConfigDict(
+        extra='forbid',
+    )
     type: Literal['issue'] = Field(..., description='Type of custom context variable.')
 
 
-class CustomContextVariable(BaseModel):
-    class Config:
-        extra = Extra.forbid
-
-    __root__: Union[CustomContextVariable1, CustomContextVariable2] = Field(
+class CustomContextVariable(
+    RootModel[Union[CustomContextVariable1, CustomContextVariable2]]
+):
+    root: Union[CustomContextVariable1, CustomContextVariable2] = Field(
         ..., discriminator='type'
     )
