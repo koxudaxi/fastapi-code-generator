@@ -10,7 +10,7 @@ router = APIRouter(
 
 {% for operation in operations %}
 {% if operation.tags[0] == tag %}
-@router.{{operation.type}}('{{operation.snake_case_path}}', response_model={{operation.response}}
+@router.{{operation.type}}('{{operation.path}}', response_model={{operation.response}}
     {% if operation.additional_responses %}
         , responses={
             {% for status_code, models in operation.additional_responses.items() %}
