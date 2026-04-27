@@ -112,6 +112,14 @@ Render enum fields as Literal annotations.
 
 Input schema: `openapi/default_template/duplicate_anonymus_parameter.yaml`
 
+### --use-annotated
+
+Render model field constraints with typing.Annotated.
+
+`fastapi-codegen --input openapi/default_template/recursion.yaml --output app --use-annotated`
+
+Input schema: `openapi/default_template/recursion.yaml`
+
 ### --model-file
 
 Write generated models to a custom module path.

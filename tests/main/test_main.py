@@ -500,6 +500,43 @@ def test_generate_with_enum_field_as_literal(output_dir: Path) -> None:
     )
 
 
+@pytest.mark.cli_doc(
+    options=["--use-annotated"],
+    option_description="Render model field constraints with typing.Annotated.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/recursion.yaml",
+        "--output",
+        "app",
+        "--use-annotated",
+    ],
+    input_schema="openapi/default_template/recursion.yaml",
+    golden_output="openapi/default_template/recursion/models.py",
+)
+@freeze_time("2020-06-19")
+def test_generate_with_use_annotated(output_dir: Path) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "recursion.yaml"),
+                "--output",
+                str(output_dir),
+                "--use-annotated",
+            ]
+        )
+        == 0
+    )
+
+    models = output_dir.joinpath("models.py").read_text(encoding="utf-8")
+    assert "from typing import Annotated, Optional" in models
+    assert (
+        "Field(examples=['5abbe4b7ddc1b351ef961414'], "
+        "pattern='^[0-9a-fA-F]{24}$')"
+    ) in models
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.parametrize(
     "oas_file",
     sorted((DATA_PATH / OPEN_API_COVERAGE_DIR_NAME).glob("callbacks*.yaml")),

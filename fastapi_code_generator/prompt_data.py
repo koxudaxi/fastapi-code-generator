@@ -283,6 +283,18 @@ PROMPT_DATA: dict[str, Any] = {
             'input_schema': 'openapi/default_template/duplicate_anonymus_parameter.yaml',
         },
         {
+            'options': ['--use-annotated'],
+            'description': 'Render model field constraints with ' 'typing.Annotated.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/recursion.yaml',
+                '--output',
+                'app',
+                '--use-annotated',
+            ],
+            'input_schema': 'openapi/default_template/recursion.yaml',
+        },
+        {
             'options': ['--model-file'],
             'description': 'Write generated models to a custom module path.',
             'cli_args': [
