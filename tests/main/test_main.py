@@ -374,6 +374,39 @@ def test_generate_using_routers(oas_file: Path, output_dir: Path) -> None:
     )
 
 
+def test_generate_router_name_from_hyphenated_tag(output_dir: Path) -> None:
+    spec = json.dumps(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "Example", "version": "1.0.0"},
+            "paths": {
+                "/items": {
+                    "get": {
+                        "tags": ["Foo-Bar"],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            },
+        }
+    )
+
+    generate_code(
+        "hyphenated_tag.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        BUILTIN_MODULAR_TEMPLATE_DIR,
+        disable_timestamp=True,
+        generate_routers=True,
+    )
+
+    assert output_dir.joinpath("routers", "foo_bar.py").exists()
+    assert "from .routers import foo_bar" in output_dir.joinpath("main.py").read_text(
+        encoding="utf-8"
+    )
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--specify-tags"],
     option_description="Regenerate only the routers matching a comma-separated tag list.",
