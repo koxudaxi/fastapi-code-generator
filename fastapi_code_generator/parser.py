@@ -288,6 +288,8 @@ class OpenAPIParser(OpenAPIModelParser):
             target_python_version=target_python_version,
             dump_resolve_reference_action=dump_resolve_reference_action,
             validation=validation,
+            # use_annotated intentionally enables field_constraints so
+            # datamodel-code-generator renders constraints via Annotated.
             field_constraints=field_constraints or use_annotated,
             snake_case_field=snake_case_field,
             strip_default_none=strip_default_none,

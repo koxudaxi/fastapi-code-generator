@@ -103,7 +103,11 @@ def main(
         callback=_show_version,
         is_eager=True,
     ),
-    use_annotated: bool = typer.Option(False, "--use-annotated"),
+    use_annotated: bool = typer.Option(
+        False,
+        "--use-annotated",
+        help="Use typing.Annotated for generated model field constraints.",
+    ),
 ) -> None:
     del version
     input_name: str = Path(input_file).name
