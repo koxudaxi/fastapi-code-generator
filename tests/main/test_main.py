@@ -407,6 +407,49 @@ def test_generate_router_name_from_hyphenated_tag(output_dir: Path) -> None:
     validate_generated_code(output_dir)
 
 
+def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None:
+    spec = json.dumps(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "Example", "version": "1.0.0"},
+            "paths": {
+                "/items/{itemId}": {
+                    "get": {
+                        "operationId": "getItem",
+                        "tags": ["Items"],
+                        "parameters": [
+                            {
+                                "name": "itemId",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            },
+        }
+    )
+
+    generate_code(
+        "camel_path_parameter.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        BUILTIN_MODULAR_TEMPLATE_DIR,
+        disable_timestamp=True,
+        generate_routers=True,
+    )
+
+    router_text = output_dir.joinpath("routers", "items.py").read_text(
+        encoding="utf-8"
+    )
+    assert "@router.get('/items/{itemId}', response_model=None" in router_text
+    assert "item_id: str = Path(..., alias='itemId')" in router_text
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--specify-tags"],
     option_description="Regenerate only the routers matching a comma-separated tag list.",

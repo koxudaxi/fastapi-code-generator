@@ -27,7 +27,7 @@ def create_wild_boars() -> None:
     pass
 
 
-@router.get('/boars/{boar_id}', response_model=Pet, tags=['Wild Boars'])
+@router.get('/boars/{boarId}', response_model=Pet, tags=['Wild Boars'])
 def show_boar_by_id(boar_id: str = Path(..., alias='boarId')) -> Pet:
     """
     Info For a Specific Boar
