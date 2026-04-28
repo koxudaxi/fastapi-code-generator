@@ -33,6 +33,18 @@ BUILTIN_MODULAR_TEMPLATE_DIR = DATA_PATH / "modular_template"
 SPECIFIC_TAGS = "Wild Boars, Fat Cats"
 
 
+def assert_specific_tag_routers_generated(output_dir: Path) -> None:
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "from .routers import fat_cats, wild_boars" in main_text
+    assert "app.include_router(fat_cats.router)" in main_text
+    assert "app.include_router(wild_boars.router)" in main_text
+    assert "slim_dogs" not in main_text
+    assert output_dir.joinpath("routers", "fat_cats.py").exists()
+    assert output_dir.joinpath("routers", "wild_boars.py").exists()
+    assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--help"],
     option_description="Show the CLI help message.",
@@ -640,15 +652,7 @@ def test_generate_specific_tags_without_existing_main(output_dir: Path) -> None:
         == 0
     )
 
-    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
-    assert "from .routers import fat_cats, wild_boars" in main_text
-    assert "app.include_router(fat_cats.router)" in main_text
-    assert "app.include_router(wild_boars.router)" in main_text
-    assert "slim_dogs" not in main_text
-    assert output_dir.joinpath("routers", "fat_cats.py").exists()
-    assert output_dir.joinpath("routers", "wild_boars.py").exists()
-    assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
-    validate_generated_code(output_dir)
+    assert_specific_tag_routers_generated(output_dir)
 
 
 @freeze_time("2023-04-11")
@@ -681,15 +685,7 @@ def test_generate_specific_tags_with_existing_main_without_router_includes(
         == 0
     )
 
-    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
-    assert "from .routers import fat_cats, wild_boars" in main_text
-    assert "app.include_router(fat_cats.router)" in main_text
-    assert "app.include_router(wild_boars.router)" in main_text
-    assert "slim_dogs" not in main_text
-    assert output_dir.joinpath("routers", "fat_cats.py").exists()
-    assert output_dir.joinpath("routers", "wild_boars.py").exists()
-    assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
-    validate_generated_code(output_dir)
+    assert_specific_tag_routers_generated(output_dir)
 
 
 def test_generate_specific_tags_without_matching_tag(

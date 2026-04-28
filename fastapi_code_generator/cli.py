@@ -277,7 +277,7 @@ def generate_code(
     # Convert from Tag Names to router_names
     sorted_tags = sorted(set(all_tags), key=lambda x: x.lower())
     routers = [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
-    router_tag_pairs = list(zip(routers, sorted_tags))
+    router_tag_pairs = list(zip(routers, sorted_tags, strict=True))
     specified_tags = set()
     existing_main_has_router_includes = False
     if generate_routers and specify_tags:
