@@ -57,6 +57,8 @@ Options:
   --specify-tags TEXT
   -c, --custom-visitor PATH
   --disable-timestamp
+  --strict-nullable               Respect explicit OpenAPI nullable flags when
+                                  generating models.
   --include-request-argument      Auto-inject a FastAPI Request parameter into
                                   operations when not present.
   -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]

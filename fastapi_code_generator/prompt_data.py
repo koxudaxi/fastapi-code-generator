@@ -122,6 +122,17 @@ PROMPT_DATA: dict[str, Any] = {
             'choices': [],
         },
         {
+            'name': 'strict_nullable',
+            'cli_flags': ['--strict-nullable'],
+            'description': 'Respect explicit OpenAPI nullable flags when '
+            'generating models.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
+        {
             'name': 'include_request_argument',
             'cli_flags': ['--include-request-argument'],
             'description': 'Auto-inject a FastAPI Request argument in '
@@ -260,6 +271,19 @@ PROMPT_DATA: dict[str, Any] = {
                 '--disable-timestamp',
             ],
             'input_schema': 'openapi/disable_timestamp/simple.yaml',
+        },
+        {
+            'options': ['--strict-nullable'],
+            'description': 'Respect explicit OpenAPI nullable flags when '
+            'generating models.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/nullable_test.yaml',
+                '--output',
+                'app',
+                '--strict-nullable',
+            ],
+            'input_schema': 'openapi/default_template/nullable_test.yaml',
         },
         {
             'options': ['--generate-routers'],
@@ -461,7 +485,7 @@ PROMPT_DATA: dict[str, Any] = {
     '\n'
     '| Format | Status | Evidence | Notes |\n'
     '|--------|--------|----------|-------|\n'
-    '| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (23 '
+    '| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (24 '
     'fixtures) | Primary fixture format exercised under '
     '`tests/data/openapi/**/*.yaml`. |\n'
     '| OpenAPI JSON | tested | '
@@ -477,7 +501,7 @@ PROMPT_DATA: dict[str, Any] = {
     '\n'
     '| Suite | Fixtures | Example files | Notes |\n'
     '|-------|----------|---------------|-------|\n'
-    '| Default template | 16 | `body_and_parameters.yaml`, '
+    '| Default template | 17 | `body_and_parameters.yaml`, '
     '`content_in_parameters.yaml`, '
     '`content_in_parameters_inline.yaml` | Core single-file '
     'generation scenarios exercised by the main CLI tests. |\n'

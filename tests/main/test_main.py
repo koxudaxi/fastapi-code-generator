@@ -432,6 +432,33 @@ def test_disable_timestamp(oas_file: Path, output_dir: Path) -> None:
 
 
 @pytest.mark.cli_doc(
+    options=["--strict-nullable"],
+    option_description="Respect explicit OpenAPI nullable flags when generating models.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/nullable_test.yaml",
+        "--output",
+        "app",
+        "--strict-nullable",
+    ],
+    input_schema="openapi/default_template/nullable_test.yaml",
+    golden_output="openapi/default_template/nullable_test_strict/models.py",
+)
+@freeze_time("2020-06-19")
+def test_generate_with_strict_nullable(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH
+        / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME
+        / "nullable_test.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH
+        / "default_template"
+        / "nullable_test_strict",
+        extra_args=["--strict-nullable"],
+    )
+
+
+@pytest.mark.cli_doc(
     options=["--generate-routers"],
     option_description="Generate modular router files from tagged OpenAPI operations.",
     cli_args=[

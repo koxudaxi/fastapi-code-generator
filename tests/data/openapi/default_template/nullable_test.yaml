@@ -1,0 +1,44 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Nullable Test API
+  description: API for testing nullable field behavior
+servers:
+  - url: http://api.example.com/v1
+paths:
+  /users:
+    get:
+      summary: Get user details
+      operationId: getUserDetails
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - phone
+        - username
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        email:
+          type: string
+          nullable: true
+          description: User's email address (explicitly nullable)
+        phone:
+          type: string
+          nullable: false
+          description: User's phone number (explicitly non-nullable)
+        nickname:
+          type: string
+          description: User's nickname (optional, not nullable under strict mode)

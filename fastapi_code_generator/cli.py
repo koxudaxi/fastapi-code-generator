@@ -90,6 +90,11 @@ def main(
         None, "--custom-visitor", "-c"
     ),
     disable_timestamp: bool = typer.Option(False, "--disable-timestamp"),
+    strict_nullable: bool = typer.Option(
+        False,
+        "--strict-nullable",
+        help="Respect explicit OpenAPI nullable flags when generating models.",
+    ),
     include_request_argument: bool = typer.Option(
         False,
         "--include-request-argument",
@@ -137,6 +142,7 @@ def main(
         enum_field_as_literal=enum_field_as_literal or None,
         custom_visitors=custom_visitors,
         disable_timestamp=disable_timestamp,
+        strict_nullable=strict_nullable,
         include_request_argument=include_request_argument,
         generate_routers=generate_routers,
         specify_tags=specify_tags,
@@ -176,6 +182,7 @@ def generate_code(
     enum_field_as_literal: Optional[LiteralType] = None,
     custom_visitors: Optional[List[Path]] = None,
     disable_timestamp: bool = False,
+    strict_nullable: bool = False,
     include_request_argument: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
@@ -209,6 +216,7 @@ def generate_code(
         dump_resolve_reference_action=data_model_types.dump_resolve_reference_action,
         custom_template_dir=model_template_dir,
         target_python_version=python_version,
+        strict_nullable=strict_nullable,
         include_request_argument=include_request_argument,
         use_annotated=use_annotated,
     )

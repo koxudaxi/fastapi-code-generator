@@ -30,5 +30,6 @@ class GenerateConfigDict(TypedDict):
     ]
     python_version: NotRequired[Literal['3.10', '3.11', '3.12', '3.13', '3.14']]
     specify_tags: NotRequired[str | None]
+    strict_nullable: NotRequired[bool]
     template_dir: NotRequired[str | None]
     use_annotated: NotRequired[bool]
