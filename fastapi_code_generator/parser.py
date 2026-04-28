@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import re
-from functools import cached_property
+from functools import cached_property, lru_cache
 from typing import (
     Any,
     Callable,
@@ -11,6 +11,7 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    Match,
     Optional,
     Pattern,
     Sequence,
@@ -20,7 +21,6 @@ from typing import (
 )
 from urllib.parse import ParseResult
 
-import stringcase
 from datamodel_code_generator import (
     DefaultPutDict,
     LiteralType,
@@ -47,6 +47,59 @@ from datamodel_code_generator.types import DataType, DataTypeManager
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
+RE_SNAKECASE_REPLACE_PATTERN: Pattern[str] = re.compile(r"[\-\.\s]")
+RE_UPPERCASE_PATTERN: Pattern[str] = re.compile(r"[A-Z]")
+RE_CAMELCASE_STRIP_PATTERN: Pattern[str] = re.compile(r"\w[\s\W]+\w")
+RE_CAMELCASE_REPLACE_PATTERN: Pattern[str] = re.compile(r"[\-_\.\s]([a-z])")
+
+
+def _underscore_lowercase(match: Match[str]) -> str:
+    return '_' + match.group(0).lower()
+
+
+def _uppercase_group(match: Match[str]) -> str:
+    return match.group(1).upper()
+
+
+@lru_cache(maxsize=2048)
+def _snakecase_string(value: str) -> str:
+    string = RE_SNAKECASE_REPLACE_PATTERN.sub('_', value)
+    if not string:
+        return string
+    return string[0].lower() + RE_UPPERCASE_PATTERN.sub(
+        _underscore_lowercase, string[1:]
+    )
+
+
+@lru_cache(maxsize=2048)
+def _camelcase_string(value: str) -> str:
+    string = RE_CAMELCASE_STRIP_PATTERN.sub('', value)
+    if not string:
+        return string
+    return string[0].lower() + RE_CAMELCASE_REPLACE_PATTERN.sub(
+        _uppercase_group,
+        string[1:],
+    )
+
+
+@lru_cache(maxsize=2048)
+def _pascalcase_string(value: str) -> str:
+    string = _camelcase_string(value)
+    if not string:
+        return string
+    return string[0].upper() + string[1:]
+
+
+def snakecase(value: object) -> str:
+    return _snakecase_string(str(value))
+
+
+def camelcase(value: object) -> str:
+    return _camelcase_string(str(value))
+
+
+def pascalcase(value: object) -> str:
+    return _pascalcase_string(str(value))
 
 
 class CachedPropertyModel(BaseModel):
@@ -78,15 +131,15 @@ class UsefulStr(str):
 
     @property
     def snakecase(self) -> str:  # pragma: no cover
-        return stringcase.snakecase(self)
+        return snakecase(self)
 
     @property
     def pascalcase(self) -> str:  # pragma: no cover
-        return stringcase.pascalcase(self)
+        return pascalcase(self)
 
     @property
     def camelcase(self) -> str:  # pragma: no cover
-        return stringcase.camelcase(self)
+        return camelcase(self)
 
 
 class Argument(CachedPropertyModel):
@@ -123,8 +176,8 @@ class Argument(CachedPropertyModel):
     def snakecase(self) -> str:
         type_hint = self.resolved_type_hint
         if self.default is None and self.required:
-            return f'{stringcase.snakecase(self.name)}: {type_hint}'
-        return f'{stringcase.snakecase(self.name)}: {type_hint} = {self.default}'
+            return f'{snakecase(self.name)}: {type_hint}'
+        return f'{snakecase(self.name)}: {type_hint} = {self.default}'
 
     @property
     def plain_parameter(self) -> str:
@@ -204,7 +257,7 @@ class Operation(CachedPropertyModel):
     @property
     def plain_arguments(self) -> str:
         return ", ".join(
-            stringcase.snakecase(argument.name) for argument in self._merged_arguments
+            snakecase(argument.name) for argument in self._merged_arguments
         )
 
     @property
@@ -231,9 +284,7 @@ class Operation(CachedPropertyModel):
 
     @cached_property
     def snake_case_path(self) -> str:
-        return re.sub(
-            r"{([^\}]+)}", lambda m: stringcase.snakecase(m.group()), self.path
-        )
+        return re.sub(r"{([^\}]+)}", lambda m: snakecase(m.group()), self.path)
 
     @cached_property
     def function_name(self) -> str:
@@ -242,7 +293,7 @@ class Operation(CachedPropertyModel):
         else:
             path = re.sub(r'/{|/', '_', self.snake_case_path).replace('}', '')
             name = f"{self.type}{path}"
-        return stringcase.snakecase(name)
+        return snakecase(name)
 
 
 @snooper_to_methods()
@@ -373,7 +424,7 @@ class OpenAPIParser(OpenAPIModelParser):
         orig_name = parameters.name
         name = self.model_resolver.get_valid_field_name(parameters.name)
         if snake_case:  # pragma: no branch
-            name = stringcase.snakecase(name)
+            name = snakecase(name)
 
         schema: Optional[JsonSchemaObject] = None
         data_type: Optional[DataType] = None
@@ -593,7 +644,7 @@ class OpenAPIParser(OpenAPIModelParser):
                 if self._is_upload_file_array(
                     property_schema
                 ) or self._is_upload_file_schema(property_schema):
-                    return stringcase.snakecase(
+                    return snakecase(
                         self.model_resolver.get_valid_field_name(property_name)
                     )
         return 'file'

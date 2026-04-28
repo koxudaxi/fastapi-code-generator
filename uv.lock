@@ -667,7 +667,6 @@ dependencies = [
     { name = "jinja2" },
     { name = "pydantic" },
     { name = "pysnooper" },
-    { name = "stringcase" },
     { name = "typer" },
 ]
 
@@ -740,7 +739,6 @@ requires-dist = [
     { name = "jinja2", specifier = ">=2.11.2,<4" },
     { name = "pydantic", specifier = ">=2.12,<3" },
     { name = "pysnooper", specifier = ">=0.4.1,<2" },
-    { name = "stringcase", specifier = ">=1.2,<2" },
     { name = "typer", specifier = ">=0.12,<1" },
 ]
 
@@ -1843,12 +1841,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", size = 9755, upload-time = "2023-10-24T04:13:38.866Z" },
 ]
-
-[[package]]
-name = "stringcase"
-version = "1.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/1f/1241aa3d66e8dc1612427b17885f5fcd9c9ee3079fc0d28e9a3aeeb36fa3/stringcase-1.2.0.tar.gz", hash = "sha256:48a06980661908efe8d9d34eab2b6c13aefa2163b3ced26972902e3bdfd87008", size = 2958, upload-time = "2017-08-06T01:40:57.021Z" }
 
 [[package]]
 name = "time-machine"

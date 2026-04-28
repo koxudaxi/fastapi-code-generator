@@ -4,7 +4,44 @@ import pytest
 from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
 from datamodel_code_generator.parser.openapi import ReferenceObject, RequestBodyObject
 
-from fastapi_code_generator.parser import OpenAPIParser
+from fastapi_code_generator.parser import OpenAPIParser, UsefulStr, snakecase
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("listPets", "list_pets"),
+        ("pet-id", "pet_id"),
+        ("pet.id", "pet_id"),
+        ("pet id", "pet_id"),
+        ("{petId}", "{pet_id}"),
+        ("HTTPStatus", "h_t_t_p_status"),
+        ("", ""),
+    ],
+)
+def test_snakecase_matches_legacy_stringcase_behavior(
+    value: str, expected: str
+) -> None:
+    assert snakecase(value) == expected
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_snake", "expected_camel", "expected_pascal"),
+    [
+        ("sample_name", "sample_name", "sampleName", "SampleName"),
+        ("listPets", "list_pets", "listPets", "ListPets"),
+        ("SampleName", "sample_name", "sampleName", "SampleName"),
+        ("", "", "", ""),
+    ],
+)
+def test_useful_str_case_helpers_match_legacy_stringcase_behavior(
+    value: str, expected_snake: str, expected_camel: str, expected_pascal: str
+) -> None:
+    useful_value = UsefulStr(value)
+
+    assert useful_value.snakecase == expected_snake
+    assert useful_value.camelcase == expected_camel
+    assert useful_value.pascalcase == expected_pascal
 
 
 def test_get_upload_file_type_resolves_reference(tmp_path: Path) -> None:
