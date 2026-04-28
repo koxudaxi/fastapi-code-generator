@@ -121,6 +121,14 @@ def main(
         "--use-annotated",
         help="Use typing.Annotated for generated model field constraints.",
     ),
+    enable_faux_immutability: bool = typer.Option(
+        False,
+        "--enable-faux-immutability",
+        help=(
+            "Generate frozen Pydantic models so instances are hashable when their "
+            "fields are hashable."
+        ),
+    ),
 ) -> None:
     del version
     input_name: str = Path(input_file).name
@@ -149,6 +157,7 @@ def main(
         output_model_type=output_model_type,
         python_version=python_version,
         use_annotated=use_annotated,
+        enable_faux_immutability=enable_faux_immutability,
     )
 
 
@@ -189,6 +198,7 @@ def generate_code(
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
     use_annotated: bool = False,
+    enable_faux_immutability: bool = False,
 ) -> None:
     global all_tags
     if not model_path:  # pragma: no cover
@@ -219,6 +229,7 @@ def generate_code(
         strict_nullable=strict_nullable,
         include_request_argument=include_request_argument,
         use_annotated=use_annotated,
+        enable_faux_immutability=enable_faux_immutability,
     )
 
     with chdir(output_dir):

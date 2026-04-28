@@ -29,6 +29,8 @@ Options:
   -V, --version
   --use-annotated                 Use typing.Annotated for generated model
                                   field constraints.
+  --enable-faux-immutability      Generate frozen Pydantic models so instances
+                                  are hashable when their fields are hashable.
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
@@ -140,6 +142,14 @@ Render model field constraints with typing.Annotated.
 `fastapi-codegen --input openapi/default_template/recursion.yaml --output app --use-annotated`
 
 Input schema: `openapi/default_template/recursion.yaml`
+
+### --enable-faux-immutability
+
+Generate frozen Pydantic models so instances are hashable when their fields are hashable.
+
+`fastapi-codegen --input openapi/coverage/faux_immutability.yaml --output app --enable-faux-immutability`
+
+Input schema: `openapi/coverage/faux_immutability.yaml`
 
 ### --model-file
 
