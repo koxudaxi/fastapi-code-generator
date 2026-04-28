@@ -133,6 +133,17 @@ PROMPT_DATA: dict[str, Any] = {
             'choices': [],
         },
         {
+            'name': 'include_request_argument',
+            'cli_flags': ['--include-request-argument'],
+            'description': 'Auto-inject a FastAPI Request argument in '
+            'generated operation signatures when not present.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
+        {
             'name': 'output_model_type',
             'cli_flags': ['--output-model-type', '-d'],
             'description': 'Model backend passed through to '
@@ -159,6 +170,17 @@ PROMPT_DATA: dict[str, Any] = {
             'multiple': False,
             'type': 'literal',
             'choices': ['3.10', '3.11', '3.12', '3.13', '3.14'],
+        },
+        {
+            'name': 'use_annotated',
+            'cli_flags': ['--use-annotated'],
+            'description': 'Use `typing.Annotated` for generated model field '
+            'constraints.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
         },
     ],
     'cli_examples': [
@@ -211,6 +233,19 @@ PROMPT_DATA: dict[str, Any] = {
                 'custom_template/security',
             ],
             'input_schema': 'openapi/custom_template_security/custom_security.yaml',
+        },
+        {
+            'options': ['--include-request-argument'],
+            'description': 'Auto-inject a FastAPI Request argument in generated '
+            'operation signatures when not present.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/simple.yaml',
+                '--output',
+                'app',
+                '--include-request-argument',
+            ],
+            'input_schema': 'openapi/default_template/simple.yaml',
         },
         {
             'options': ['--encoding'],
@@ -294,6 +329,18 @@ PROMPT_DATA: dict[str, Any] = {
                 'all',
             ],
             'input_schema': 'openapi/default_template/duplicate_anonymus_parameter.yaml',
+        },
+        {
+            'options': ['--use-annotated'],
+            'description': 'Render model field constraints with ' 'typing.Annotated.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/recursion.yaml',
+                '--output',
+                'app',
+                '--use-annotated',
+            ],
+            'input_schema': 'openapi/default_template/recursion.yaml',
         },
         {
             'options': ['--model-file'],

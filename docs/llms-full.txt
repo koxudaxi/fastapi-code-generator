@@ -59,13 +59,17 @@ Options:
   --specify-tags TEXT
   -c, --custom-visitor PATH
   --disable-timestamp
-  --strict-nullable               Strictly follow nullable attributes in
-                                  OpenAPI schemas.
+  --strict-nullable               Respect explicit OpenAPI nullable flags when
+                                  generating models.
+  --include-request-argument      Auto-inject a FastAPI Request parameter into
+                                  operations when not present.
   -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
                                   [default: pydantic_v2.BaseModel]
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
                                   [default: 3.10]
   -V, --version
+  --use-annotated                 Use typing.Annotated for generated model
+                                  field constraints.
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
@@ -316,7 +320,6 @@ FastAPI's [Bigger Applications](https://fastapi.tiangolo.com/tutorial/bigger-app
 
 - Use the [CLI reference](cli-reference.md) for option-by-option behavior and tested scenarios
 - Use the [development and contributing guide](development-contributing.md) for the local workflow, docs sync, and release-adjacent checks
-
 ---
 
 # CLI Reference
@@ -341,13 +344,17 @@ Options:
   --specify-tags TEXT
   -c, --custom-visitor PATH
   --disable-timestamp
-  --strict-nullable               Strictly follow nullable attributes in
-                                  OpenAPI schemas.
+  --strict-nullable               Respect explicit OpenAPI nullable flags when
+                                  generating models.
+  --include-request-argument      Auto-inject a FastAPI Request parameter into
+                                  operations when not present.
   -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
                                   [default: pydantic_v2.BaseModel]
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
                                   [default: 3.10]
   -V, --version
+  --use-annotated                 Use typing.Annotated for generated model
+                                  field constraints.
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
@@ -395,6 +402,14 @@ Render generated files with a custom template directory.
 `fastapi-codegen --input openapi/custom_template_security/custom_security.yaml --output app --template-dir custom_template/security`
 
 Input schema: `openapi/custom_template_security/custom_security.yaml`
+
+### --include-request-argument
+
+Auto-inject a FastAPI Request argument in generated operation signatures when not present.
+
+`fastapi-codegen --input openapi/default_template/simple.yaml --output app --include-request-argument`
+
+Input schema: `openapi/default_template/simple.yaml`
 
 ### --encoding
 
@@ -444,6 +459,14 @@ Render enum fields as Literal annotations.
 
 Input schema: `openapi/default_template/duplicate_anonymus_parameter.yaml`
 
+### --use-annotated
+
+Render model field constraints with typing.Annotated.
+
+`fastapi-codegen --input openapi/default_template/recursion.yaml --output app --use-annotated`
+
+Input schema: `openapi/default_template/recursion.yaml`
+
 ### --model-file
 
 Write generated models to a custom module path.
@@ -491,7 +514,6 @@ Load a custom visitor module and expose additional template variables.
 `fastapi-codegen --input openapi/default_template/simple.yaml --output app --template-dir template --generate-routers --custom-visitor visitor.py`
 
 Input schema: `openapi/default_template/simple.yaml`
-
 ---
 
 # Supported Formats
@@ -529,7 +551,6 @@ Run `tox run -e schema-docs` after changing supported inputs or model backends.
 | `dataclasses.dataclass` | supported | Standard-library dataclass output. |
 | `typing.TypedDict` | supported | TypedDict-based model output. |
 | `msgspec.Struct` | supported | msgspec Struct output. |
-
 ---
 
 # Development and Contributing
@@ -621,4 +642,3 @@ tox run -e coverage
 - Keep `docs/index.md` as the canonical long-form overview instead of copying `README.md` into docs
 - Regenerate `docs/cli-reference.md` after CLI option changes
 - Regenerate `docs/llms.txt` and `docs/llms-full.txt` after docs page or nav changes
-

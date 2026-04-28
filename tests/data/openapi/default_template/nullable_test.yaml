@@ -41,4 +41,4 @@ components:
           description: User's phone number (explicitly non-nullable)
         nickname:
           type: string
-          description: User's nickname (implicitly nullable)
+          description: User's nickname (optional, not nullable under strict mode)

@@ -101,36 +101,34 @@ class Argument(CachedPropertyModel):
         return self.argument
 
     @property
-    def argument(self) -> str:  # pragma: no cover
+    def resolved_type_hint(self) -> UsefulStr:
         if self.field is None:
-            type_hint = self.type_hint
-        else:
-            type_hint = (
-                UsefulStr(self.field.type_hint)
-                if not isinstance(self.field, list)
-                else UsefulStr(
-                    f"Union[{', '.join(field.type_hint for field in self.field)}]"
-                )
+            return self.type_hint
+        return (
+            UsefulStr(self.field.type_hint)
+            if not isinstance(self.field, list)
+            else UsefulStr(
+                f"Union[{', '.join(field.type_hint for field in self.field)}]"
             )
+        )
+
+    @property
+    def argument(self) -> str:  # pragma: no cover
+        type_hint = self.resolved_type_hint
         if self.default is None and self.required:
             return f'{self.name}: {type_hint}'
         return f'{self.name}: {type_hint} = {self.default}'
 
     @property
     def snakecase(self) -> str:
-        if self.field is None:
-            type_hint = self.type_hint
-        else:
-            type_hint = (
-                UsefulStr(self.field.type_hint)
-                if not isinstance(self.field, list)
-                else UsefulStr(
-                    f"Union[{', '.join(field.type_hint for field in self.field)}]"
-                )
-            )
+        type_hint = self.resolved_type_hint
         if self.default is None and self.required:
             return f'{stringcase.snakecase(self.name)}: {type_hint}'
         return f'{stringcase.snakecase(self.name)}: {type_hint} = {self.default}'
+
+    @property
+    def plain_parameter(self) -> str:
+        return self.snakecase
 
 
 class Operation(CachedPropertyModel):
@@ -191,20 +189,34 @@ class Operation(CachedPropertyModel):
         """
         return self.method
 
+    @cached_property
+    def _merged_arguments(self) -> List[Argument]:
+        return Operation.merge_arguments_with_union(self.arguments_list)
+
     @property
     def arguments(self) -> str:  # pragma: no cover
-        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
-        return ", ".join(argument.argument for argument in sorted_arguments)
+        return ", ".join(argument.argument for argument in self._merged_arguments)
 
     @property
     def snake_case_arguments(self) -> str:
-        sorted_arguments = Operation.merge_arguments_with_union(self.arguments_list)
-        return ", ".join(argument.snakecase for argument in sorted_arguments)
+        return ", ".join(argument.snakecase for argument in self._merged_arguments)
+
+    @property
+    def plain_arguments(self) -> str:
+        return ", ".join(
+            stringcase.snakecase(argument.name) for argument in self._merged_arguments
+        )
+
+    @property
+    def plain_parameters(self) -> str:
+        return ", ".join(
+            argument.plain_parameter for argument in self._merged_arguments
+        )
 
     @property
     def imports(self) -> Imports:
         imports = Imports()
-        for argument in Operation.merge_arguments_with_union(self.arguments_list):
+        for argument in self._merged_arguments:
             if isinstance(argument.field, list):
                 for field in argument.field:
                     imports.append(field.data_type.import_)
@@ -274,6 +286,8 @@ class OpenAPIParser(OpenAPIModelParser):
         custom_class_name_generator: Optional[Callable[[str], str]] = None,
         field_extra_keys: Optional[Set[str]] = None,
         field_include_all_keys: bool = False,
+        include_request_argument: bool = False,
+        use_annotated: bool = False,
     ):
         super().__init__(
             source=source,
@@ -287,7 +301,9 @@ class OpenAPIParser(OpenAPIModelParser):
             target_python_version=target_python_version,
             dump_resolve_reference_action=dump_resolve_reference_action,
             validation=validation,
-            field_constraints=field_constraints,
+            # use_annotated intentionally enables field_constraints so
+            # datamodel-code-generator renders constraints via Annotated.
+            field_constraints=field_constraints or use_annotated,
             snake_case_field=snake_case_field,
             strip_default_none=strip_default_none,
             aliases=aliases,
@@ -313,11 +329,13 @@ class OpenAPIParser(OpenAPIModelParser):
             field_extra_keys=field_extra_keys,
             field_include_all_keys=field_include_all_keys,
             openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
+            use_annotated=use_annotated,
         )
         self.operations: Dict[str, Operation] = {}
         self._temporary_operation: Dict[str, Any] = {}
         self.imports_for_fastapi: Imports = Imports()
         self.data_types: List[DataType] = []
+        self.include_request_argument = include_request_argument
 
     def parse_info(self) -> Optional[Dict[str, Any]]:
         if not isinstance(self.raw_obj, dict):  # pragma: no cover
@@ -363,7 +381,7 @@ class OpenAPIParser(OpenAPIModelParser):
             if isinstance(content.schema_, ReferenceObject):
                 data_type = self.get_ref_data_type(content.schema_.ref)
                 ref_model = self.get_ref_model(content.schema_.ref)
-                schema = JsonSchemaObject.parse_obj(ref_model)  # pragma: no cover
+                schema = JsonSchemaObject.model_validate(ref_model)  # pragma: no cover
             else:
                 schema = content.schema_
             break
@@ -440,6 +458,19 @@ class OpenAPIParser(OpenAPIModelParser):
         if request:
             arguments.append(request)
 
+        if self.include_request_argument and not any(
+            argument.name == "request" for argument in arguments
+        ):
+            arguments.insert(
+                0,
+                Argument(
+                    name='request',  # type: ignore
+                    type_hint='Request',  # type: ignore
+                    required=True,
+                ),
+            )
+            self.imports_for_fastapi.append(Import.from_full_path("fastapi.Request"))
+
         positional_argument: bool = False
         for argument in arguments:
             if positional_argument and argument.required and argument.default is None:
@@ -463,7 +494,23 @@ class OpenAPIParser(OpenAPIModelParser):
         request_body: RequestBodyObject,
         path: List[str],
     ) -> Dict[str, DataType]:
-        request_body_fields = super().parse_request_body(name, request_body, path)
+        if 'multipart/form-data' in request_body.content:
+            content = {
+                media_type: media_obj
+                for media_type, media_obj in request_body.content.items()
+                if media_type != 'multipart/form-data'
+            }
+            request_body_fields = (
+                super().parse_request_body(
+                    name,
+                    request_body.model_copy(update={'content': content}),
+                    path,
+                )
+                if content
+                else {}
+            )
+        else:
+            request_body_fields = super().parse_request_body(name, request_body, path)
         arguments: List[Argument] = []
         for (
             media_type,
@@ -500,7 +547,7 @@ class OpenAPIParser(OpenAPIModelParser):
                         )
                     )
                     self.imports_for_fastapi.append(
-                        Import.from_full_path('starlette.requests.Request')
+                        Import.from_full_path('fastapi.Request')
                     )
                 elif media_type == 'application/octet-stream':
                     arguments.append(
@@ -514,10 +561,11 @@ class OpenAPIParser(OpenAPIModelParser):
                         Import.from_full_path("fastapi.Request")
                     )
                 elif media_type == 'multipart/form-data':
+                    file_name, type_hint = self._get_upload_file_type(media_obj.schema_)
                     arguments.append(
                         Argument(
-                            name='file',  # type: ignore
-                            type_hint='UploadFile',  # type: ignore
+                            name=file_name,  # type: ignore
+                            type_hint=type_hint,  # type: ignore
                             required=True,
                         )
                     )
@@ -526,6 +574,48 @@ class OpenAPIParser(OpenAPIModelParser):
                     )
         self._temporary_operation['_request'] = arguments[0] if arguments else None
         return request_body_fields
+
+    def _get_upload_file_type(
+        self, schema: Union[JsonSchemaObject, ReferenceObject]
+    ) -> tuple[str, str]:
+        if isinstance(schema, ReferenceObject):
+            schema = JsonSchemaObject.model_validate(self.get_ref_model(schema.ref))
+        file_name = self._get_upload_file_name(schema)
+        if self._is_upload_file_array(schema):
+            self.imports_for_fastapi.append(Import(from_='typing', import_='List'))
+            return file_name, 'List[UploadFile]'
+        return file_name, 'UploadFile'
+
+    def _get_upload_file_name(self, schema: JsonSchemaObject) -> str:
+        if schema.properties:
+            # The operation template supports one multipart upload argument.
+            for property_name, property_schema in schema.properties.items():
+                if self._is_upload_file_array(
+                    property_schema
+                ) or self._is_upload_file_schema(property_schema):
+                    return stringcase.snakecase(
+                        self.model_resolver.get_valid_field_name(property_name)
+                    )
+        return 'file'
+
+    def _is_upload_file_array(self, schema: Any) -> bool:
+        if not isinstance(schema, JsonSchemaObject):
+            return False
+        if schema.is_array and self._is_upload_file_schema(schema.items):
+            return True
+        if schema.properties:
+            return any(
+                self._is_upload_file_array(property_schema)
+                for property_schema in schema.properties.values()
+            )
+        return False
+
+    def _is_upload_file_schema(self, schema: Any) -> bool:
+        return (
+            isinstance(schema, JsonSchemaObject)
+            and schema.type == 'string'
+            and schema.format == 'binary'
+        )
 
     def parse_responses(  # type: ignore[override]
         self,

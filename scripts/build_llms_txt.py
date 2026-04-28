@@ -257,9 +257,7 @@ def generate_llms_full_txt(pages: list[PageInfo]) -> str:
             first_newline = content.find("\n")
             if first_newline != -1:
                 content = content[first_newline + 1 :].strip()
-        blocks.append(
-            f"# {page.title}\n\nSource: {page.url}\n\n{content}\n"
-        )
+        blocks.append(f"# {page.title}\n\nSource: {page.url}\n\n{content}")
     return "\n---\n\n".join(blocks) + "\n"
 
 

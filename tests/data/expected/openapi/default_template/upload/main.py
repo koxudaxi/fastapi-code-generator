@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import List, Optional
 
 from fastapi import FastAPI, Request, UploadFile
 
@@ -43,5 +43,20 @@ def upload_pet_image_with_octet_stream(
 ) -> Optional[Error]:
     """
     Upload image with octet-stream for a pet
+    """
+    pass
+
+
+@app.post(
+    '/pets/{id}/images/form-data',
+    response_model=None,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
+)
+def upload_pet_images_with_form_data(
+    id: str, images: List[UploadFile] = ...
+) -> Optional[Error]:
+    """
+    Upload images with Form-Data for a pet
     """
     pass

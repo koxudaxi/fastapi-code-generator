@@ -262,6 +262,97 @@ paths:
     validate_generated_code(output_dir)
 
 
+@freeze_time("2020-06-19")
+def test_custom_template_can_use_plain_arguments(
+    tmp_path: Path, output_dir: Path
+) -> None:
+    template_dir = tmp_path / "template"
+    template_dir.mkdir()
+    template_dir.joinpath("main.jinja2").write_text(
+        """
+PLAIN_ARGUMENTS = "{{ operations[0].plain_arguments }}"
+PLAIN_PARAMETERS = "{{ operations[0].plain_parameters }}"
+LEGACY_ARGUMENTS = "{{ operations[0].snake_case_arguments }}"
+""",
+        encoding="utf-8",
+    )
+    spec = """openapi: 3.0.0
+info:
+  title: Plain arguments
+  version: 1.0.0
+paths:
+  /pets/{pet_id}:
+    get:
+      operationId: listPets
+      responses:
+        '200':
+          description: ok
+      parameters:
+        - name: pet_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+"""
+
+    generate_code(
+        "plain_arguments.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        template_dir,
+    )
+
+    generated = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert 'PLAIN_ARGUMENTS = "pet_id, limit"' in generated
+    assert 'PLAIN_PARAMETERS = "pet_id: str, limit: Optional[int] = 0"' in generated
+    assert 'LEGACY_ARGUMENTS = "pet_id: str, limit: Optional[int] = 0"' in generated
+    validate_generated_code(output_dir)
+
+
+@pytest.mark.cli_doc(
+    options=["--include-request-argument"],
+    option_description=(
+        "Auto-inject a FastAPI Request argument in generated operation signatures "
+        "when not present."
+    ),
+    cli_args=[
+        "--input",
+        "openapi/default_template/simple.yaml",
+        "--output",
+        "app",
+        "--include-request-argument",
+    ],
+    input_schema="openapi/default_template/simple.yaml",
+)
+@freeze_time("2020-06-19")
+def test_include_request_argument(output_dir: Path) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "simple.yaml"),
+                "--output",
+                str(output_dir),
+                "--include-request-argument",
+            ]
+        )
+        == 0
+    )
+
+    generated = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "Request" in generated
+    assert "def list_pets(" in generated
+    assert "request: Request" in generated
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--encoding"],
     option_description="Read the input schema using an explicit text encoding.",
@@ -401,6 +492,83 @@ def test_generate_using_routers(oas_file: Path, output_dir: Path) -> None:
     )
 
 
+def test_generate_router_name_from_hyphenated_tag(output_dir: Path) -> None:
+    spec = json.dumps(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "Example", "version": "1.0.0"},
+            "paths": {
+                "/items": {
+                    "get": {
+                        "tags": ["Foo-Bar"],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            },
+        }
+    )
+
+    generate_code(
+        "hyphenated_tag.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        BUILTIN_MODULAR_TEMPLATE_DIR,
+        disable_timestamp=True,
+        generate_routers=True,
+    )
+
+    assert output_dir.joinpath("routers", "foo_bar.py").exists()
+    assert "from .routers import foo_bar" in output_dir.joinpath("main.py").read_text(
+        encoding="utf-8"
+    )
+    validate_generated_code(output_dir)
+
+
+def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None:
+    spec = json.dumps(
+        {
+            "openapi": "3.0.0",
+            "info": {"title": "Example", "version": "1.0.0"},
+            "paths": {
+                "/items/{itemId}": {
+                    "get": {
+                        "operationId": "getItem",
+                        "tags": ["Items"],
+                        "parameters": [
+                            {
+                                "name": "itemId",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            }
+                        ],
+                        "responses": {"200": {"description": "OK"}},
+                    }
+                }
+            },
+        }
+    )
+
+    generate_code(
+        "camel_path_parameter.yaml",
+        spec,
+        "utf-8",
+        output_dir,
+        BUILTIN_MODULAR_TEMPLATE_DIR,
+        disable_timestamp=True,
+        generate_routers=True,
+    )
+
+    router_text = output_dir.joinpath("routers", "items.py").read_text(encoding="utf-8")
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "@router.get('/items/{itemId}', response_model=None" in router_text
+    assert "item_id: str = Path(..., alias='itemId')" in router_text
+    assert "from .routers import items" in main_text
+    assert "app.include_router(items.router)" in main_text
+    validate_generated_code(output_dir)
+
+
 @pytest.mark.cli_doc(
     options=["--specify-tags"],
     option_description="Regenerate only the routers matching a comma-separated tag list.",
@@ -525,6 +693,42 @@ def test_generate_with_enum_field_as_literal(output_dir: Path) -> None:
         expected_path=EXPECTED_OPENAPI_PATH / "coverage" / "enum_field_as_literal",
         extra_args=["--enum-field-as-literal", "all"],
     )
+
+
+@pytest.mark.cli_doc(
+    options=["--use-annotated"],
+    option_description="Render model field constraints with typing.Annotated.",
+    cli_args=[
+        "--input",
+        "openapi/default_template/recursion.yaml",
+        "--output",
+        "app",
+        "--use-annotated",
+    ],
+    input_schema="openapi/default_template/recursion.yaml",
+    golden_output="openapi/default_template/recursion/models.py",
+)
+@freeze_time("2020-06-19")
+def test_generate_with_use_annotated(output_dir: Path) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "recursion.yaml"),
+                "--output",
+                str(output_dir),
+                "--use-annotated",
+            ]
+        )
+        == 0
+    )
+
+    models = output_dir.joinpath("models.py").read_text(encoding="utf-8")
+    assert "Annotated" in models
+    assert "Optional" in models
+    assert "examples=['5abbe4b7ddc1b351ef961414']" in models
+    assert "pattern='^[0-9a-fA-F]{24}$'" in models
+    validate_generated_code(output_dir)
 
 
 @pytest.mark.parametrize(

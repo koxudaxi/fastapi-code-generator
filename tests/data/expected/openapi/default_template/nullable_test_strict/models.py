@@ -17,5 +17,5 @@ class User(BaseModel):
     )
     phone: str = Field(..., description="User's phone number (explicitly non-nullable)")
     nickname: Optional[str] = Field(
-        None, description="User's nickname (implicitly nullable)"
+        None, description="User's nickname (optional, not nullable under strict mode)"
     )

@@ -23,7 +23,7 @@ app = typer.Typer()
 
 all_tags: List[str] = []
 
-TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z ])(?=[A-Z])| ')
+TITLE_PATTERN = re.compile(r'(?<!^)(?<![A-Z -])(?=[A-Z])|[ -]+')
 
 BUILTIN_MODULAR_TEMPLATE_DIR = Path(__file__).parent / "modular_template"
 
@@ -93,7 +93,15 @@ def main(
     strict_nullable: bool = typer.Option(
         False,
         "--strict-nullable",
-        help="Strictly follow nullable attributes in OpenAPI schemas.",
+        help="Respect explicit OpenAPI nullable flags when generating models.",
+    ),
+    include_request_argument: bool = typer.Option(
+        False,
+        "--include-request-argument",
+        help=(
+            "Auto-inject a FastAPI Request parameter into operations when not "
+            "present."
+        ),
     ),
     output_model_type: DataModelType = typer.Option(
         DataModelType.PydanticV2BaseModel.value, "--output-model-type", "-d"
@@ -107,6 +115,11 @@ def main(
         "-V",
         callback=_show_version,
         is_eager=True,
+    ),
+    use_annotated: bool = typer.Option(
+        False,
+        "--use-annotated",
+        help="Use typing.Annotated for generated model field constraints.",
     ),
 ) -> None:
     del version
@@ -130,10 +143,12 @@ def main(
         custom_visitors=custom_visitors,
         disable_timestamp=disable_timestamp,
         strict_nullable=strict_nullable,
+        include_request_argument=include_request_argument,
         generate_routers=generate_routers,
         specify_tags=specify_tags,
         output_model_type=output_model_type,
         python_version=python_version,
+        use_annotated=use_annotated,
     )
 
 
@@ -168,10 +183,12 @@ def generate_code(
     custom_visitors: Optional[List[Path]] = None,
     disable_timestamp: bool = False,
     strict_nullable: bool = False,
+    include_request_argument: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
+    use_annotated: bool = False,
 ) -> None:
     global all_tags
     if not model_path:  # pragma: no cover
@@ -200,6 +217,8 @@ def generate_code(
         custom_template_dir=model_template_dir,
         target_python_version=python_version,
         strict_nullable=strict_nullable,
+        include_request_argument=include_request_argument,
+        use_annotated=use_annotated,
     )
 
     with chdir(output_dir):
