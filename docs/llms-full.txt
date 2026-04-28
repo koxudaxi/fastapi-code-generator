@@ -445,7 +445,7 @@ Input schema: `openapi/using_routers/using_routers_example.yaml`
 
 ### --specify-tags
 
-Regenerate only the routers matching a comma-separated tag list.
+Generate or regenerate only the routers matching a comma-separated tag list.
 
 `fastapi-codegen --input openapi/using_routers/using_routers_example.yaml --output app --template-dir modular_template --generate-routers --specify-tags Wild Boars, Fat Cats`
 
