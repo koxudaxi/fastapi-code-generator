@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,6 +44,17 @@ def assert_specific_tag_routers_generated(output_dir: Path) -> None:
     assert output_dir.joinpath("routers", "wild_boars.py").exists()
     assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
     validate_generated_code(output_dir)
+
+
+def assert_generated_module_has_attribute(
+    module_path: Path, module_name: str, attribute_name: str
+) -> None:
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert hasattr(module, attribute_name)
 
 
 @pytest.mark.cli_doc(
@@ -237,6 +249,24 @@ def test_generate_from_json_input(tmp_path: Path, output_dir: Path) -> None:
             "\r\n", "\n"
         ) == expected.replace("\r\n", "\n")
     validate_generated_code(output_dir)
+
+
+@freeze_time("2020-06-19")
+def test_generate_discriminated_union_with_simple_type(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH
+        / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME
+        / "discriminated_union_simple_type.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH
+        / "default_template"
+        / "discriminated_union_simple_type",
+    )
+    assert_generated_module_has_attribute(
+        output_dir / "models.py",
+        "generated_discriminated_union_simple_type",
+        "Content",
+    )
 
 
 @freeze_time("2020-06-19")
