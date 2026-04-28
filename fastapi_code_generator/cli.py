@@ -279,7 +279,28 @@ def generate_code(
     routers = sorted(
         [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
     )
-    template_vars = {**template_vars, "routers": routers, "tags": sorted_tags}
+    router_tag_pairs = list(zip(routers, sorted_tags))
+    specified_tags = set()
+    existing_main_has_router_includes = False
+    if generate_routers and specify_tags:
+        specified_tags = {tag.strip() for tag in str(specify_tags).split(",")}
+        main_path = output_dir / "main.py"
+        if main_path.exists():
+            existing_main_has_router_includes = (
+                "app.include_router" in main_path.read_text(encoding=encoding)
+            )
+
+    main_router_tag_pairs = router_tag_pairs
+    if specified_tags and not existing_main_has_router_includes:
+        main_router_tag_pairs = [
+            (router, tag) for router, tag in router_tag_pairs if tag in specified_tags
+        ]
+
+    template_vars = {
+        **template_vars,
+        "routers": [router for router, _ in main_router_tag_pairs],
+        "tags": [tag for _, tag in main_router_tag_pairs],
+    }
 
     for target in template_dir.rglob("*"):
         relative_path = target.relative_to(template_dir)
@@ -290,25 +311,20 @@ def generate_code(
         )
 
     if generate_routers:
-        tags = sorted_tags
         results.pop(Path("routers.jinja2"), None)
-        if specify_tags:
-            if Path(output_dir.joinpath("main.py")).exists():
-                with open(Path(output_dir.joinpath("main.py")), 'r') as file:
-                    content = file.read()
-                    if "app.include_router" in content:
-                        tags = sorted(
-                            set(tag.strip() for tag in str(specify_tags).split(","))
-                        )
+        router_pairs = router_tag_pairs
+        if specified_tags and not existing_main_has_router_includes:
+            router_pairs = main_router_tag_pairs
 
         for target in template_dir.rglob("routers.*"):
             relative_path = target.relative_to(template_dir)
-            for router, tag in zip(routers, sorted_tags):
+            for router, tag in router_pairs:
                 if (
                     not Path(output_dir.joinpath("routers", router))
                     .with_suffix(".py")
                     .exists()
-                    or tag in tags
+                    or not specified_tags
+                    or tag in specified_tags
                 ):
                     template_vars["tag"] = tag.strip()
                     template = environment.get_template(str(relative_path))

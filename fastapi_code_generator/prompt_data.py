@@ -302,7 +302,7 @@ PROMPT_DATA: dict[str, Any] = {
         },
         {
             'options': ['--specify-tags'],
-            'description': 'Regenerate only the routers matching a '
+            'description': 'Generate or regenerate only the routers matching a '
             'comma-separated tag list.',
             'cli_args': [
                 '--input',

@@ -571,7 +571,7 @@ def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None
 
 @pytest.mark.cli_doc(
     options=["--specify-tags"],
-    option_description="Regenerate only the routers matching a comma-separated tag list.",
+    option_description="Generate or regenerate only the routers matching a comma-separated tag list.",
     cli_args=[
         "--input",
         "openapi/using_routers/using_routers_example.yaml",
@@ -619,20 +619,36 @@ def test_generate_modify_specific_routers(oas_file: Path, output_dir: Path) -> N
 
 @freeze_time("2023-04-11")
 def test_generate_specific_tags_without_existing_main(output_dir: Path) -> None:
-    run_cli_and_assert(
-        input_path=DATA_PATH
-        / OPEN_API_USING_ROUTERS_DIR_NAME
-        / "using_routers_example.yaml",
-        output_path=output_dir,
-        expected_path=EXPECTED_OPENAPI_PATH / "using_routers" / "using_routers_example",
-        extra_args=[
-            "--template-dir",
-            str(BUILTIN_MODULAR_TEMPLATE_DIR),
-            "--generate-routers",
-            "--specify-tags",
-            SPECIFIC_TAGS,
-        ],
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(
+                    DATA_PATH
+                    / OPEN_API_USING_ROUTERS_DIR_NAME
+                    / "using_routers_example.yaml"
+                ),
+                "--output",
+                str(output_dir),
+                "--template-dir",
+                str(BUILTIN_MODULAR_TEMPLATE_DIR),
+                "--generate-routers",
+                "--specify-tags",
+                SPECIFIC_TAGS,
+            ]
+        )
+        == 0
     )
+
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "from .routers import fat_cats, wild_boars" in main_text
+    assert "app.include_router(fat_cats.router)" in main_text
+    assert "app.include_router(wild_boars.router)" in main_text
+    assert "slim_dogs" not in main_text
+    assert output_dir.joinpath("routers", "fat_cats.py").exists()
+    assert output_dir.joinpath("routers", "wild_boars.py").exists()
+    assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
+    validate_generated_code(output_dir)
 
 
 @freeze_time("2023-04-11")
@@ -644,20 +660,34 @@ def test_generate_specific_tags_with_existing_main_without_router_includes(
         "from fastapi import FastAPI\n\napp = FastAPI()\n",
         encoding="utf-8",
     )
-    run_cli_and_assert(
-        input_path=DATA_PATH
-        / OPEN_API_USING_ROUTERS_DIR_NAME
-        / "using_routers_example.yaml",
-        output_path=output_dir,
-        expected_path=EXPECTED_OPENAPI_PATH / "using_routers" / "using_routers_example",
-        extra_args=[
-            "--template-dir",
-            str(BUILTIN_MODULAR_TEMPLATE_DIR),
-            "--generate-routers",
-            "--specify-tags",
-            SPECIFIC_TAGS,
-        ],
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(
+                    DATA_PATH
+                    / OPEN_API_USING_ROUTERS_DIR_NAME
+                    / "using_routers_example.yaml"
+                ),
+                "--output",
+                str(output_dir),
+                "--template-dir",
+                str(BUILTIN_MODULAR_TEMPLATE_DIR),
+                "--generate-routers",
+                "--specify-tags",
+                SPECIFIC_TAGS,
+            ]
+        )
+        == 0
     )
+
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "from .routers import fat_cats, wild_boars" in main_text
+    assert "slim_dogs" not in main_text
+    assert output_dir.joinpath("routers", "fat_cats.py").exists()
+    assert output_dir.joinpath("routers", "wild_boars.py").exists()
+    assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
+    validate_generated_code(output_dir)
 
 
 @freeze_time("2020-06-19")
