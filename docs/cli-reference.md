@@ -29,6 +29,8 @@ Options:
   -V, --version
   --use-annotated                 Use typing.Annotated for generated model
                                   field constraints.
+  --reuse-model                   Reuse identical generated models as the same
+                                  type.
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
@@ -180,6 +182,16 @@ Target a specific Python version when formatting generated code.
 Input schema: `openapi/default_template/body_and_parameters.yaml`
 
 Related options: `--model-file`, `--model-template-dir`, `--output-model-type`
+
+### --reuse-model
+
+Reuse generated model classes when another model has the same content.
+
+`fastapi-codegen --input openapi/default_template/reuse_model.yaml --output app --reuse-model`
+
+Input schema: `openapi/default_template/reuse_model.yaml`
+
+Related options: `--model-file`, `--output-model-type`
 
 ### --custom-visitor
 

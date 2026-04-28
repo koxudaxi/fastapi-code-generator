@@ -862,6 +862,33 @@ def test_generate_with_model_options(tmp_path: Path, output_dir: Path) -> None:
     )
 
 
+@pytest.mark.cli_doc(
+    options=["--reuse-model"],
+    option_description=(
+        "Reuse generated model classes when another model has the same content."
+    ),
+    cli_args=[
+        "--input",
+        "openapi/default_template/reuse_model.yaml",
+        "--output",
+        "app",
+        "--reuse-model",
+    ],
+    input_schema="openapi/default_template/reuse_model.yaml",
+    related_options=["--model-file", "--output-model-type"],
+)
+@freeze_time("2020-06-19")
+def test_generate_with_reuse_model(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME / "reuse_model.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH
+        / "default_template"
+        / "reuse_model_with_reuse",
+        extra_args=["--reuse-model"],
+    )
+
+
 def test_invalid_custom_visitor(tmp_path: Path, output_dir: Path) -> None:
     visitor_path = tmp_path / "invalid_visitor.py"
     visitor_path.write_text("VALUE = 1\n", encoding="utf-8")

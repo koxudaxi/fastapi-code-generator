@@ -182,6 +182,16 @@ PROMPT_DATA: dict[str, Any] = {
             'type': 'boolean',
             'choices': [],
         },
+        {
+            'name': 'reuse_model',
+            'cli_flags': ['--reuse-model'],
+            'description': 'Reuse identical generated models as the same ' 'type.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
     ],
     'cli_examples': [
         {
@@ -421,6 +431,19 @@ PROMPT_DATA: dict[str, Any] = {
             'input_schema': 'openapi/default_template/body_and_parameters.yaml',
         },
         {
+            'options': ['--reuse-model'],
+            'description': 'Reuse generated model classes when another model '
+            'has the same content.',
+            'cli_args': [
+                '--input',
+                'openapi/default_template/reuse_model.yaml',
+                '--output',
+                'app',
+                '--reuse-model',
+            ],
+            'input_schema': 'openapi/default_template/reuse_model.yaml',
+        },
+        {
             'options': ['--custom-visitor'],
             'description': 'Load a custom visitor module and expose additional '
             'template variables.',
@@ -485,7 +508,7 @@ PROMPT_DATA: dict[str, Any] = {
     '\n'
     '| Format | Status | Evidence | Notes |\n'
     '|--------|--------|----------|-------|\n'
-    '| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (24 '
+    '| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (25 '
     'fixtures) | Primary fixture format exercised under '
     '`tests/data/openapi/**/*.yaml`. |\n'
     '| OpenAPI JSON | tested | '
@@ -501,7 +524,7 @@ PROMPT_DATA: dict[str, Any] = {
     '\n'
     '| Suite | Fixtures | Example files | Notes |\n'
     '|-------|----------|---------------|-------|\n'
-    '| Default template | 17 | `body_and_parameters.yaml`, '
+    '| Default template | 18 | `body_and_parameters.yaml`, '
     '`content_in_parameters.yaml`, '
     '`content_in_parameters_inline.yaml` | Core single-file '
     'generation scenarios exercised by the main CLI tests. |\n'
