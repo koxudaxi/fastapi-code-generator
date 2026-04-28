@@ -32,7 +32,6 @@ dependencies = [
   "jinja2>=2.11.2,<4",
   "pydantic>=2.12,<3",
   "pysnooper>=0.4.1,<2",
-  "stringcase>=1.2,<2",
   "typer>=0.12,<1",
 ]
 
