@@ -65,6 +65,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /pets/{id}/images/form-data:
+    post:
+      summary: Upload images with Form-Data for a pet
+      operationId: uploadPetImagesWithFormData
+      tags:
+        - pets
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the pet
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '201':
+          description: empty response
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     Error:
