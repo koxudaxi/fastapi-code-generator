@@ -683,11 +683,44 @@ def test_generate_specific_tags_with_existing_main_without_router_includes(
 
     main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
     assert "from .routers import fat_cats, wild_boars" in main_text
+    assert "app.include_router(fat_cats.router)" in main_text
+    assert "app.include_router(wild_boars.router)" in main_text
     assert "slim_dogs" not in main_text
     assert output_dir.joinpath("routers", "fat_cats.py").exists()
     assert output_dir.joinpath("routers", "wild_boars.py").exists()
     assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
     validate_generated_code(output_dir)
+
+
+def test_generate_specific_tags_without_matching_tag(
+    capsys: pytest.CaptureFixture[str], output_dir: Path
+) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(
+                    DATA_PATH
+                    / OPEN_API_USING_ROUTERS_DIR_NAME
+                    / "using_routers_example.yaml"
+                ),
+                "--output",
+                str(output_dir),
+                "--template-dir",
+                str(BUILTIN_MODULAR_TEMPLATE_DIR),
+                "--generate-routers",
+                "--specify-tags",
+                "Missing Tag",
+            ]
+        )
+        == 1
+    )
+
+    assert (
+        "No routers matched --specify-tags (Missing Tag). "
+        "Available tags: Fat Cats, Slim Dogs, Wild Boars"
+    ) in capsys.readouterr().err
+    assert not output_dir.joinpath("main.py").exists()
 
 
 @freeze_time("2020-06-19")

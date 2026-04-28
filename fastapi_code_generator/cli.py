@@ -276,14 +276,14 @@ def generate_code(
                     all_tags.append(tag)
     # Convert from Tag Names to router_names
     sorted_tags = sorted(set(all_tags), key=lambda x: x.lower())
-    routers = sorted(
-        [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
-    )
+    routers = [re.sub(TITLE_PATTERN, '_', tag.strip()).lower() for tag in sorted_tags]
     router_tag_pairs = list(zip(routers, sorted_tags))
     specified_tags = set()
     existing_main_has_router_includes = False
     if generate_routers and specify_tags:
-        specified_tags = {tag.strip() for tag in str(specify_tags).split(",")}
+        specified_tags = {
+            tag.strip() for tag in str(specify_tags).split(",") if tag.strip()
+        }
         main_path = output_dir / "main.py"
         if main_path.exists():
             existing_main_has_router_includes = (
@@ -295,6 +295,13 @@ def generate_code(
         main_router_tag_pairs = [
             (router, tag) for router, tag in router_tag_pairs if tag in specified_tags
         ]
+        if not main_router_tag_pairs:
+            available = ", ".join(tag for _, tag in router_tag_pairs) or "<none>"
+            requested = ", ".join(sorted(specified_tags))
+            raise ClickException(
+                f"No routers matched --specify-tags ({requested}). "
+                f"Available tags: {available}"
+            )
 
     template_vars = {
         **template_vars,
