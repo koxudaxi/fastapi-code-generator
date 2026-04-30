@@ -70,6 +70,8 @@ Options:
   -V, --version
   --use-annotated                 Use typing.Annotated for generated model
                                   field constraints.
+  --reuse-model                   Reuse identical generated models as the same
+                                  type.
   --enable-faux-immutability      Generate frozen Pydantic models so instances
                                   are hashable when their fields are hashable.
   --install-completion            Install completion for the current shell.
@@ -357,6 +359,8 @@ Options:
   -V, --version
   --use-annotated                 Use typing.Annotated for generated model
                                   field constraints.
+  --reuse-model                   Reuse identical generated models as the same
+                                  type.
   --enable-faux-immutability      Generate frozen Pydantic models so instances
                                   are hashable when their fields are hashable.
   --install-completion            Install completion for the current shell.
@@ -519,6 +523,16 @@ Input schema: `openapi/default_template/body_and_parameters.yaml`
 
 Related options: `--model-file`, `--model-template-dir`, `--output-model-type`
 
+### --reuse-model
+
+Reuse generated model classes when another model has the same content.
+
+`fastapi-codegen --input openapi/default_template/reuse_model.yaml --output app --reuse-model`
+
+Input schema: `openapi/default_template/reuse_model.yaml`
+
+Related options: `--model-file`, `--output-model-type`
+
 ### --custom-visitor
 
 Load a custom visitor module and expose additional template variables.
@@ -539,7 +553,7 @@ Run `tox run -e schema-docs` after changing supported inputs or model backends.
 
 | Format | Status | Evidence | Notes |
 |--------|--------|----------|-------|
-| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (26 fixtures) | Primary fixture format exercised under `tests/data/openapi/**/*.yaml`. |
+| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (27 fixtures) | Primary fixture format exercised under `tests/data/openapi/**/*.yaml`. |
 | OpenAPI JSON | tested | `tests/main/test_main.py::test_generate_from_json_input` | Covered by the JSON conversion CLI test in `tests/main/test_main.py`. |
 | Remote HTTP `$ref` targets | tested | `tests/main/test_main.py::test_generate_remote_ref` | Covered by the remote `$ref` generation test against a live HTTP server. |
 
@@ -547,7 +561,7 @@ Run `tox run -e schema-docs` after changing supported inputs or model backends.
 
 | Suite | Fixtures | Example files | Notes |
 |-------|----------|---------------|-------|
-| Default template | 18 | `body_and_parameters.yaml`, `content_in_parameters.yaml`, `content_in_parameters_inline.yaml` | Core single-file generation scenarios exercised by the main CLI tests. |
+| Default template | 19 | `body_and_parameters.yaml`, `content_in_parameters.yaml`, `content_in_parameters_inline.yaml` | Core single-file generation scenarios exercised by the main CLI tests. |
 | Coverage fixtures | 4 | `callbacks.yaml`, `callbacks_with_operation_id.yaml`, `faux_immutability.yaml` | Focused fixtures for callbacks, non-200 responses, and other regression edges. |
 | Custom template overrides | 1 | `custom_security.yaml` | Template override coverage for `--template-dir`. |
 | Timestamp suppression | 1 | `simple.yaml` | Fixtures that exercise `--disable-timestamp`. |

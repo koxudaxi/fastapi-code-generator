@@ -178,6 +178,11 @@ class GenerateConfig(BaseModel):
         description="Use `typing.Annotated` for generated model field constraints.",
         json_schema_extra=cast(Any, _cli_metadata("--use-annotated")),
     )
+    reuse_model: bool = Field(
+        default=False,
+        description="Reuse identical generated models as the same type.",
+        json_schema_extra=cast(Any, _cli_metadata("--reuse-model")),
+    )
     enable_faux_immutability: bool = Field(
         default=False,
         description=(

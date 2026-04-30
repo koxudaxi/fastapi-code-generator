@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 
 import typer
-from click import Abort, ClickException
+from click import Abort, ClickException, Command
 from datamodel_code_generator import LiteralType, chdir
 from datamodel_code_generator.enums import DataModelType
 from datamodel_code_generator.format import CodeFormatter, PythonVersion
@@ -73,6 +73,11 @@ def _show_version(value: bool) -> None:
         raise typer.Exit()
 
 
+@lru_cache(maxsize=1)
+def _get_command() -> Command:
+    return get_command(app)
+
+
 @app.command()
 def main(
     encoding: str = typer.Option("utf-8", "--encoding", "-e"),
@@ -121,6 +126,11 @@ def main(
         "--use-annotated",
         help="Use typing.Annotated for generated model field constraints.",
     ),
+    reuse_model: bool = typer.Option(
+        False,
+        "--reuse-model",
+        help="Reuse identical generated models as the same type.",
+    ),
     enable_faux_immutability: bool = typer.Option(
         False,
         "--enable-faux-immutability",
@@ -157,6 +167,7 @@ def main(
         output_model_type=output_model_type,
         python_version=python_version,
         use_annotated=use_annotated,
+        reuse_model=reuse_model,
         enable_faux_immutability=enable_faux_immutability,
     )
 
@@ -164,9 +175,8 @@ def main(
 def invoke_main(args: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if args is None else args)
 
-    command = get_command(app)
     try:
-        result = command.main(
+        result = _get_command().main(
             args=argv,
             prog_name="fastapi-codegen",
             standalone_mode=False,
@@ -198,6 +208,7 @@ def generate_code(
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
     python_version: PythonVersion = PythonVersion.PY_310,
     use_annotated: bool = False,
+    reuse_model: bool = False,
     enable_faux_immutability: bool = False,
 ) -> None:
     global all_tags
@@ -229,6 +240,7 @@ def generate_code(
         strict_nullable=strict_nullable,
         include_request_argument=include_request_argument,
         use_annotated=use_annotated,
+        reuse_model=reuse_model,
         enable_faux_immutability=enable_faux_immutability,
     )
 

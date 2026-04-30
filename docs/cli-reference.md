@@ -29,6 +29,8 @@ Options:
   -V, --version
   --use-annotated                 Use typing.Annotated for generated model
                                   field constraints.
+  --reuse-model                   Reuse identical generated models as the same
+                                  type.
   --enable-faux-immutability      Generate frozen Pydantic models so instances
                                   are hashable when their fields are hashable.
   --install-completion            Install completion for the current shell.
@@ -190,6 +192,16 @@ Target a specific Python version when formatting generated code.
 Input schema: `openapi/default_template/body_and_parameters.yaml`
 
 Related options: `--model-file`, `--model-template-dir`, `--output-model-type`
+
+### --reuse-model
+
+Reuse generated model classes when another model has the same content.
+
+`fastapi-codegen --input openapi/default_template/reuse_model.yaml --output app --reuse-model`
+
+Input schema: `openapi/default_template/reuse_model.yaml`
+
+Related options: `--model-file`, `--output-model-type`
 
 ### --custom-visitor
 
