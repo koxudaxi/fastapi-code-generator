@@ -147,7 +147,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} \
+          gh issue edit ${{ github.event.pull_request.number }} \
             --repo "$GITHUB_REPOSITORY" \
             --add-label "breaking-change-analyzed"
 
@@ -156,7 +156,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} \
+          gh issue edit ${{ github.event.pull_request.number }} \
             --repo "$GITHUB_REPOSITORY" \
             --add-label "breaking-change"
 
@@ -186,7 +186,7 @@ jobs:
             printf '*This analysis was performed by Claude Code Action*\n'
           } > "$TMPFILE"
 
-          gh pr comment ${{ github.event.pull_request.number }} \
+          gh issue comment ${{ github.event.pull_request.number }} \
             --repo "$GITHUB_REPOSITORY" \
             --body-file "$TMPFILE"
 
