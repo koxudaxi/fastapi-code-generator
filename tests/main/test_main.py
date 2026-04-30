@@ -8,7 +8,7 @@ from importlib.resources import as_file, files
 from pathlib import Path
 from shutil import copy2, copytree
 from threading import Thread
-from typing import Iterator
+from typing import Any, Iterator
 
 import pytest
 import yaml
@@ -55,6 +55,18 @@ def assert_generated_module_has_attribute(
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     assert hasattr(module, attribute_name)
+
+
+def assert_generated_draft_request_is_hashable(models_path: Path) -> None:
+    namespace: dict[str, Any] = {}
+    exec(  # noqa: S102 - execute generated fixture code in a test namespace.
+        models_path.read_text(encoding="utf-8"), namespace
+    )
+    draft_type = namespace["DraftType"]
+    draft_request = namespace["DraftRequest"]
+    draft_request.model_rebuild(_types_namespace=namespace)
+    draft = draft_request(draftType=draft_type.Type1)
+    assert isinstance(hash(draft), int)
 
 
 @pytest.mark.cli_doc(
@@ -818,6 +830,33 @@ def test_generate_with_use_annotated(output_dir: Path) -> None:
     assert "examples=['5abbe4b7ddc1b351ef961414']" in models
     assert "pattern='^[0-9a-fA-F]{24}$'" in models
     validate_generated_code(output_dir)
+
+
+@pytest.mark.cli_doc(
+    options=["--enable-faux-immutability"],
+    option_description=(
+        "Generate frozen Pydantic models so instances are hashable when their "
+        "fields are hashable."
+    ),
+    cli_args=[
+        "--input",
+        "openapi/coverage/faux_immutability.yaml",
+        "--output",
+        "app",
+        "--enable-faux-immutability",
+    ],
+    input_schema="openapi/coverage/faux_immutability.yaml",
+    golden_output="openapi/coverage/faux_immutability/models.py",
+)
+@freeze_time("2020-06-19")
+def test_generate_with_enable_faux_immutability(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH / OPEN_API_COVERAGE_DIR_NAME / "faux_immutability.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH / "coverage" / "faux_immutability",
+        extra_args=["--enable-faux-immutability"],
+    )
+    assert_generated_draft_request_is_hashable(output_dir / "models.py")
 
 
 @pytest.mark.parametrize(

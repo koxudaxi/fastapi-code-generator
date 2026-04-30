@@ -182,6 +182,17 @@ PROMPT_DATA: dict[str, Any] = {
             'type': 'boolean',
             'choices': [],
         },
+        {
+            'name': 'enable_faux_immutability',
+            'cli_flags': ['--enable-faux-immutability'],
+            'description': 'Generate frozen Pydantic models so hashable field '
+            'values make model instances hashable.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
     ],
     'cli_examples': [
         {
@@ -343,6 +354,19 @@ PROMPT_DATA: dict[str, Any] = {
             'input_schema': 'openapi/default_template/recursion.yaml',
         },
         {
+            'options': ['--enable-faux-immutability'],
+            'description': 'Generate frozen Pydantic models so instances are '
+            'hashable when their fields are hashable.',
+            'cli_args': [
+                '--input',
+                'openapi/coverage/faux_immutability.yaml',
+                '--output',
+                'app',
+                '--enable-faux-immutability',
+            ],
+            'input_schema': 'openapi/coverage/faux_immutability.yaml',
+        },
+        {
             'options': ['--model-file'],
             'description': 'Write generated models to a custom module path.',
             'cli_args': [
@@ -485,7 +509,7 @@ PROMPT_DATA: dict[str, Any] = {
     '\n'
     '| Format | Status | Evidence | Notes |\n'
     '|--------|--------|----------|-------|\n'
-    '| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (25 '
+    '| OpenAPI YAML | tested | `tests/data/openapi/**/*.yaml` (26 '
     'fixtures) | Primary fixture format exercised under '
     '`tests/data/openapi/**/*.yaml`. |\n'
     '| OpenAPI JSON | tested | '
@@ -505,8 +529,8 @@ PROMPT_DATA: dict[str, Any] = {
     '`content_in_parameters.yaml`, '
     '`content_in_parameters_inline.yaml` | Core single-file '
     'generation scenarios exercised by the main CLI tests. |\n'
-    '| Coverage fixtures | 3 | `callbacks.yaml`, '
-    '`callbacks_with_operation_id.yaml`, `non_200_responses.yaml` '
+    '| Coverage fixtures | 4 | `callbacks.yaml`, '
+    '`callbacks_with_operation_id.yaml`, `faux_immutability.yaml` '
     '| Focused fixtures for callbacks, non-200 responses, and '
     'other regression edges. |\n'
     '| Custom template overrides | 1 | `custom_security.yaml` | '
