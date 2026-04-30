@@ -1,0 +1,19 @@
+openapi: 3.0.0
+info:
+  title: Draft API
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    DraftType:
+      type: string
+      enum:
+        - Type1
+        - Type2
+    DraftRequest:
+      type: object
+      properties:
+        draftType:
+          $ref: "#/components/schemas/DraftType"
+      required:
+        - draftType

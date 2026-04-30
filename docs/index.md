@@ -68,6 +68,10 @@ Options:
   -V, --version
   --use-annotated                 Use typing.Annotated for generated model
                                   field constraints.
+  --reuse-model                   Reuse identical generated models as the same
+                                  type.
+  --enable-faux-immutability      Generate frozen Pydantic models so instances
+                                  are hashable when their fields are hashable.
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.

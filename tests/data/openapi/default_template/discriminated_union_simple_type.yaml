@@ -1,0 +1,62 @@
+info:
+  title: discriminated_union_simple_type
+  version: 1.0.0
+openapi: 3.0.0
+paths: {}
+components:
+  schemas:
+    Content:
+      oneOf:
+        - type: string
+        - $ref: '#/components/schemas/ImageUrl'
+        - $ref: '#/components/schemas/AudioUrl'
+        - $ref: '#/components/schemas/DocumentUrl'
+        - $ref: '#/components/schemas/BinaryContent'
+      discriminator:
+        propertyName: kind
+        mapping:
+          image_url: '#/components/schemas/ImageUrl'
+          audio_url: '#/components/schemas/AudioUrl'
+          document_url: '#/components/schemas/DocumentUrl'
+          binary_content: '#/components/schemas/BinaryContent'
+      description: Union type representing different content formats
+    ImageUrl:
+      type: object
+      properties:
+        kind:
+          type: string
+        image_url:
+          type: string
+      required:
+        - kind
+        - image_url
+    AudioUrl:
+      type: object
+      properties:
+        kind:
+          type: string
+        audio_url:
+          type: string
+      required:
+        - kind
+        - audio_url
+    DocumentUrl:
+      type: object
+      properties:
+        kind:
+          type: string
+        document_url:
+          type: string
+      required:
+        - kind
+        - document_url
+    BinaryContent:
+      type: object
+      properties:
+        kind:
+          type: string
+        binary_content:
+          type: string
+      required:
+        - kind
+        - binary_content

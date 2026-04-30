@@ -626,6 +626,42 @@ class OpenAPIParser(OpenAPIModelParser):
         self._temporary_operation['_request'] = arguments[0] if arguments else None
         return request_body_fields
 
+    def get_field_extras(self, obj: JsonSchemaObject) -> dict[str, Any]:
+        extras = super().get_field_extras(obj)
+        if self._has_non_object_discriminator_variant(obj):
+            extras.pop('discriminator', None)
+        return extras
+
+    def _has_non_object_discriminator_variant(self, obj: JsonSchemaObject) -> bool:
+        if not obj.discriminator:
+            return False
+        combined_schemas = [*(obj.oneOf or []), *(obj.anyOf or [])]
+        if not combined_schemas:
+            return False
+        return any(
+            not self._is_object_discriminator_variant(schema)
+            for schema in combined_schemas
+        )
+
+    def _is_object_discriminator_variant(
+        self, schema: JsonSchemaObject, seen_refs: set[str] | None = None
+    ) -> bool:
+        if seen_refs is None:
+            seen_refs = set()
+        if schema.ref:
+            if schema.ref in seen_refs:
+                return False
+            seen_refs.add(schema.ref)
+            schema = JsonSchemaObject.model_validate(self.get_ref_model(schema.ref))
+        if schema.is_object or schema.properties:
+            return True
+        if not schema.allOf:
+            return False
+        return any(
+            self._is_object_discriminator_variant(member, seen_refs.copy())
+            for member in schema.allOf
+        )
+
     def _get_upload_file_type(
         self, schema: Union[JsonSchemaObject, ReferenceObject]
     ) -> tuple[str, str]:

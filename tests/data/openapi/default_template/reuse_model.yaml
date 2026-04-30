@@ -1,0 +1,41 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Reuse model
+paths:
+  /source:
+    get:
+      operationId: getSource
+      responses:
+        "200":
+          description: Source response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+  /target:
+    get:
+      operationId: getTarget
+      responses:
+        "200":
+          description: Target response
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - name
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string

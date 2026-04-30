@@ -11,6 +11,7 @@ from typing_extensions import NotRequired, TypedDict
 class GenerateConfigDict(TypedDict):
     custom_visitors: NotRequired[list[str] | None]
     disable_timestamp: NotRequired[bool]
+    enable_faux_immutability: NotRequired[bool]
     encoding: NotRequired[str]
     enum_field_as_literal: NotRequired[Literal['all', 'one', 'none'] | None]
     generate_routers: NotRequired[bool]
@@ -29,6 +30,7 @@ class GenerateConfigDict(TypedDict):
         ]
     ]
     python_version: NotRequired[Literal['3.10', '3.11', '3.12', '3.13', '3.14']]
+    reuse_model: NotRequired[bool]
     specify_tags: NotRequired[str | None]
     strict_nullable: NotRequired[bool]
     template_dir: NotRequired[str | None]
