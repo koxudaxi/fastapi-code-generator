@@ -147,14 +147,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "breaking-change-analyzed"
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo "$GITHUB_REPOSITORY" \
+            --add-label "breaking-change-analyzed"
 
       - name: Add breaking-change label if applicable
         if: steps.analysis.outputs.has_breaking_changes == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "breaking-change"
+          gh pr edit ${{ github.event.pull_request.number }} \
+            --repo "$GITHUB_REPOSITORY" \
+            --add-label "breaking-change"
 
       - name: Post analysis result to PR
         env:
@@ -182,7 +186,9 @@ jobs:
             printf '*This analysis was performed by Claude Code Action*\n'
           } > "$TMPFILE"
 
-          gh pr comment ${{ github.event.pull_request.number }} --body-file "$TMPFILE"
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file "$TMPFILE"
 
       - name: Calculate version and update draft release
         env:
@@ -193,7 +199,7 @@ jobs:
           set -euo pipefail
 
           # Get latest published release tag and strip "v" prefix if present
-          LATEST_TAG_RAW=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // "0.0.0"')
+          LATEST_TAG_RAW=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // "0.0.0"')
           LATEST_TAG="${LATEST_TAG_RAW#v}"
           LATEST_TAG="${LATEST_TAG#V}"
           echo "Latest published tag: $LATEST_TAG_RAW (parsed as: $LATEST_TAG)"
@@ -213,7 +219,7 @@ jobs:
 
           # Check if draft release exists (use jq to extract first draft tag safely)
           # Keep raw tag name for gh commands, strip prefix only for version comparison
-          DRAFT_TAG_RAW=$(gh release list --json tagName,isDraft --jq '[.[] | select(.isDraft == true)] | .[0].tagName // ""')
+          DRAFT_TAG_RAW=$(gh release list --repo "$GITHUB_REPOSITORY" --json tagName,isDraft --jq '[.[] | select(.isDraft == true)] | .[0].tagName // ""')
           DRAFT_TAG="${DRAFT_TAG_RAW#v}"
           DRAFT_TAG="${DRAFT_TAG#V}"
           BC_SOURCE_TAG_RAW="$DRAFT_TAG_RAW"
@@ -274,7 +280,7 @@ jobs:
           # Get existing draft body if updating (only if DRAFT_TAG_RAW is set, meaning we're updating same version)
           EXISTING_BC=""
           if [ -n "$BC_SOURCE_TAG_RAW" ]; then
-            EXISTING_BODY=$(gh release view "$BC_SOURCE_TAG_RAW" --json body --jq '.body // ""')
+            EXISTING_BODY=$(gh release view "$BC_SOURCE_TAG_RAW" --repo "$GITHUB_REPOSITORY" --json body --jq '.body // ""')
             # Extract existing Breaking Changes section content
             # Use awk for precise extraction - stops at any ## header that's not "## Breaking Changes"
             if echo "$EXISTING_BODY" | grep -q '^## Breaking Changes$'; then
@@ -336,19 +342,21 @@ jobs:
           if [ -n "$DRAFT_TAG_RAW" ] && [ "$DRAFT_TAG" = "$NEXT_VERSION" ]; then
             echo "Updating existing draft release: $DRAFT_TAG_RAW"
             echo "$RELEASE_BODY" | gh release edit "$DRAFT_TAG_RAW" \
+              --repo "$GITHUB_REPOSITORY" \
               --title "$NEXT_VERSION" \
               --notes-file -
           else
             echo "Creating new draft release: $NEXT_VERSION"
             # Create new draft first, then delete old one (to prevent data loss)
             if echo "$RELEASE_BODY" | gh release create "$NEXT_VERSION" \
+              --repo "$GITHUB_REPOSITORY" \
               --title "$NEXT_VERSION" \
               --notes-file - \
               --draft; then
               # Only delete old draft after successful creation
               if [ -n "$OLD_DRAFT_TAG" ]; then
                 echo "Deleting old draft: $OLD_DRAFT_TAG"
-                gh release delete "$OLD_DRAFT_TAG" --yes 2>/dev/null || true
+                gh release delete "$OLD_DRAFT_TAG" --repo "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
               fi
             else
               echo "Failed to create new draft release"
