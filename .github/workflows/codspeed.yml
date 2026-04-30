@@ -35,7 +35,11 @@ jobs:
             exit 0
           fi
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            if ! gh pr diff "$PR_NUMBER" --name-only | grep -qE '^(fastapi_code_generator/|tests/|pyproject\.toml$|uv\.lock$|tox\.ini$)'; then
+            changed_files="$(gh pr diff "$PR_NUMBER" --name-only)" || {
+              echo "Failed to fetch PR diff" >&2
+              exit 1
+            }
+            if ! grep -qE '^(fastapi_code_generator/|tests/|pyproject\.toml$|uv\.lock$|tox\.ini$)' <<<"$changed_files"; then
               echo "enabled=false" >> "$GITHUB_OUTPUT"
               exit 0
             fi

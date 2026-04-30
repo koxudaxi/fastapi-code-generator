@@ -301,7 +301,7 @@ jobs:
                     const issueComments = await getAllComments(issueNumber);
                     const hasExistingComment = issueComments.some(c =>
                       c.body && (c.body.includes(`Released in [${version}]`) ||
-                                 c.body.includes(`Related PR Released`))
+                                 c.body.includes(`Related PR Released: [${version}]`))
                     );
 
                     if (!hasExistingComment) {
