@@ -635,7 +635,7 @@ class OpenAPIParser(OpenAPIModelParser):
     def _has_non_object_discriminator_variant(self, obj: JsonSchemaObject) -> bool:
         if not obj.discriminator:
             return False
-        combined_schemas = obj.oneOf or obj.anyOf
+        combined_schemas = [*(obj.oneOf or []), *(obj.anyOf or [])]
         if not combined_schemas:
             return False
         return any(

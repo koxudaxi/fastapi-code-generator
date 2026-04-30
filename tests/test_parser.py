@@ -284,3 +284,33 @@ def test_get_field_extras_removes_discriminator_for_cyclic_all_of_ref(
         },
         {},
     )
+
+
+def test_get_field_extras_checks_one_of_and_any_of_variants() -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    assert_field_extras(
+        parser,
+        {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                        },
+                    },
+                },
+            ],
+            "anyOf": [
+                {
+                    "type": "string",
+                },
+            ],
+            "discriminator": {
+                "propertyName": "kind",
+            },
+        },
+        {},
+    )
