@@ -183,6 +183,14 @@ class GenerateConfig(BaseModel):
         description="Reuse identical generated models as the same type.",
         json_schema_extra=cast(Any, _cli_metadata("--reuse-model")),
     )
+    enable_faux_immutability: bool = Field(
+        default=False,
+        description=(
+            "Generate frozen Pydantic models so hashable field values make model "
+            "instances hashable."
+        ),
+        json_schema_extra=cast(Any, _cli_metadata("--enable-faux-immutability")),
+    )
 
 
 def _type_label(annotation: Any) -> str:

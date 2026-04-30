@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -7,7 +8,7 @@ from importlib.resources import as_file, files
 from pathlib import Path
 from shutil import copy2, copytree
 from threading import Thread
-from typing import Iterator
+from typing import Any, Iterator
 
 import pytest
 import yaml
@@ -31,6 +32,41 @@ MODIFY_SPECIFIC_ROUTERS_EXPECTED_DIR_NAME = Path("modify_specific_routers")
 
 BUILTIN_MODULAR_TEMPLATE_DIR = DATA_PATH / "modular_template"
 SPECIFIC_TAGS = "Wild Boars, Fat Cats"
+
+
+def assert_specific_tag_routers_generated(output_dir: Path) -> None:
+    main_text = output_dir.joinpath("main.py").read_text(encoding="utf-8")
+    assert "from .routers import fat_cats, wild_boars" in main_text
+    assert "app.include_router(fat_cats.router)" in main_text
+    assert "app.include_router(wild_boars.router)" in main_text
+    assert "slim_dogs" not in main_text
+    assert output_dir.joinpath("routers", "fat_cats.py").exists()
+    assert output_dir.joinpath("routers", "wild_boars.py").exists()
+    assert not output_dir.joinpath("routers", "slim_dogs.py").exists()
+    validate_generated_code(output_dir)
+
+
+def assert_generated_module_has_attribute(
+    module_path: Path, module_name: str, attribute_name: str
+) -> None:
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    assert hasattr(module, attribute_name)
+
+
+def assert_generated_draft_request_is_hashable(models_path: Path) -> None:
+    namespace: dict[str, Any] = {}
+    exec(  # noqa: S102 - execute generated fixture code in a test namespace.
+        models_path.read_text(encoding="utf-8"), namespace
+    )
+    draft_type = namespace["DraftType"]
+    draft_request = namespace["DraftRequest"]
+    draft_request.model_rebuild(_types_namespace=namespace)
+    draft = draft_request(draftType=draft_type.Type1)
+    assert isinstance(hash(draft), int)
 
 
 @pytest.mark.cli_doc(
@@ -225,6 +261,24 @@ def test_generate_from_json_input(tmp_path: Path, output_dir: Path) -> None:
             "\r\n", "\n"
         ) == expected.replace("\r\n", "\n")
     validate_generated_code(output_dir)
+
+
+@freeze_time("2020-06-19")
+def test_generate_discriminated_union_with_simple_type(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH
+        / OPEN_API_DEFAULT_TEMPLATE_DIR_NAME
+        / "discriminated_union_simple_type.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH
+        / "default_template"
+        / "discriminated_union_simple_type",
+    )
+    assert_generated_module_has_attribute(
+        output_dir / "models.py",
+        "generated_discriminated_union_simple_type",
+        "Content",
+    )
 
 
 @freeze_time("2020-06-19")
@@ -571,7 +625,7 @@ def test_generate_router_preserves_path_parameter_name(output_dir: Path) -> None
 
 @pytest.mark.cli_doc(
     options=["--specify-tags"],
-    option_description="Regenerate only the routers matching a comma-separated tag list.",
+    option_description="Generate or regenerate only the routers matching a comma-separated tag list.",
     cli_args=[
         "--input",
         "openapi/using_routers/using_routers_example.yaml",
@@ -619,20 +673,28 @@ def test_generate_modify_specific_routers(oas_file: Path, output_dir: Path) -> N
 
 @freeze_time("2023-04-11")
 def test_generate_specific_tags_without_existing_main(output_dir: Path) -> None:
-    run_cli_and_assert(
-        input_path=DATA_PATH
-        / OPEN_API_USING_ROUTERS_DIR_NAME
-        / "using_routers_example.yaml",
-        output_path=output_dir,
-        expected_path=EXPECTED_OPENAPI_PATH / "using_routers" / "using_routers_example",
-        extra_args=[
-            "--template-dir",
-            str(BUILTIN_MODULAR_TEMPLATE_DIR),
-            "--generate-routers",
-            "--specify-tags",
-            SPECIFIC_TAGS,
-        ],
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(
+                    DATA_PATH
+                    / OPEN_API_USING_ROUTERS_DIR_NAME
+                    / "using_routers_example.yaml"
+                ),
+                "--output",
+                str(output_dir),
+                "--template-dir",
+                str(BUILTIN_MODULAR_TEMPLATE_DIR),
+                "--generate-routers",
+                "--specify-tags",
+                SPECIFIC_TAGS,
+            ]
+        )
+        == 0
     )
+
+    assert_specific_tag_routers_generated(output_dir)
 
 
 @freeze_time("2023-04-11")
@@ -644,20 +706,59 @@ def test_generate_specific_tags_with_existing_main_without_router_includes(
         "from fastapi import FastAPI\n\napp = FastAPI()\n",
         encoding="utf-8",
     )
-    run_cli_and_assert(
-        input_path=DATA_PATH
-        / OPEN_API_USING_ROUTERS_DIR_NAME
-        / "using_routers_example.yaml",
-        output_path=output_dir,
-        expected_path=EXPECTED_OPENAPI_PATH / "using_routers" / "using_routers_example",
-        extra_args=[
-            "--template-dir",
-            str(BUILTIN_MODULAR_TEMPLATE_DIR),
-            "--generate-routers",
-            "--specify-tags",
-            SPECIFIC_TAGS,
-        ],
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(
+                    DATA_PATH
+                    / OPEN_API_USING_ROUTERS_DIR_NAME
+                    / "using_routers_example.yaml"
+                ),
+                "--output",
+                str(output_dir),
+                "--template-dir",
+                str(BUILTIN_MODULAR_TEMPLATE_DIR),
+                "--generate-routers",
+                "--specify-tags",
+                SPECIFIC_TAGS,
+            ]
+        )
+        == 0
     )
+
+    assert_specific_tag_routers_generated(output_dir)
+
+
+def test_generate_specific_tags_without_matching_tag(
+    capsys: pytest.CaptureFixture[str], output_dir: Path
+) -> None:
+    assert (
+        run_main_with_args(
+            [
+                "--input",
+                str(
+                    DATA_PATH
+                    / OPEN_API_USING_ROUTERS_DIR_NAME
+                    / "using_routers_example.yaml"
+                ),
+                "--output",
+                str(output_dir),
+                "--template-dir",
+                str(BUILTIN_MODULAR_TEMPLATE_DIR),
+                "--generate-routers",
+                "--specify-tags",
+                "Missing Tag",
+            ]
+        )
+        == 1
+    )
+
+    assert (
+        "No routers matched --specify-tags (Missing Tag). "
+        "Available tags: Fat Cats, Slim Dogs, Wild Boars"
+    ) in capsys.readouterr().err
+    assert not output_dir.joinpath("main.py").exists()
 
 
 @freeze_time("2020-06-19")
@@ -729,6 +830,33 @@ def test_generate_with_use_annotated(output_dir: Path) -> None:
     assert "examples=['5abbe4b7ddc1b351ef961414']" in models
     assert "pattern='^[0-9a-fA-F]{24}$'" in models
     validate_generated_code(output_dir)
+
+
+@pytest.mark.cli_doc(
+    options=["--enable-faux-immutability"],
+    option_description=(
+        "Generate frozen Pydantic models so instances are hashable when their "
+        "fields are hashable."
+    ),
+    cli_args=[
+        "--input",
+        "openapi/coverage/faux_immutability.yaml",
+        "--output",
+        "app",
+        "--enable-faux-immutability",
+    ],
+    input_schema="openapi/coverage/faux_immutability.yaml",
+    golden_output="openapi/coverage/faux_immutability/models.py",
+)
+@freeze_time("2020-06-19")
+def test_generate_with_enable_faux_immutability(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH / OPEN_API_COVERAGE_DIR_NAME / "faux_immutability.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH / "coverage" / "faux_immutability",
+        extra_args=["--enable-faux-immutability"],
+    )
+    assert_generated_draft_request_is_hashable(output_dir / "models.py")
 
 
 @pytest.mark.parametrize(

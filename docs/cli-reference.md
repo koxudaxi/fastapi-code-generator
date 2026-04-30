@@ -31,6 +31,8 @@ Options:
                                   field constraints.
   --reuse-model                   Reuse identical generated models as the same
                                   type.
+  --enable-faux-immutability      Generate frozen Pydantic models so instances
+                                  are hashable when their fields are hashable.
   --install-completion            Install completion for the current shell.
   --show-completion               Show completion for the current shell, to
                                   copy it or customize the installation.
@@ -121,7 +123,7 @@ Input schema: `openapi/using_routers/using_routers_example.yaml`
 
 ### --specify-tags
 
-Regenerate only the routers matching a comma-separated tag list.
+Generate or regenerate only the routers matching a comma-separated tag list.
 
 `fastapi-codegen --input openapi/using_routers/using_routers_example.yaml --output app --template-dir modular_template --generate-routers --specify-tags Wild Boars, Fat Cats`
 
@@ -142,6 +144,14 @@ Render model field constraints with typing.Annotated.
 `fastapi-codegen --input openapi/default_template/recursion.yaml --output app --use-annotated`
 
 Input schema: `openapi/default_template/recursion.yaml`
+
+### --enable-faux-immutability
+
+Generate frozen Pydantic models so instances are hashable when their fields are hashable.
+
+`fastapi-codegen --input openapi/coverage/faux_immutability.yaml --output app --enable-faux-immutability`
+
+Input schema: `openapi/coverage/faux_immutability.yaml`
 
 ### --model-file
 
