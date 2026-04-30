@@ -192,9 +192,16 @@ jobs:
             printf '*This analysis was performed by Claude Code Action*\n'
           } > "$TMPFILE"
 
-          gh issue comment ${{ github.event.pull_request.number }} \
-            --repo "$GITHUB_REPOSITORY" \
-            --body-file "$TMPFILE"
+          TMPJSON=$(mktemp)
+          trap 'rm -f "$TMPFILE" "$TMPJSON"' EXIT
+          jq -n --rawfile body "$TMPFILE" '{body: $body}' > "$TMPJSON"
+
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            "/repos/$GITHUB_REPOSITORY/issues/${{ github.event.pull_request.number }}/comments" \
+            --input "$TMPJSON" \
+            --silent
 
       - name: Calculate version and update draft release
         env:
