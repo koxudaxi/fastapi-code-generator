@@ -328,7 +328,8 @@ jobs:
                   try {
                     const refPrComments = await getAllComments(refPrNumber);
                     const hasExistingComment = refPrComments.some(c =>
-                      c.body && c.body.includes(`Released in [${version}]`)
+                      c.body && (c.body.includes(`Released in [${version}]`) ||
+                                 c.body.includes(`Related PR Released: [${version}]`))
                     );
 
                     if (!hasExistingComment) {
