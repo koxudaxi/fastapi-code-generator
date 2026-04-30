@@ -44,6 +44,13 @@ def test_useful_str_case_helpers_match_legacy_stringcase_behavior(
     assert useful_value.pascalcase == expected_pascal
 
 
+def assert_field_extras(
+    parser: OpenAPIParser, schema_data: dict[str, object], expected: dict[str, object]
+) -> None:
+    schema = JsonSchemaObject.model_validate(schema_data)
+    assert parser.get_field_extras(schema) == expected
+
+
 def test_get_upload_file_type_resolves_reference(tmp_path: Path) -> None:
     schema_path = tmp_path / "schema.yaml"
     schema_path.write_text(
@@ -156,3 +163,154 @@ def test_parse_request_body_filters_multipart_from_mixed_content() -> None:
     )
 
     assert set(request_body_fields) == {"application/json"}
+
+
+def test_get_field_extras_preserves_non_union_discriminator() -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    assert_field_extras(
+        parser,
+        {
+            "type": "object",
+            "discriminator": {
+                "propertyName": "kind",
+            },
+        },
+        {"discriminator": {"propertyName": "kind"}},
+    )
+
+
+def test_get_field_extras_removes_discriminator_for_all_of_simple_variant() -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    assert_field_extras(
+        parser,
+        {
+            "oneOf": [
+                {
+                    "allOf": [
+                        {
+                            "type": "string",
+                        }
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                        },
+                    },
+                },
+            ],
+            "discriminator": {
+                "propertyName": "kind",
+            },
+        },
+        {},
+    )
+
+
+def test_get_field_extras_preserves_discriminator_for_all_of_object_variant() -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    assert_field_extras(
+        parser,
+        {
+            "oneOf": [
+                {
+                    "allOf": [
+                        {
+                            "type": "object",
+                            "properties": {
+                                "kind": {
+                                    "type": "string",
+                                },
+                            },
+                        }
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                        },
+                    },
+                },
+            ],
+            "discriminator": {
+                "propertyName": "kind",
+            },
+        },
+        {"discriminator": {"propertyName": "kind"}},
+    )
+
+
+def test_get_field_extras_removes_discriminator_for_cyclic_all_of_ref(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    schema_ref = "#/components/schemas/Loop"
+
+    def get_ref_model(ref: str) -> dict[str, object]:
+        return {"allOf": [{"$ref": ref}]}
+
+    monkeypatch.setattr(parser, "get_ref_model", get_ref_model)
+    assert_field_extras(
+        parser,
+        {
+            "oneOf": [
+                {
+                    "$ref": schema_ref,
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                        },
+                    },
+                },
+            ],
+            "discriminator": {
+                "propertyName": "kind",
+            },
+        },
+        {},
+    )
+
+
+def test_get_field_extras_checks_one_of_and_any_of_variants() -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    assert_field_extras(
+        parser,
+        {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "kind": {
+                            "type": "string",
+                        },
+                    },
+                },
+            ],
+            "anyOf": [
+                {
+                    "type": "string",
+                },
+            ],
+            "discriminator": {
+                "propertyName": "kind",
+            },
+        },
+        {},
+    )
