@@ -21,7 +21,7 @@ jobs:
     outputs:
       enabled: ${{ steps.check.outputs.enabled }}
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - id: check
@@ -59,18 +59,18 @@ jobs:
     if: needs.preflight.outputs.enabled == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14.2"
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       - name: Install dependencies
         run: uv sync --all-extras --group benchmark
       - name: Run benchmarks
-        uses: CodSpeedHQ/action@db35df748deb45fdef0960669f57d627c1956c30 # v4
+        uses: CodSpeedHQ/action@c381be0bfd20e844fb45594f6aa182ffcd94545c # v4
         with:
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: .venv/bin/pytest tests/main/test_performance.py --codspeed
