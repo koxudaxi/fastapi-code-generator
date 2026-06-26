@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from typing import Optional
-
 from fastapi import FastAPI
 
 from .models import Ack, EventPayload, Subscription, SubscriptionRequest
@@ -16,8 +14,6 @@ app = FastAPI(
 )
 
 
-@app.post(
-    '/subscriptions', response_model=None, responses={'201': {'model': Subscription}}
-)
-def create_subscription(body: SubscriptionRequest) -> Optional[Subscription]:
+@app.post('/subscriptions', response_model=Subscription, status_code=201)
+def create_subscription(body: SubscriptionRequest) -> Subscription:
     pass

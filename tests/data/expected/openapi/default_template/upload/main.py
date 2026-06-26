@@ -22,6 +22,7 @@ app = FastAPI(
 @app.post(
     '/pets/{id}/image/form-data',
     response_model=None,
+    status_code=201,
     responses={'default': {'model': Error}},
     tags=['pets'],
 )
@@ -35,6 +36,7 @@ def upload_pet_image_with_form_data(id: str, file: UploadFile = ...) -> Optional
 @app.post(
     '/pets/{id}/image/octet-stream',
     response_model=None,
+    status_code=201,
     responses={'default': {'model': Error}},
     tags=['pets'],
 )
@@ -50,6 +52,7 @@ def upload_pet_image_with_octet_stream(
 @app.post(
     '/pets/{id}/images/form-data',
     response_model=None,
+    status_code=201,
     responses={'default': {'model': Error}},
     tags=['pets'],
 )

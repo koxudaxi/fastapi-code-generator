@@ -48,6 +48,12 @@ from datamodel_code_generator.types import DataType, DataTypeManager
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 
 RE_APPLICATION_JSON_PATTERN: Pattern[str] = re.compile(r'^application/.*json$')
+ResponseStatusCode = Union[str, int]
+ResponseDefinitions = Mapping[
+    ResponseStatusCode, Union[ResponseObject, ReferenceObject]
+]
+ResponseStatusLookup = Mapping[ResponseStatusCode, object]
+ParsedResponseDataTypes = Mapping[ResponseStatusCode, Dict[str, DataType]]
 RE_SNAKECASE_REPLACE_PATTERN: Pattern[str] = re.compile(r"[\-\.\s]")
 RE_UPPERCASE_PATTERN: Pattern[str] = re.compile(r"[A-Z]")
 RE_CAMELCASE_STRIP_PATTERN: Pattern[str] = re.compile(r"\w[\s\W]+\w")
@@ -722,43 +728,137 @@ class OpenAPIParser(OpenAPIModelParser):
             and schema.format == 'binary'
         )
 
-    def parse_responses(  # type: ignore[override]
+    def _parse_success_status_code(self, status_code: object) -> int | None:
+        if not (status_code_text := str(status_code)).isdigit():
+            return None
+        parsed_status_code = int(status_code_text)
+        if 200 <= parsed_status_code < 300:
+            return parsed_status_code
+        return None
+
+    def _get_success_status_codes(self, responses: ResponseDefinitions) -> list[int]:
+        return sorted(
+            parsed_status_code
+            for status_code in responses
+            if (parsed_status_code := self._parse_success_status_code(status_code))
+            is not None
+        )
+
+    def _find_response_status_code_key(
+        self, responses: ResponseStatusLookup, status_code: int
+    ) -> ResponseStatusCode | None:
+        if status_code in responses:
+            return status_code
+        if (status_code_text := str(status_code)) in responses:
+            return status_code_text
+        return None
+
+    def _get_response_data_types(
+        self, data_types: ParsedResponseDataTypes, status_code: int
+    ) -> Dict[str, DataType] | None:
+        if (
+            status_code_key := self._find_response_status_code_key(
+                data_types, status_code
+            )
+        ) is None:
+            return None
+        return data_types[status_code_key] or None
+
+    def _select_primary_response_status_code(
+        self,
+        responses: ResponseDefinitions,
+        data_types: ParsedResponseDataTypes,
+        success_status_codes: list[int],
+    ) -> ResponseStatusCode | None:
+        if status_code_key := self._find_response_status_code_key(responses, 200):
+            return status_code_key
+        for status_code in success_status_codes:
+            match self._get_response_data_types(data_types, status_code):
+                case response_data_types if response_data_types:
+                    return self._find_response_status_code_key(data_types, status_code)
+                case _:
+                    continue
+        return None
+
+    def _get_primary_response_data_type(
+        self,
+        status_code: ResponseStatusCode | None,
+        data_types: ParsedResponseDataTypes,
+    ) -> DataType:
+        if (
+            status_code is None
+            or (parsed_status_code := self._parse_success_status_code(status_code))
+            is None
+        ):
+            return DataType(type='None')
+        if not (
+            response_data_types := self._get_response_data_types(
+                data_types, parsed_status_code
+            )
+        ):
+            return DataType(type='None')
+        data_type = next(iter(response_data_types.values()))
+        data_type = self._collapse_root_model(data_type)
+        self.data_types.append(data_type)
+        return data_type
+
+    def _select_route_status_code(
+        self,
+        primary_status_code: ResponseStatusCode | None,
+        data_types: ParsedResponseDataTypes,
+        success_status_codes: list[int],
+    ) -> int | None:
+        primary_status_code_value = (
+            self._parse_success_status_code(primary_status_code)
+            if primary_status_code is not None
+            else None
+        )
+        if primary_status_code_value and primary_status_code_value != 200:
+            return primary_status_code_value
+        match success_status_codes:
+            case [
+                status_code
+            ] if status_code != 200 and not self._get_response_data_types(
+                data_types, status_code
+            ):
+                return status_code
+            case _:
+                return None
+
+    def parse_responses(
         self,
         name: str,
-        responses: Dict[str, Union[ResponseObject, ReferenceObject]],
+        responses: Dict[ResponseStatusCode, Union[ResponseObject, ReferenceObject]],
         path: List[str],
-    ) -> Dict[Union[str, int], Dict[str, DataType]]:
-        data_types = super().parse_responses(name, responses, path)  # type: ignore[arg-type]
-        status_code_200 = data_types.get('200')
-        if status_code_200:
-            data_type = list(status_code_200.values())[0]
-            data_type = self._collapse_root_model(data_type)
-            self.data_types.append(data_type)
-        else:
-            data_type = DataType(type='None')
+    ) -> Dict[ResponseStatusCode, Dict[str, DataType]]:
+        data_types = super().parse_responses(name, responses, path)
+        success_status_codes = self._get_success_status_codes(responses)
+        primary_status_code = self._select_primary_response_status_code(
+            responses, data_types, success_status_codes
+        )
+        data_type = self._get_primary_response_data_type(
+            primary_status_code, data_types
+        )
         type_hint = data_type.type_hint  # TODO: change to lazy loading
         self._temporary_operation['response'] = type_hint
-        success_status_codes = [
-            int(status_code)
-            for status_code in responses
-            if str(status_code).isdigit() and 200 <= int(status_code) < 300
-        ]
-        if '200' not in responses and success_status_codes:
-            selected_status_code = min(success_status_codes)
-            if selected_status_code == 204 and not data_types.get(
-                str(selected_status_code)
-            ):
-                self._temporary_operation['status_code'] = selected_status_code
+        if status_code := self._select_route_status_code(
+            primary_status_code, data_types, success_status_codes
+        ):
+            self._temporary_operation['status_code'] = status_code
         return_types = {type_hint: data_type}
-        for status_code, additional_responses in data_types.items():
-            if status_code != '200' and additional_responses:  # 200 is processed above
-                data_type = list(additional_responses.values())[0]
-                self.data_types.append(data_type)
-                type_hint = data_type.type_hint  # TODO: change to lazy loading
-                self._temporary_operation.setdefault('additional_responses', {})[
-                    status_code
-                ] = {'model': type_hint}
-                return_types[type_hint] = data_type
+        for additional_status_code, additional_responses in data_types.items():
+            is_primary_response = primary_status_code is not None and str(
+                additional_status_code
+            ) == str(primary_status_code)
+            if is_primary_response or not additional_responses:
+                continue
+            data_type = next(iter(additional_responses.values()))
+            self.data_types.append(data_type)
+            type_hint = data_type.type_hint  # TODO: change to lazy loading
+            self._temporary_operation.setdefault('additional_responses', {})[
+                additional_status_code
+            ] = {'model': type_hint}
+            return_types[type_hint] = data_type
         if len(return_types) == 1:
             return_type = next(iter(return_types.values()))
         else:

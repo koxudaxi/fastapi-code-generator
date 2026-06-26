@@ -15,7 +15,9 @@ app = FastAPI(
 )
 
 
-@app.post('/pets/{id}/image/octet-stream', response_model=None, tags=['pets'])
+@app.post(
+    '/pets/{id}/image/octet-stream', response_model=None, status_code=201, tags=['pets']
+)
 def upload_pet_image_with_duplicate_request(
     id: str, request: Optional[str] = None
 ) -> None:

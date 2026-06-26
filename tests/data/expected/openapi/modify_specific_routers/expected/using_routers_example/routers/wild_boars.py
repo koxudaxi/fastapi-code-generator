@@ -19,7 +19,7 @@ def list_wild_boars(limit: Optional[int] = None) -> List[Pet]:
     pass
 
 
-@router.post('/boars', response_model=None, tags=['Wild Boars'])
+@router.post('/boars', response_model=None, status_code=201, tags=['Wild Boars'])
 def create_wild_boars() -> None:
     """
     Create a Wild Boar

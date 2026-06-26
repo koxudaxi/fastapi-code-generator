@@ -19,7 +19,7 @@ def list_fat_cats(limit: Optional[int] = None) -> List[Pet]:
     pass
 
 
-@router.post('/cats', response_model=None, tags=['Fat Cats'])
+@router.post('/cats', response_model=None, status_code=201, tags=['Fat Cats'])
 def create_fat_cats() -> None:
     """
     Create a Fat Cat

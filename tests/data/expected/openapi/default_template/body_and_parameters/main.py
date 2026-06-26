@@ -51,7 +51,11 @@ def get_foo(foo: Optional[str] = None) -> str:
 
 
 @app.post(
-    '/food', response_model=None, responses={'default': {'model': str}}, tags=['pets']
+    '/food',
+    response_model=None,
+    status_code=201,
+    responses={'default': {'model': str}},
+    tags=['pets'],
 )
 def post_food(body: str) -> Optional[str]:
     """
@@ -88,7 +92,11 @@ def list_pets(
 
 
 @app.post(
-    '/pets', response_model=None, responses={'default': {'model': Error}}, tags=['pets']
+    '/pets',
+    response_model=None,
+    status_code=201,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
 )
 def post_pets(body: PetForm) -> Optional[Error]:
     """
@@ -113,6 +121,7 @@ def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
 @app.put(
     '/pets/{petId}',
     response_model=None,
+    status_code=201,
     responses={'default': {'model': Error}},
     tags=['pets'],
 )
@@ -130,7 +139,7 @@ def get_user() -> UserGetResponse:
     pass
 
 
-@app.post('/user', response_model=None, tags=['user'])
+@app.post('/user', response_model=None, status_code=201, tags=['user'])
 def post_user(body: UserPostRequest) -> None:
     pass
 
@@ -140,7 +149,7 @@ def get_users() -> List[UsersGetResponseItem]:
     pass
 
 
-@app.post('/users', response_model=None, tags=['user'])
+@app.post('/users', response_model=None, status_code=201, tags=['user'])
 def post_users(body: List[UsersPostRequestItem]) -> None:
     pass
 
