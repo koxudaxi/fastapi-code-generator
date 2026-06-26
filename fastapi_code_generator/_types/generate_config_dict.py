@@ -9,6 +9,8 @@ from typing_extensions import NotRequired, TypedDict
 
 
 class GenerateConfigDict(TypedDict):
+    allow_private_network: NotRequired[bool]
+    allow_remote_refs: NotRequired[bool | None]
     custom_visitors: NotRequired[list[str] | None]
     disable_timestamp: NotRequired[bool]
     enable_faux_immutability: NotRequired[bool]

@@ -22,6 +22,13 @@ Options:
                                   generating models.
   --include-request-argument      Auto-inject a FastAPI Request parameter into
                                   operations when not present.
+  --allow-remote-refs / --no-allow-remote-refs
+                                  Allow or block fetching remote $ref targets
+                                  over HTTP/HTTPS. The default follows
+                                  datamodel-code-generator compatibility
+                                  behavior.
+  --allow-private-network         Allow trusted remote $ref targets on local
+                                  or private network addresses.
   -d, --output-model-type [pydantic_v2.BaseModel|pydantic_v2.dataclass|dataclasses.dataclass|typing.TypedDict|msgspec.Struct]
                                   [default: pydantic_v2.BaseModel]
   -p, --python-version [3.10|3.11|3.12|3.13|3.14]
@@ -80,6 +87,26 @@ Render generated files with a custom template directory.
 `fastapi-codegen --input openapi/custom_template_security/custom_security.yaml --output app --template-dir custom_template/security`
 
 Input schema: `openapi/custom_template_security/custom_security.yaml`
+
+### --allow-private-network
+
+Allow trusted remote `$ref` targets on local or private network addresses.
+
+`fastapi-codegen --input openapi/remote_ref/body_and_parameters.yaml --output app --allow-private-network`
+
+Input schema: `openapi/remote_ref/body_and_parameters.yaml`
+
+Related options: `--allow-remote-refs`
+
+### --allow-remote-refs, --no-allow-remote-refs
+
+Allow or block fetching remote `$ref` targets over HTTP/HTTPS.
+
+`fastapi-codegen --input openapi/remote_ref/body_and_parameters.yaml --output app --allow-remote-refs`
+
+Input schema: `openapi/remote_ref/body_and_parameters.yaml`
+
+Related options: `--allow-private-network`
 
 ### --include-request-argument
 

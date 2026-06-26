@@ -347,6 +347,8 @@ class OpenAPIParser(OpenAPIModelParser):
         field_extra_keys: Optional[Set[str]] = None,
         field_include_all_keys: bool = False,
         include_request_argument: bool = False,
+        allow_remote_refs: Optional[bool] = None,
+        allow_private_network: bool = False,
         use_annotated: bool = False,
     ):
         super().__init__(
@@ -389,6 +391,8 @@ class OpenAPIParser(OpenAPIModelParser):
             field_extra_keys=field_extra_keys,
             field_include_all_keys=field_include_all_keys,
             openapi_scopes=[OpenAPIScope.Schemas, OpenAPIScope.Paths],
+            allow_remote_refs=allow_remote_refs,
+            allow_private_network=allow_private_network,
             use_annotated=use_annotated,
         )
         self.operations: Dict[str, Operation] = {}
@@ -438,12 +442,17 @@ class OpenAPIParser(OpenAPIModelParser):
         schema: Optional[JsonSchemaObject] = None
         data_type: Optional[DataType] = None
         for content in parameters.content.values():
-            if isinstance(content.schema_, ReferenceObject):
-                data_type = self.get_ref_data_type(content.schema_.ref)
-                ref_model = self.get_ref_model(content.schema_.ref)
-                schema = JsonSchemaObject.model_validate(ref_model)  # pragma: no cover
-            else:
-                schema = content.schema_
+            match content.schema_:
+                case ReferenceObject() as schema_ref:
+                    data_type = self.get_ref_data_type(schema_ref.ref)
+                    ref_model = self.get_ref_model(schema_ref.ref)
+                    schema = JsonSchemaObject.model_validate(
+                        ref_model
+                    )  # pragma: no cover
+                case JsonSchemaObject() as schema_obj:
+                    schema = schema_obj
+                case _:
+                    continue
             break
         if not data_type:
             if not schema:

@@ -163,6 +163,21 @@ class GenerateConfig(BaseModel):
         ),
         json_schema_extra=cast(Any, _cli_metadata("--include-request-argument")),
     )
+    allow_remote_refs: bool | None = Field(
+        default=None,
+        description="Allow or block fetching remote `$ref` targets over HTTP/HTTPS.",
+        json_schema_extra=cast(
+            Any, _cli_metadata("--allow-remote-refs", "--no-allow-remote-refs")
+        ),
+    )
+    allow_private_network: bool = Field(
+        default=False,
+        description=(
+            "Allow trusted remote `$ref` targets on local or private network "
+            "addresses."
+        ),
+        json_schema_extra=cast(Any, _cli_metadata("--allow-private-network")),
+    )
     output_model_type: OutputModelTypeName = Field(
         default="pydantic_v2.BaseModel",
         description="Model backend passed through to datamodel-code-generator.",
@@ -296,9 +311,10 @@ def validate_generate_config_model() -> None:
         cli = _get_cli_metadata(field)
         param = params[name]
         expected_flags = tuple(cli["flags"])
-        if tuple(param.opts) != expected_flags:
+        actual_flags = tuple(param.opts) + tuple(getattr(param, "secondary_opts", ()))
+        if actual_flags != expected_flags:
             raise ValueError(
-                f"{name} flags drifted: expected {expected_flags!r}, got {tuple(param.opts)!r}"
+                f"{name} flags drifted: expected {expected_flags!r}, got {actual_flags!r}"
             )
         if cli["multiple"] != bool(getattr(param, "multiple", False)):
             raise ValueError(f"{name} multiple setting drifted from the CLI")

@@ -7,7 +7,7 @@ import pytest
 from tests.cli_doc.test_cli_doc_coverage import (
     MANUAL_DOCS,
     get_all_canonical_options,
-    get_canonical_option,
+    iter_canonical_marker_options,
 )
 
 
@@ -16,8 +16,12 @@ def collected_options(request: pytest.FixtureRequest) -> set[str]:
     items: list[dict[str, Any]] = getattr(request.config, "_cli_doc_items", [])
     options: set[str] = set()
     for item in items:
-        options.update(item.get("marker_kwargs", {}).get("options", []))
-    return {get_canonical_option([option]) for option in options}
+        options.update(
+            iter_canonical_marker_options(
+                item.get("marker_kwargs", {}).get("options", [])
+            )
+        )
+    return options
 
 
 def test_manual_doc_options_exist_in_cli() -> None:

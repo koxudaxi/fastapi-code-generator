@@ -2,8 +2,16 @@ from pathlib import Path
 
 import pytest
 from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
-from datamodel_code_generator.parser.openapi import ReferenceObject, RequestBodyObject
+from datamodel_code_generator.parser.openapi import (
+    ParameterObject,
+    ReferenceObject,
+    RequestBodyObject,
+)
 
+from fastapi_code_generator.cli import (
+    _parse_specified_tags,
+    _resolve_remote_reference_options,
+)
 from fastapi_code_generator.parser import OpenAPIParser, UsefulStr, snakecase
 
 
@@ -42,6 +50,16 @@ def test_useful_str_case_helpers_match_legacy_stringcase_behavior(
     assert useful_value.snakecase == expected_snake
     assert useful_value.camelcase == expected_camel
     assert useful_value.pascalcase == expected_pascal
+
+
+def test_cli_helpers_normalize_remote_refs_and_tags() -> None:
+    assert _resolve_remote_reference_options(None, True) == (True, True)
+    assert _resolve_remote_reference_options(False, True) == (False, False)
+    assert _parse_specified_tags(None) == set()
+    assert _parse_specified_tags(" Fat Cats, ,Wild Boars ") == {
+        "Fat Cats",
+        "Wild Boars",
+    }
 
 
 def assert_field_extras(
@@ -163,6 +181,25 @@ def test_parse_request_body_filters_multipart_from_mixed_content() -> None:
     )
 
     assert set(request_body_fields) == {"application/json"}
+
+
+def test_get_parameter_type_uses_parameter_schema_for_boolean_content_schema() -> None:
+    parser = OpenAPIParser(
+        "openapi: 3.0.0\ninfo: {title: Test, version: '1.0'}\npaths: {}\n"
+    )
+    parameter = ParameterObject.model_validate(
+        {
+            "name": "message",
+            "in": "query",
+            "schema": {"type": "string"},
+            "content": {"application/json": {"schema": True}},
+        }
+    )
+
+    argument = parser.get_parameter_type(parameter, path=["paths", "items", "get"])
+
+    assert argument.name == "message"
+    assert argument.type_hint == "Optional[str]"
 
 
 def test_get_field_extras_preserves_non_union_discriminator() -> None:

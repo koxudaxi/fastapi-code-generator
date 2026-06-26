@@ -213,6 +213,36 @@ def serve_schema(schema_text: str) -> Iterator[str]:
 
 
 @freeze_time("2020-06-19")
+@pytest.mark.cli_doc(
+    options=["--allow-private-network"],
+    option_description=(
+        "Allow trusted remote `$ref` targets on local or private network addresses."
+    ),
+    cli_args=[
+        "--input",
+        "openapi/remote_ref/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--allow-private-network",
+    ],
+    input_schema="openapi/remote_ref/body_and_parameters.yaml",
+    golden_output="openapi/remote_ref/body_and_parameters/main.py",
+    related_options=["--allow-remote-refs"],
+)
+@pytest.mark.cli_doc(
+    options=["--allow-remote-refs", "--no-allow-remote-refs"],
+    option_description="Allow or block fetching remote `$ref` targets over HTTP/HTTPS.",
+    cli_args=[
+        "--input",
+        "openapi/remote_ref/body_and_parameters.yaml",
+        "--output",
+        "app",
+        "--allow-remote-refs",
+    ],
+    input_schema="openapi/remote_ref/body_and_parameters.yaml",
+    golden_output="openapi/remote_ref/body_and_parameters/main.py",
+    related_options=["--allow-private-network"],
+)
 def test_generate_remote_ref(tmp_path: Path, output_dir: Path) -> None:
     oas_file = DATA_PATH / OPEN_API_REMOTE_REF_DIR_NAME / "body_and_parameters.yaml"
     remote_schema = oas_file.read_text(encoding="utf-8")
@@ -228,6 +258,7 @@ def test_generate_remote_ref(tmp_path: Path, output_dir: Path) -> None:
             input_path=input_path,
             output_path=output_dir,
             expected_path=EXPECTED_OPENAPI_PATH / "remote_ref" / oas_file.stem,
+            extra_args=["--allow-private-network"],
         )
 
 
