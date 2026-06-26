@@ -144,6 +144,28 @@ PROMPT_DATA: dict[str, Any] = {
             'choices': [],
         },
         {
+            'name': 'allow_remote_refs',
+            'cli_flags': ['--allow-remote-refs', '--no-allow-remote-refs'],
+            'description': 'Allow or block fetching remote `$ref` targets '
+            'over HTTP/HTTPS.',
+            'required': False,
+            'default': None,
+            'multiple': False,
+            'type': 'boolean | null',
+            'choices': [],
+        },
+        {
+            'name': 'allow_private_network',
+            'cli_flags': ['--allow-private-network'],
+            'description': 'Allow trusted remote `$ref` targets on local or '
+            'private network addresses.',
+            'required': False,
+            'default': False,
+            'multiple': False,
+            'type': 'boolean',
+            'choices': [],
+        },
+        {
             'name': 'output_model_type',
             'cli_flags': ['--output-model-type', '-d'],
             'description': 'Model backend passed through to '
@@ -254,6 +276,32 @@ PROMPT_DATA: dict[str, Any] = {
                 'custom_template/security',
             ],
             'input_schema': 'openapi/custom_template_security/custom_security.yaml',
+        },
+        {
+            'options': ['--allow-private-network'],
+            'description': 'Allow trusted remote `$ref` targets on local or '
+            'private network addresses.',
+            'cli_args': [
+                '--input',
+                'openapi/remote_ref/body_and_parameters.yaml',
+                '--output',
+                'app',
+                '--allow-private-network',
+            ],
+            'input_schema': 'openapi/remote_ref/body_and_parameters.yaml',
+        },
+        {
+            'options': ['--allow-remote-refs', '--no-allow-remote-refs'],
+            'description': 'Allow or block fetching remote `$ref` targets over '
+            'HTTP/HTTPS.',
+            'cli_args': [
+                '--input',
+                'openapi/remote_ref/body_and_parameters.yaml',
+                '--output',
+                'app',
+                '--allow-remote-refs',
+            ],
+            'input_schema': 'openapi/remote_ref/body_and_parameters.yaml',
         },
         {
             'options': ['--include-request-argument'],

@@ -29,13 +29,23 @@ def get_all_canonical_options() -> set[str]:
     return options
 
 
+def iter_canonical_marker_options(marker_options: list[str]) -> set[str]:
+    if any(option.startswith("--no-") for option in marker_options):
+        return {get_canonical_option(marker_options)}
+    return {get_canonical_option([option]) for option in marker_options}
+
+
 @pytest.fixture(scope="module")
 def collected_options(request: pytest.FixtureRequest) -> set[str]:
     items: list[dict[str, Any]] = getattr(request.config, "_cli_doc_items", [])
     options: set[str] = set()
     for item in items:
-        options.update(item.get("marker_kwargs", {}).get("options", []))
-    return {get_canonical_option([option]) for option in options}
+        options.update(
+            iter_canonical_marker_options(
+                item.get("marker_kwargs", {}).get("options", [])
+            )
+        )
+    return options
 
 
 def test_all_options_have_cli_doc_markers(collected_options: set[str]) -> None:

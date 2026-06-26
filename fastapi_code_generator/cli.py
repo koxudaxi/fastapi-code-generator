@@ -73,6 +73,22 @@ def _show_version(value: bool) -> None:
         raise typer.Exit()
 
 
+def _resolve_remote_reference_options(
+    allow_remote_refs: Optional[bool], allow_private_network: bool
+) -> tuple[Optional[bool], bool]:
+    match allow_remote_refs, allow_private_network:
+        case None, True:
+            return True, True
+        case _:
+            return allow_remote_refs, allow_private_network
+
+
+def _parse_specified_tags(specify_tags: Optional[str]) -> set[str]:
+    if not specify_tags:
+        return set()
+    return {tag for raw_tag in specify_tags.split(",") if (tag := raw_tag.strip())}
+
+
 @lru_cache(maxsize=1)
 def _get_command() -> Command:
     return get_command(app)
@@ -106,6 +122,22 @@ def main(
         help=(
             "Auto-inject a FastAPI Request parameter into operations when not "
             "present."
+        ),
+    ),
+    allow_remote_refs: Optional[bool] = typer.Option(
+        None,
+        "--allow-remote-refs/--no-allow-remote-refs",
+        help=(
+            "Allow or block fetching remote $ref targets over HTTP/HTTPS. "
+            "The default follows datamodel-code-generator compatibility behavior."
+        ),
+    ),
+    allow_private_network: bool = typer.Option(
+        False,
+        "--allow-private-network",
+        help=(
+            "Allow trusted remote $ref targets on local or private network "
+            "addresses."
         ),
     ),
     output_model_type: DataModelType = typer.Option(
@@ -162,6 +194,8 @@ def main(
         disable_timestamp=disable_timestamp,
         strict_nullable=strict_nullable,
         include_request_argument=include_request_argument,
+        allow_remote_refs=allow_remote_refs,
+        allow_private_network=allow_private_network,
         generate_routers=generate_routers,
         specify_tags=specify_tags,
         output_model_type=output_model_type,
@@ -203,6 +237,8 @@ def generate_code(
     disable_timestamp: bool = False,
     strict_nullable: bool = False,
     include_request_argument: bool = False,
+    allow_remote_refs: Optional[bool] = None,
+    allow_private_network: bool = False,
     generate_routers: Optional[bool] = None,
     specify_tags: Optional[str] = None,
     output_model_type: DataModelType = DataModelType.PydanticV2BaseModel,
@@ -226,6 +262,9 @@ def generate_code(
         custom_visitors = []
     data_model_types = get_data_model_types(output_model_type, python_version)
     code_formatter = _get_code_formatter(python_version, Path().resolve())
+    allow_remote_refs, allow_private_network = _resolve_remote_reference_options(
+        allow_remote_refs, allow_private_network
+    )
 
     parser = OpenAPIParser(
         input_text,
@@ -239,6 +278,8 @@ def generate_code(
         target_python_version=python_version,
         strict_nullable=strict_nullable,
         include_request_argument=include_request_argument,
+        allow_remote_refs=allow_remote_refs,
+        allow_private_network=allow_private_network,
         use_annotated=use_annotated,
         reuse_model=reuse_model,
         enable_faux_immutability=enable_faux_immutability,
@@ -304,9 +345,7 @@ def generate_code(
     specified_tags = set()
     existing_main_has_router_includes = False
     if generate_routers and specify_tags:
-        specified_tags = {
-            tag.strip() for tag in str(specify_tags).split(",") if tag.strip()
-        }
+        specified_tags = _parse_specified_tags(specify_tags)
         main_path = output_dir / "main.py"
         if main_path.exists():
             existing_main_has_router_includes = (

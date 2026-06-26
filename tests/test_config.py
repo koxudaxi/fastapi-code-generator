@@ -93,6 +93,7 @@ def _fake_params() -> dict[str, SimpleNamespace]:
     for name, param in get_command_config_params().items():
         fake[name] = SimpleNamespace(
             opts=tuple(param.opts),
+            secondary_opts=tuple(getattr(param, "secondary_opts", ())),
             multiple=bool(getattr(param, "multiple", False)),
             required=bool(param.required),
             default=param.default,
