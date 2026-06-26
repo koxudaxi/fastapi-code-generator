@@ -735,7 +735,7 @@ type = [
 [package.metadata]
 requires-dist = [
     { name = "click", specifier = ">=8.1.8,<8.2" },
-    { name = "datamodel-code-generator", extras = ["http"], specifier = ">=0.59,<0.66" },
+    { name = "datamodel-code-generator", extras = ["http"], specifier = ">=0.61,<0.66" },
     { name = "jinja2", specifier = ">=2.11.2,<4" },
     { name = "pydantic", specifier = ">=2.12,<3" },
     { name = "pysnooper", specifier = ">=0.4.1,<2" },

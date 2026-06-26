@@ -77,10 +77,13 @@ def _resolve_remote_reference_options(
     allow_remote_refs: Optional[bool], allow_private_network: bool
 ) -> tuple[Optional[bool], bool]:
     match allow_remote_refs, allow_private_network:
+        case False, True:
+            return False, False
         case None, True:
             return True, True
         case _:
-            return allow_remote_refs, allow_private_network
+            pass
+    return allow_remote_refs, allow_private_network
 
 
 def _parse_specified_tags(specify_tags: Optional[str]) -> set[str]:

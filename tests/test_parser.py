@@ -54,7 +54,7 @@ def test_useful_str_case_helpers_match_legacy_stringcase_behavior(
 
 def test_cli_helpers_normalize_remote_refs_and_tags() -> None:
     assert _resolve_remote_reference_options(None, True) == (True, True)
-    assert _resolve_remote_reference_options(False, True) == (False, True)
+    assert _resolve_remote_reference_options(False, True) == (False, False)
     assert _parse_specified_tags(None) == set()
     assert _parse_specified_tags(" Fat Cats, ,Wild Boars ") == {
         "Fat Cats",
