@@ -19,13 +19,17 @@ app = FastAPI(
 )
 
 
-@app.get('/foo', response_model=None, responses={'200': {'model': str}}, tags=['foo'])
-def get_foo(foo: Optional[str] = None) -> Optional[str]:
+@app.get('/foo', response_model=str, tags=['foo'])
+def get_foo(foo: Optional[str] = None) -> str:
     pass
 
 
 @app.post(
-    '/food', response_model=None, responses={'default': {'model': str}}, tags=['pets']
+    '/food',
+    response_model=None,
+    status_code=201,
+    responses={'default': {'model': str}},
+    tags=['pets'],
 )
 def post_food(body: str) -> Optional[str]:
     """
@@ -62,7 +66,11 @@ def list_pets(
 
 
 @app.post(
-    '/pets', response_model=None, responses={'default': {'model': Error}}, tags=['pets']
+    '/pets',
+    response_model=None,
+    status_code=201,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
 )
 def post_pets(body: PetForm) -> Optional[Error]:
     """
@@ -87,6 +95,7 @@ def show_pet_by_id(pet_id: str = Path(..., alias='petId')) -> Union[Pet, Error]:
 @app.put(
     '/pets/{petId}',
     response_model=None,
+    status_code=201,
     responses={'default': {'model': Error}},
     tags=['pets'],
 )
@@ -102,6 +111,7 @@ def put_pets_pet_id(
 @app.post(
     '/pets/{petId}/image',
     response_model=None,
+    status_code=201,
     responses={'default': {'model': str}},
     tags=['pets'],
 )

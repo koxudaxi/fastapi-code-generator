@@ -15,3 +15,8 @@ app = FastAPI(
 @app.delete('/items/{item_id}', response_model=None, status_code=204)
 def delete_item(item_id: int) -> None:
     pass
+
+
+@app.post('/jobs/{job_id}/start', response_model=None, status_code=202)
+def start_job(job_id: int) -> None:
+    pass

@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Union
+from typing import Union
 
 from fastapi import FastAPI
 
@@ -18,8 +18,9 @@ app = FastAPI(
 
 @app.post(
     '/jobs',
-    response_model=None,
-    responses={'201': {'model': JobCreated}, '404': {'model': Error}},
+    response_model=JobCreated,
+    status_code=201,
+    responses={'404': {'model': Error}},
 )
-def create_job() -> Optional[Union[JobCreated, Error]]:
+def create_job() -> Union[JobCreated, Error]:
     pass

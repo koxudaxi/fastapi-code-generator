@@ -19,7 +19,7 @@ def list_slim_dogs(limit: Optional[int] = None) -> List[Pet]:
     pass
 
 
-@router.post('/dogs', response_model=None, tags=['Slim Dogs'])
+@router.post('/dogs', response_model=None, status_code=201, tags=['Slim Dogs'])
 def create_slim_dogs() -> None:
     """
     Create a Slim Dog

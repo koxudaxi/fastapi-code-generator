@@ -3,6 +3,18 @@ info:
   title: Delete API
   version: 1.0.0
 paths:
+  /jobs/{job_id}/start:
+    post:
+      operationId: startJob
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "202":
+          description: Accepted
   /items/{item_id}:
     delete:
       operationId: deleteItem

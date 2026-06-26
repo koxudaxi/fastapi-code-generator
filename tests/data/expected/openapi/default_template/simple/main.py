@@ -33,7 +33,11 @@ def list_pets(limit: Optional[int] = None) -> Union[List[Pet], Error]:
 
 
 @app.post(
-    '/pets', response_model=None, responses={'default': {'model': Error}}, tags=['pets']
+    '/pets',
+    response_model=None,
+    status_code=201,
+    responses={'default': {'model': Error}},
+    tags=['pets'],
 )
 def create_pets() -> Optional[Error]:
     """

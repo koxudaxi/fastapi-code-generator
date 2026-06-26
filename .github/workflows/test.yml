@@ -302,6 +302,7 @@ jobs:
           files: .tox/coverage.xml
           flags: unittests
           fail_ci_if_error: true
+          use_pypi: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       - name: Fail if coverage check failed
