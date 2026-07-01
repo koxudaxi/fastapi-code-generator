@@ -931,6 +931,31 @@ def test_generate_non_200_success_status_code(output_dir: Path) -> None:
 
 
 @freeze_time("2020-06-19")
+def test_generate_python_literal_escaping(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH
+        / OPEN_API_COVERAGE_DIR_NAME
+        / "python_literal_escaping.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH / "coverage" / "python_literal_escaping",
+    )
+
+
+@freeze_time("2020-06-19")
+def test_generate_modular_python_literal_escaping(output_dir: Path) -> None:
+    run_cli_and_assert(
+        input_path=DATA_PATH
+        / OPEN_API_COVERAGE_DIR_NAME
+        / "python_literal_escaping.yaml",
+        output_path=output_dir,
+        expected_path=EXPECTED_OPENAPI_PATH
+        / "coverage"
+        / "python_literal_escaping_modular",
+        extra_args=["--generate-routers"],
+    )
+
+
+@freeze_time("2020-06-19")
 def test_generate_header_and_cookie_parameters(output_dir: Path) -> None:
     run_cli_and_assert(
         input_path=DATA_PATH
