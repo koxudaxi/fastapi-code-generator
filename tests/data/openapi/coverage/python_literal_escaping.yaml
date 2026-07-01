@@ -1,0 +1,42 @@
+openapi: 3.0.0
+info:
+  title: Python literal escaping
+  version: 1.0.0
+paths:
+  "/items/'+(__import__(\"os\").system(\"path\") or \"\")+'/detail":
+    get:
+      tags:
+        - literal escaping
+      summary: 'bad""" + (__import__("os").system("summary") or "") + """done'
+      operationId: getEscapedThing
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+        "404' + (__import__(\"os\").system(\"status\") or \"\") + 'x":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        418:
+          description: Teapot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        name:
+          type: string
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
