@@ -11,6 +11,16 @@ Generate a FastAPI application from an OpenAPI document.
 
 > 📣 💼 Maintainer update: Open to opportunities. 🔗 [koxudaxi.dev](https://koxudaxi.dev/?utm_source=github_readme&utm_medium=top&utm_campaign=open_to_work)
 
+## Maintenance Status and Migration
+
+`fastapi-code-generator` is no longer maintained due to limited maintainer resources.
+
+For new projects and migration, use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/), which now supports [FastAPI server generation](https://datamodel-code-generator.koxudaxi.dev/fastapi-server/) and [Python client generation](https://datamodel-code-generator.koxudaxi.dev/python-client/). These features are still **experimental**, and their options and generated code may change.
+
+The generation process and output differ between the two tools, so migration requires changes to your generation workflow and application code. Follow the [migration guide from fastapi-code-generator](https://datamodel-code-generator.koxudaxi.dev/fastapi-code-generator-migration/) to update commands, adapt handlers, and review compatibility differences.
+
+The documentation below remains available as a reference for existing users.
+
 ## Documentation
 
 The docs site is the source of truth for user-facing documentation:

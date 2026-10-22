@@ -4,6 +4,16 @@
 
 This site is the source of truth for the project documentation. The repository `README.md` stays intentionally shorter and links back here for the complete walkthrough.
 
+## Maintenance Status and Migration
+
+`fastapi-code-generator` is no longer maintained due to limited maintainer resources.
+
+For new projects and migration, use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/), which now supports [FastAPI server generation](https://datamodel-code-generator.koxudaxi.dev/fastapi-server/) and [Python client generation](https://datamodel-code-generator.koxudaxi.dev/python-client/). These features are still **experimental**, and their options and generated code may change.
+
+The generation process and output differ between the two tools, so migration requires changes to your generation workflow and application code. Follow the [migration guide from fastapi-code-generator](https://datamodel-code-generator.koxudaxi.dev/fastapi-code-generator-migration/) to update commands, adapt handlers, and review compatibility differences.
+
+The documentation below remains available as a reference for existing users.
+
 ## What it does
 
 - Generate a FastAPI app skeleton directly from an OpenAPI schema
