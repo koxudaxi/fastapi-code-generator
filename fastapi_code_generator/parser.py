@@ -35,15 +35,15 @@ from datamodel_code_generator.model import pydantic_v2 as pydantic_model
 from datamodel_code_generator.model.pydantic_v2 import DataModelField
 from datamodel_code_generator.parser.base import SPECIAL_PATH_FORMAT
 from datamodel_code_generator.parser.jsonschema import JsonSchemaObject
-from datamodel_code_generator.parser.openapi import MediaObject
-from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.parser.openapi import (
+    MediaObject,
     ParameterLocation,
     ParameterObject,
     ReferenceObject,
     RequestBodyObject,
     ResponseObject,
 )
+from datamodel_code_generator.parser.openapi import OpenAPIParser as OpenAPIModelParser
 from datamodel_code_generator.types import DataType, DataTypeManager
 from pydantic import BaseModel, ConfigDict, ValidationInfo
 
