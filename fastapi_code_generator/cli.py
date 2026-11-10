@@ -179,8 +179,13 @@ def main(
     input_name: str = Path(input_file).name
     input_text: str
 
-    with open(input_file, encoding=encoding) as f:
-        input_text = f.read()
+    try:
+        with open(input_file, encoding=encoding) as f:
+            input_text = f.read()
+    except OSError as exc:
+        raise ClickException(
+            f"Could not read input file {input_file}: {exc.strerror or exc}"
+        ) from exc
 
     model_path = Path(model_file) if model_file else MODEL_PATH  # pragma: no cover
 

@@ -112,6 +112,19 @@ def test_missing_required_options(capsys: pytest.CaptureFixture[str]) -> None:
     assert "Missing option '--input'" in capsys.readouterr().err
 
 
+def test_missing_input_file_reports_clean_error(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    missing = tmp_path / "does-not-exist.yaml"
+    assert (
+        run_main_with_args(["--input", str(missing), "--output", str(tmp_path / "out")])
+        == 1
+    )
+    err = capsys.readouterr().err
+    assert "Could not read input file" in err
+    assert "does-not-exist.yaml" in err
+
+
 @freeze_time("2020-06-19T00:00:00.123456Z")
 def test_generate_into_existing_output_dir(output_dir: Path) -> None:
     output_dir.mkdir(parents=True)
