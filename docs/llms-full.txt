@@ -2,13 +2,16 @@
 
 Source: https://fastapi-code-generator.koxudaxi.dev/
 
+!!! warning "This project is unmaintained"
+    `fastapi-code-generator` receives no bug fixes and no security fixes. Use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/) instead. See [Maintenance Status and Migration](#maintenance-status-and-migration) and the [security policy](https://github.com/koxudaxi/fastapi-code-generator/blob/main/SECURITY.md).
+
 `fastapi-code-generator` creates a FastAPI application from an OpenAPI document.
 
 This site is the source of truth for the project documentation. The repository `README.md` stays intentionally shorter and links back here for the complete walkthrough.
 
 ## Maintenance Status and Migration
 
-`fastapi-code-generator` is no longer maintained due to limited maintainer resources.
+`fastapi-code-generator` is no longer maintained due to limited maintainer resources. No version receives bug fixes or security fixes; see the [security policy](https://github.com/koxudaxi/fastapi-code-generator/blob/main/SECURITY.md).
 
 For new projects and migration, use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/), which now supports [FastAPI server generation](https://datamodel-code-generator.koxudaxi.dev/fastapi-server/) and [Python client generation](https://datamodel-code-generator.koxudaxi.dev/python-client/). These features are still **experimental**, and their options and generated code may change.
 
