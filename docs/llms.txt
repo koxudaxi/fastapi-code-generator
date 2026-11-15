@@ -2,7 +2,7 @@
 
 > This code generator creates FastAPI apps from OpenAPI files.
 
-- [fastapi-code-generator](https://fastapi-code-generator.koxudaxi.dev/): `fastapi-code-generator` creates a FastAPI application from an OpenAPI document.
+- [fastapi-code-generator](https://fastapi-code-generator.koxudaxi.dev/): `fastapi-code-generator` receives no bug fixes and no security fixes. Use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/...
 - [CLI Reference](https://fastapi-code-generator.koxudaxi.dev/cli-reference/): This page is generated from the current `fastapi-codegen --help` output. Run `tox run -e cli-docs` after changing CLI options.
 - [Supported Formats](https://fastapi-code-generator.koxudaxi.dev/supported_formats/): This page is generated from repository fixture inventory and config metadata. Run `tox run -e schema-docs` after changing supported inputs or model...
 ## Optional

@@ -1,5 +1,8 @@
 # fastapi-code-generator
 
+> [!WARNING]
+> **This project is unmaintained.** It receives no bug fixes and no security fixes. Use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/) instead. See [Maintenance Status and Migration](#maintenance-status-and-migration) and the [security policy](https://github.com/koxudaxi/fastapi-code-generator/blob/main/SECURITY.md).
+
 Generate a FastAPI application from an OpenAPI document.
 
 [![PyPI version](https://badge.fury.io/py/fastapi-code-generator.svg)](https://pypi.python.org/pypi/fastapi-code-generator)
@@ -13,7 +16,7 @@ Generate a FastAPI application from an OpenAPI document.
 
 ## Maintenance Status and Migration
 
-`fastapi-code-generator` is no longer maintained due to limited maintainer resources.
+`fastapi-code-generator` is no longer maintained due to limited maintainer resources. No version receives bug fixes or security fixes; see the [security policy](https://github.com/koxudaxi/fastapi-code-generator/blob/main/SECURITY.md).
 
 For new projects and migration, use [datamodel-code-generator](https://datamodel-code-generator.koxudaxi.dev/), which now supports [FastAPI server generation](https://datamodel-code-generator.koxudaxi.dev/fastapi-server/) and [Python client generation](https://datamodel-code-generator.koxudaxi.dev/python-client/). These features are still **experimental**, and their options and generated code may change.
 
